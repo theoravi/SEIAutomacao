@@ -950,6 +950,24 @@ def analisaProcesso(navegador, lista_processos, nomeEstag, planilhaDrones):
                                 pyautogui.press('enter')
                                 time.sleep(0.3)
                                 pyautogui.press('esc')
+                                #COPIA O NUMERO DO PROCESSO NA CELULA PARA SABER SE ELE FOI ENCONTRADO CORRETAMENTE
+                                pyautogui.hotkey('ctrl','c')
+                                time.sleep(0.5)
+                                n_processoConfirmation = pyperclip.paste()
+                                n_processoConfirmation = n_processoConfirmation.replace('\n', '')
+                                n_processoConfirmation = n_processoConfirmation.strip('"')
+                                print(n_processoConfirmation)
+                                print(type(n_processoConfirmation))
+                                if n_processoConfirmation != processos:
+                                    while True:
+                                        procure_manualmente = int(input("Houve um problema para encontrar o processo. Busque o manualmente e digite 1: "))
+                                        if procure_manualmente == 1:
+                                            time.sleep(1)
+                                            pyautogui.click(edge)
+                                            time.sleep(0.7)
+                                            break
+                                        else:
+                                            print("Opcao incorreta")
                                 #NAVEGA ENTRE AS CELULAS E INSERE OS DADOS SOBRE O PROCESSO
                                 pyautogui.press('right')
                                 pyautogui.PAUSE = 0.3
@@ -1698,6 +1716,24 @@ def analisaUmprocesso(navegador, nomeEstag, planilhaDrones):
                     pyautogui.press('enter')
                     time.sleep(0.3)
                     pyautogui.press('esc')
+                    #COPIA O NUMERO DO PROCESSO NA CELULA PARA SABER SE ELE FOI ENCONTRADO CORRETAMENTE
+                    pyautogui.hotkey('ctrl','c')
+                    time.sleep(0.5)
+                    n_processoConfirmation = pyperclip.paste()
+                    n_processoConfirmation = n_processoConfirmation.replace('\n', '')
+                    n_processoConfirmation = n_processoConfirmation.strip('"')
+                    print(n_processoConfirmation)
+                    print(type(n_processoConfirmation))
+                    if n_processoConfirmation != processo:
+                        while True:
+                            procure_manualmente = int(input("Houve um problema para encontrar o processo. Busque o manualmente e digite 1: "))
+                            if procure_manualmente == 1:
+                                time.sleep(1)
+                                pyautogui.click(edge)
+                                time.sleep(0.7)
+                                break
+                            else:
+                                print("Opcao incorreta")
                     #NAVEGA ENTRE AS CELULAS E INSERE OS DADOS SOBRE O PROCESSO
                     pyautogui.press('right')
                     pyautogui.PAUSE = 0.3
