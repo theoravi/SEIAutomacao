@@ -1783,34 +1783,39 @@ def concluiProcesso(navegador, lista_procConformes):
     #DEFINE EMAIL PARA PROCESSO RETIDO
     textoRetido = '''Prezado(a) Senhor(a),
 
-    Em atenção ao pedido de homologação constante do processo SEI em referência, informamos que:
+Em atenção ao pedido de homologação constante do processo SEI em referência, informamos que:
 
-    1. O pedido foi APROVADO
-    2. O Despacho Decisório que aprovou o pedido está disponível publicamente por meio do sistema SEI na área de Pesquisa Pública, no link:
+1. O pedido foi APROVADO
+2. O Despacho Decisório que aprovou o pedido está disponível publicamente por meio do sistema SEI na área de Pesquisa Pública, no link:
 
-            https://sei.anatel.gov.br/sei/modulos/pesquisa/md_pesq_processo_pesquisar.php?acao_externa=protocolo_pesquisar&acao_origem_externa=protocolo_pesquisar&id_orgao_acesso_externo=0
-
-
-    3. O Despacho Decisório deverá ser portado junto ao Equipamento (fisicamente ou eletronicamente), para que as autoridades competentes possam conferir a regularidade, quando necessário.
-    4. Visto que o produto se encontra retido, para que seja informado o número de série, solicitamos que acesse o sistema SEI da Anatel por meio do seguinte link:
+        https://sei.anatel.gov.br/sei/modulos/pesquisa/md_pesq_processo_pesquisar.php?acao_externa=protocolo_pesquisar&acao_origem_externa=protocolo_pesquisar&id_orgao_acesso_externo=0
 
 
-            https://sei.anatel.gov.br/sei/controlador_externo.php?acao=usuario_externo_logar&id_orgao_acesso_externo=0.
+3. O Despacho Decisório deverá ser portado junto ao Equipamento (fisicamente ou eletronicamente), para que as autoridades competentes possam conferir a regularidade, quando necessário.
+4. Visto que o produto se encontra retido, para que seja informado o número de série, solicitamos que acesse o sistema SEI da Anatel por meio do seguinte link:
 
 
-    5. Após autenticação no sistema SEI, solicitamos que inclua os documentos selecionando a opção "Intercorrente" e informando o número do processo em referência.
+             https://sei.anatel.gov.br/sei/controlador_externo.php?acao=usuario_externo_logar&id_orgao_acesso_externo=0.
 
 
+5. Após autenticação no sistema SEI, solicitamos que inclua os documentos selecionando a opção "Intercorrente" e informando o número do processo em referência.
 
-    FAVOR NÃO RESPONDER ESTE E-MAIL.
+6. Em caso de equipamento retido, recomendamos que apresente cópia do Despacho decisório ao e-mail corporativo, para que seja liberada a entrega da encomenda retida, de acordo com o local onde está sendo feita a fiscalização.
 
-    Atenciosamente,
+Caso encomenda retida no Paraná, encaminhar email para - documentacao.pr@anatel.gov.br
+Caso encomenda retida em São Paulo, encaminhar email para - documentacao.sp@anatel.gov.br
+Caso encomenda retida em Rio de Janeiro, encaminhar email para - documentacao.rj@anatel.gov.br
 
-    ORCN - Gerência de Certificação e Numeração
 
-    SOR - Superintendência de Outorga e Recursos à Prestação
+FAVOR NÃO RESPONDER ESTE E-MAIL.
 
-    Anatel - Agência Nacional de Telecomunicações'''
+Atenciosamente,
+
+ORCN - Gerência de Certificação e Numeração
+
+SOR - Superintendência de Outorga e Recursos à Prestação
+
+Anatel - Agência Nacional de Telecomunicações'''
 
     #DEFINE EMAIL PARA PROCESSO NAO RETIDO
     textoNaoRetido = '''Prezado(a) Senhor(a),
