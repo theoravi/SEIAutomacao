@@ -1,48 +1,42 @@
-import pyautogui
-import time
-import pyperclip
-processos = "53500.068611/2024-66"
 
-edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
-#COPIA NUMERO DO PROCESSO
-pyperclip.copy(processos)
-#CLICA NO NAVEGADOR
-pyautogui.click(edge)
-time.sleep(0.5)
-#PESQUISA PROCESSO NA PLANILHA
-pyautogui.hotkey('ctrl', 'l')
-time.sleep(0.3)
-#COLA NUMERO DO PROCESSO E APERTA ENTER PARA PESQUISAR O PROCESSO
-pyautogui.hotkey('ctrl', 'v')
-time.sleep(0.3)
-pyautogui.press('enter')
-time.sleep(0.3)
-pyautogui.press('esc')
-time.sleep(.3)
-#COPIA O NUMERO DO PROCESSO NA CELULA PARA SABER SE ELE FOI ENCONTRADO CORRETAMENTE
-pyautogui.hotkey('ctrl','c')
-time.sleep(0.5)
-n_processoConfirmation = pyperclip.paste()
-n_processoConfirmation = n_processoConfirmation.replace('\n', '')
-n_processoConfirmation = n_processoConfirmation.strip('"')
-print(n_processoConfirmation)
-print(type(n_processoConfirmation))
-if n_processoConfirmation != processos:
-    while True:
-        procure_manualmente = int(input("Houve um problema para encontrar o processo. Busque o manualmente e digite 1: "))
-        if procure_manualmente == 1:
-            time.sleep(1)
-            pyautogui.click(edge)
-            time.sleep(0.7)
-            break
-        else:
-            print("Opcao incorreta")  
-#NAVEGA ENTRE AS CELULAS E INSERE OS DADOS SOBRE O PROCESSO        
-pyautogui.press('right')
-pyautogui.PAUSE = 0.3
-pyperclip.copy('teste')
-pyautogui.hotkey('ctrl', 'v')
-pyautogui.press('right')
-pyperclip.copy('teste')
-pyautogui.hotkey('ctrl', 'v')
-pyautogui.press('right')
+import pandas as pd
+from tabulate import tabulate
+import numpy as np
+
+preenchido = {'Modelo': ["MT3PD\n", "RM 330"], 'Nome Comercial': ["MINI 3", "C5"], 'Número de Série (incluindo rádio controle e óculos)': ["1581FFGDF564GFDRA45", "5HAZ54GDGDG6"] }
+df = pd.DataFrame(preenchido)
+modelos = df['Modelo']
+modelos = modelos.reset_index(drop=True)
+print(df)
+print(modelos)
+print("\n")
+df = df.replace(' ', np.nan)
+df = df.dropna(how='all')
+data = df.values.tolist()
+headers = df.columns.tolist()
+print(tabulate(data, headers=headers, tablefmt='pretty'))
+print('\n')
+tabela = pd.read_excel("C:\\Users\\andrej.estagio\\ANATEL\\ORCN - Drones\\Lista de Drones Anatel_Corrigida.xlsx")
+tabela.columns = tabela.iloc[1]
+tabela = tabela.iloc[2:]
+tabela = tabela.reset_index(drop=True)
+tabela = tabela['MODELO']
+print(modelos[1])
+print(type(modelos[1]))
+print(modelos[1].lower())
+# checkexcel = modelos.isin(tabela['MODELO'])
+# checkexcel = tabela['MODELO'].isin(modelos)
+input("Pressione qualquer tecla para continuar")
+checkexcel = []
+for i in tabela:
+    for j in range(len(modelos)):
+        if modelos[j].lower() == i.lower():
+            checkexcel[j] = True
+print(checkexcel)
+input()
+for i in range(len(checkexcel)):
+    if checkexcel[i] == True:
+        print(f"O modelo {modelos[i]} está na lista de drones conformes.")
+    else:
+        print(f"O modelo {modelos[i]} não se encontra na lista de drones conformes")
+print('\n')
