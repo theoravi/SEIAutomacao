@@ -160,7 +160,7 @@ def main():
                 opcoes = int(input("Opção: "))
                 if opcoes == 1:
                     #EXECUTA FUNCAO PARA ANALISAR PROCESSO
-                    fc.analisaProcesso(navegador, lista_processos, nomeEstag, planilhaDrones)
+                    fc.analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrones)
                     print("Análise finalizada.")
                 elif opcoes == 2:
                     #EXECUTA FUNCAO PARA CONCLUIR PROCESSO
@@ -174,7 +174,7 @@ def main():
                         print(f"Ocorreu um erro! {e}")
                 elif opcoes == 4:
                     #EXECUTA FUNCAO PARA ANALISAR  UM ÚNICO PROCESSO
-                    fc.analisaUmprocesso(navegador, nomeEstag, planilhaDrones)
+                    fc.analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones)
                 elif opcoes == 5:
                     print("Reiniciando programa")
                     reset = True

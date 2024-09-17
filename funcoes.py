@@ -235,1547 +235,793 @@ def outro_erro(navegador):
     assunto  = input("Insira o assunto do email: ")
     navegador.find_element(By.ID, 'txtAssunto').send_keys(assunto)
 
-#FUNCAO QUE ANALISA PROCESSO E CRIA DESPACHO DECISORIO OU GERA EXIGENCIA
-def analisaProcesso(navegador, lista_processos, nomeEstag, planilhaDrones):
-    #COLETA NOME DO ESTAGIARIO
-    #LE A PLANILHA DE DRONES PARA USAR COMO CONSULTA NOS PROCESSOS
-    #TRATA A TABELA FORNECIDA PELO PANDAS
+def corrige_planilha(planilhaDrones):
     tabela = pd.read_excel(planilhaDrones)
     tabela.columns = tabela.iloc[1]
     tabela = tabela.iloc[2:]
     tabela = tabela.reset_index(drop=True)
+    return tabela
 
-    #VARIAVEL UTILIZADA PARA O SELENIUM RETORNAR PARA A JANELA PRINCIPAL
-    janela_principal = navegador.current_window_handle
-    
-    #ITERA PELOS PROCESSOS CONTIDOS NA LISTA DE PROCESSOS PARA ANALISE
+def analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrones):
+    tabela = corrige_planilha(planilhaDrones)
     for processos in lista_processos[:]:
-        #GERA UMA CONDICAO DE SAIDA AO USUARIO PARA CASO QUEIRA PARA DE ANALISAR
+        analisa(navegador, processos, nomeEstag, tabela)
+        #REMOVE O PROCESSO ANALISADO DA LISTA
+        lista_processos.remove(processos)
+        analisar = int(input("Caso deseje analisar o próximo processo digite [1], caso contrario, digite [2]: "))
         while True:
-            try:
-                analisar = int(input("Deseja analisar o próximo processo? Se sim digite [1], se não digite [2]: "))
-                #SAI DA ANALISE CASO SEJA DIGITADO O 2
-                if analisar == 2:
-                    return
-                #INICIA A ANALISE CASO SEJA DIGITADO 1
-                elif analisar==1:
-                    try:
-                        #FAZ UM LOG DO PROCESSO
-                        escrever_informacoes(processos, nomeEstag)
-                        #INICIA A VARIAVEL ZERADA
-                        impProp=''
-                        situacao=''
-                        #PESQUISA NUMERO DO PROCESSO NA CAIXA DE PESQUISA DO SEI PARA ACESSAR O PROCESSO
-                        navegador.switch_to.default_content()
-                        navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processos) 
-                        elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                        elementos.send_keys(Keys.ENTER)    
-                        #TEMPO DEFINIDO PARA QUE A PAGINA CARREGUE
-                        time.sleep(1)
-                        #ENTRA NO FRAME QUE CONTÉM OS DOCUMENTOS DOS PROCESSOS
-                        #A PAGINA DOS PROCESSOS SAO DIVIDIDOS EM FRAMES
-                        navegador.switch_to.frame('ifrArvore')
-                        #VERIFICA SE O PROCESSO JA FOI DESPACHADO, CASO TENHA SIDO ELE PULA O PROCESSO
-                        if check_element_exists(By.PARTIAL_LINK_TEXT, 'Despacho Decisório', navegador):
-                            print(f"O processo {processos} já foi despachado!")
-                        else:
-                            #VERIFICA SE HÁ PASTAS NO PROCESSO, SE HOUVER ELE ABRE A PRIMEIRA PARA ENCONTRAR A DECLARACAO DE CONFORMIDADE
-                            if check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]', navegador):
-                                navegador.find_element(By.XPATH, '//*[@id="spanPASTA1"]').click()
-                                time.sleep(1)
-                            #ENCONTRAR DECLARAÇÃO DE CONFORMIDADE NO PROCESSO DRONE
-                            if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Drone", navegador):
-                                #ACESSA O RECIBO PARA PEGAR NOME DO SOLICITANTE
-                                navegador.find_element(By.PARTIAL_LINK_TEXT, 'Recibo Eletrônico').click()
-                                navegador.switch_to.default_content()
-                                #ENTRA NOS FRAMES QUE POSSUE O NOME DO SOLICITANTE
-                                navegador.switch_to.frame('ifrVisualizacao')
-                                navegador.switch_to.frame('ifrArvoreHtml')
-                                #ARMAZENA NOME DO SOLICITANTE NA VARIAVEL
-                                nomeSol = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[1]/td[2]').text
-                                #RETORNA AO FRAME DEFAULT
-                                navegador.switch_to.default_content()
-                                #COLETAR DADOS DA DECLARAÇÃO DE CONFORMIDADE
-                                #RETORNA AO FRAME QUE CONTÉM OS DOCUMENTOS
-                                navegador.switch_to.frame('ifrArvore')
-                                #CLICA NA DECLARACAO DE CONFORMIDADE
-                                navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Drone").click()
-                                time.sleep(1)
-                                #RETORNA AO FRAME DEFAULT E ENTRA NOS FRAMES QUE CONTÉM A VISUALIZACAO DA DECLARACAO
-                                navegador.switch_to.default_content()
-                                navegador.switch_to.frame('ifrVisualizacao')
-                                navegador.switch_to.frame('ifrArvoreHtml')
-                                #EXIBE INFORMACOES DO PROCESSO
-                                print("--------------------------------------------------------------------------")
-                                print('--------------------------------------------------------------------------')
-                                print(f"Processo: {processos}")
+            if analisar == 2:
+                return
+            elif analisar == 1:
+                break
+            else:
+                print("Alternativa inválida")
+    return
 
-                                #COLETAR TEXTO NOME DO INTERESSADO
-                                nome_interessado = navegador.find_element(By.XPATH, '/html/body/table[1]/tbody/tr/td').text
-                                #VERIFICA SE O CAMPO ESTÁ VAZIO, CASO ESTEJA DEFINIRA CM NAO INFORMADO
-                                if not nome_interessado.strip():
-                                    nome_interessado = 'Não informado'
-                                    print("NOME DO INTERESSADO NÃO INFORMADO")
-                                #EXIBE NOMES DO INTERESSADO E SOLICITANTE
-                                print("Interessado: ",nome_interessado)
-                                print("Solicitante: ",nomeSol)
-                                print('\n')
-
-                                #CHECKBOX DE QUEM ESTÁ FAZENDO O PETICIONAMENTO
-                                checkbox=navegador.find_element(By.XPATH,'/html/body/table[2]/tbody/tr[1]/td[1]').text
-                                checkbox2=navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[1]').text
-                                #VERIFICA CAMPO DA CHECKBOX
-                                #SE OS DOIS CAMPOS ESTIVEREM VAZIOS AVISA QUE NAO FOI INFORMADO QUEM ESTÁ FAZENDO O PETICIONAMENTO
-                                if not checkbox.strip() and not checkbox2.strip():
-                                    print("O usuário não informou quem está fazendo o peticionamento, confira os nomes do documento.")
-                                elif not checkbox.strip():
-                                    procuracao_eletronica = navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[3]').text
-                                    print("Peticionamento representando terceiro, Pessoa Jurídica ou Pessoa Física.", f"\nProcuração eletrônica: {procuracao_eletronica}.")
-                                else:
-                                    print("Peticionamento em interesse próprio como Pessoa Física.")
-                                print('\n')
-
-                                #CONTA QUANTIDADE DE LINHAS DA TABELA SOBRE O PRODUTO
-                                quantidade_linhas = len(navegador.find_elements(By.XPATH, '/html/body/table[3]/tbody/tr'))
-
-                                #VERIFICA CAMPOS QUE CONTÉM AS INFORMAÇÕES SOBRE O PRODUTO
-                                #ARMAZENA OS MODELOS INFORMADOS PARA VERIFICAR SE ESTÃO NA PLANILHA DE DRONES CONFORMES
-                                modelos = []
-                                for i in range(1, quantidade_linhas, 1):
-                                    linha = navegador.find_element('xpath', f'/html/body/table[3]/tbody/tr[{i}]')
-                                    celulas = linha.find_elements(By.TAG_NAME,'td')
-                                    modelos_produto = [celula.text for celula in celulas]
-                                    modelos.append(modelos_produto)
-
-                                #CRIA DATAFRAME PARA PRINTAR AS INFORMAÇÕES DO PRODUTO JÁ TRATADAS
-                                df = pd.DataFrame(modelos)
-                                df.columns = ['Modelo', 'Nome Comercial', 'Número de Série (incluindo rádio controle e óculos)']
-                                df = df[1:]
-                                df = df.replace(' ', np.nan)
-                                df = df.dropna(how='all')
-                                data = df.values.tolist()
-                                headers = df.columns.tolist()
-                                print(tabulate(data, headers=headers, tablefmt='pretty'))
-                                print('\n')
-
-                                #VERIFICA SE O MODELO DO DRONE E RADIO CONTROLE ESTA NA PLANILHA DE DRONES CONFORMES
-                                modelos = df['Modelo']
-                                modelos = modelos.reset_index(drop=True)
-                                checkexcel = modelos.isin(tabela['MODELO'])
-                                for i in range(len(checkexcel)):
-                                    if checkexcel[i] == True:
-                                        print(f"O modelo {modelos[i]} está na lista de drones conformes.")
-                                    else:
-                                        print(f"O modelo {modelos[i]} não se encontra na lista de drones conformes")
-                                print('\n')
-                                #EXIBE CÓDIGO DE RAST"REIO
-                                #LINHA ESPECIFICA ESCREVE NA PLANILHA SE O PRODUTO ESTA RETIDO E, CASO ESTEJA, ESCREVE O CODIGO DE RASTREIO
-                                n_serie = navegador.find_element(By.XPATH, '/html/body/table[3]/tbody/tr[2]/td[3]').text
-                                codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[4]/tbody/tr/td[2]').text
-                                #VERIFICA SE HÁ ALGUM TEXTO NA TABELA COM O CÓDIGO DE RASTREIO
-                                #SE HOUVER ALGUM TEXTO ELE DA COMO RETIDO, CASO NAO TENHA TEXTO ELE DA COMO NAO RETIDO
-                                if not codigo_rastreio.strip():
-                                    print("Produto não retido ou código de rastreio não informado.")
-                                    retido='Não'
-                                else:
-                                    if not n_serie.strip():
-                                        print(f'O código de rastreio é: {codigo_rastreio}.')
-                                        retido='Sim'
-                                    elif n_serie.strip():
-                                        print('Confira se o produto está retido.')
-                                        verifica_retido = int(input('O produto está retido? Se sim digite [1], se não digite [2]: '))
-                                        if verifica_retido == 1:
-                                            retido='Sim'
-                                        elif verifica_retido == 2:
-                                            retido='Não'
-                                print('\n')
-                                print('Confira o relatório fotográfico e veja se os documentos estão conformes!\n')
-                                print('--------------------------------------------------------------------------')
-                                print('--------------------------------------------------------------------------')
-                                
-                            #ENCONTRAR SE HÁ ALGUMA PASTA DE DOCUMENTOS OU DECLARAÇÃO DE CONFORMIDADE NO PROCESSO
-                            elif check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio", navegador) or check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]', navegador):
-                                #PEGAR NOME DO SOLICITANTE NO RECIBO ELETRONICO
-                                navegador.find_element(By.PARTIAL_LINK_TEXT, 'Recibo Eletrônico').click()
-                                navegador.switch_to.default_content()
-                                time.sleep(0.5)
-                                navegador.switch_to.frame('ifrVisualizacao')
-                                navegador.switch_to.frame('ifrArvoreHtml')
-                                nomeSol = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[1]/td[2]').text
-                                navegador.switch_to.default_content()
-                                #CLICA NA DECLARACAO DE CONFORMIDADE
-                                #COLETAR DADOS DA DECLARAÇÃO DE CONFORMIDADE
-                                navegador.switch_to.frame('ifrArvore')
-                                navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio").click()
-                                time.sleep(0.5)
-                                navegador.switch_to.default_content()
-                                navegador.switch_to.frame('ifrVisualizacao')
-                                navegador.switch_to.frame('ifrArvoreHtml')
-
-                                #EXIBE INFORMACOES DO PROCESSO
-                                print("--------------------------------------------------------------------------")
-                                print('--------------------------------------------------------------------------')
-                                print(f"Processo: {processos}")
-
-                                #COLETAR TEXTO NOME DO INTERESSADO
-                                nome_interessado=navegador.find_element(By.XPATH, '/html/body/table[1]/tbody/tr/td/p').text
-                                if not nome_interessado.strip():
-                                    nome_interessado = 'Não informado'
-                                    print("NOME DO INTERESSADO NÃO INFORMADO")
-                                print(nome_interessado)
-                                print(nomeSol)
-                                print('\n')
-                                #CHECKBOX DE QUEM ESTÁ FAZENDO O PETICIONAMENTO
-                                checkbox=navegador.find_element('xpath','/html/body/table[2]/tbody/tr[1]/td[1]/p').text
-                                checkbox2=navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[1]').text
-
-                                #CHECA CAMPO DA CHECKBOX
-                                if not checkbox.strip() and not checkbox2.strip():
-                                    print("O usuário não informou quem está fazendo o peticionamento, confira os nomes do documento.")
-                                elif not checkbox.strip():
-                                    procuracao_eletronica = navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[3]').text
-                                    print("Peticionamento representando terceiro, Pessoa Jurídica ou Pessoa Física.", f"\nProcuração eletrônica: {procuracao_eletronica}.")
-                                else:
-                                    print("Peticionamento em interesse próprio como Pessoa Física.")
-                                print('\n')
-
-                                #INFORMA O TIPO DE PRODUTO QUE ESTÁ SENDO TRATADO
-                                print("\nTipo de produto:")
-                                quantidade_linhasPro = len(navegador.find_elements(By.XPATH, '/html/body/table[3]/tbody/tr'))
-                                tipoPro = []
-                                for i in range(1, quantidade_linhasPro, 1):
-                                    linhas = navegador.find_element(By.XPATH, f'/html/body/table[3]/tbody/tr[{i}]')
-                                    celulas2 = linhas.find_elements(By.TAG_NAME,'td')
-                                    produtos = [celula2.text for celula2 in celulas2]
-                                    tipoPro.append(produtos)
-                                dfPro = pd.DataFrame(tipoPro)
-                                dfPro.columns = ['Tipo de Equipamento', 'Assinale com um X', 'Observação:']
-                                dfPro = dfPro.drop('Observação:', axis=1)
-                                dfPro = dfPro[1:]
-
-                                #EXIBE A TABELA DO TIPO DE PRODUTO
-                                data = dfPro.values.tolist()
-                                headers = dfPro.columns.tolist()
-                                print(tabulate(data, headers=headers, tablefmt='pretty'))
-                                print('\n')
-
-                                #CONTA QUANTIDADE DE LINHAS DA TABELA SOBRE O PRODUTO
-                                quantidade_linhas = len(navegador.find_elements(By.XPATH, '/html/body/table[4]/tbody/tr'))
-
-                                #VERIFICA CAMPOS QUE CONTÉM AS INFORMAÇÕES SOBRE O PRODUTO
-                                modelos = []
-                                for i in range(1, quantidade_linhas, 1):
-                                    linha = navegador.find_element('xpath', f'/html/body/table[4]/tbody/tr[{i}]')
-                                    celulas = linha.find_elements(By.TAG_NAME,'td')
-                                    modelos_produto = [celula.text for celula in celulas]
-                                    modelos.append(modelos_produto)
-                                
-                                #CRIA DATAFRAME E VERIFICA SE OS MODELOS FORNECIDOS ESTÃO NA PLANILHA DE DRONES CONFORMES
-                                df = pd.DataFrame(modelos)
-                                df.columns = ['Modelo', 'Nome Comercial', 'Número de Série']
-                                df = df[1:]
-                                df = df.replace(' ', np.nan)
-                                df = df.dropna(how='all')
-                                modelos = df['Modelo']
-                                modelos = modelos.reset_index(drop=True)
-                                checkexcel = modelos.isin(tabela['MODELO'])                        
-                                print("Modelos:")
-                                #CRIA DATAFRAME PARA PRINTAR AS INFORMAÇÕES DO PRODUTO
-                                data2 = df.values.tolist()
-                                headers2 = df.columns.tolist()
-                                print(tabulate(data2, headers=headers2, tablefmt='pretty'))
-                                print('\n')
-
-                                for i in range(len(checkexcel)):
-                                    if checkexcel[i] == True:
-                                        print(f"O modelo {modelos[i]} está na lista de drones conformes.")
-                                    else:
-                                        print(f"O modelo {modelos[i]} não se encontra na lista de drones conformes")
-                                print('\n')
-                                #EXIBE CÓDIGO DE RASTREIO
-                                #ESCREVE NA TABELA EXCEL SE ESTA RETIDO, CASO ESTEJA INSERE CODIGO DE RASTREIO
-                                n_serie = navegador.find_element(By.XPATH, '/html/body/table[4]/tbody/tr[2]/td[3]').text
-                                codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[5]/tbody/tr/td[2]').text
-                                if not codigo_rastreio.strip():
-                                    print("Produto não retido ou código de rastreio não informado.")
-                                    retido='Não'
-                                else:
-                                    if not n_serie.strip():
-                                        print(f'O código de rastreio é: {codigo_rastreio}.')
-                                        retido='Sim'
-                                    elif n_serie.strip():
-                                        print('Confira se o produto está retido.')
-                                        verifica_retido = int(input('O produto está retido? Se sim digite [1], se não digite [2]: '))
-                                        if verifica_retido == 1:
-                                            retido='Sim'
-                                        elif verifica_retido == 2:
-                                            retido='Não'
-                                print('\n')
-                                print('Confira o relatório fotográfico e veja se os documentos estão conformes!\n')
-                                print('--------------------------------------------------------------------------')
-                                print('--------------------------------------------------------------------------')
-                                
-                            time.sleep(1)
-                            navegador.switch_to.default_content()
-
-                            #CRIA DESPACHO DECISORIO
-                            #PEDE PRA USUARIO VERIFICAR SE ESTÁ TUDO CERTO
-                            #VOLTA PARA A PAGINA DE INICIO DO PROCESSO
-                            while True:
-                                try:
-                                    confirmacao = int(input('Caso esteja tudo certo e NÃO HAJA UM DESPACHO JÁ CRIADO digite [1] para continuar, senão, digite [2]: '))
-                                    if (nome_interessado == 'Não informado' or '') and confirmacao == 1:
-                                        print("Nome do interessado não informado, não é possível criar despacho, selecione outra opção!")
-                                    elif confirmacao == 1:
-                                        break
-                                    elif confirmacao == 2:
-                                        break
-                                    else:
-                                        print("Opção inválida, tente novamente!")
-                                except ValueError:
-                                    print("Opção inválida, tente novamente!")
-                            if confirmacao == 1:
-                                navegador.switch_to.frame('ifrArvore')
-                                arvoredocs = navegador.find_elements(By.CLASS_NAME, 'infraArvoreNo')
-
-                                #VERIFICA SE O DOCUMENTO ESTÁ RESTRITO, SE ESTIVER ELE IRÁ DEIXAR COMO PUBLICO UTILIZANDO O SIMBOLO DE RESTRITO COMO REFERENCIA
-                                elementos_com_src = navegador.find_elements(By.CSS_SELECTOR, "[src='svg/processo_restrito.svg?11']")
-                                #CRIA UMA LISTA PARA OS DOCUMENTOS QUE DEVERÃO SER DEIXADOS COMO PUBLICO
-                                elementos_para_clicar = []
-                                #ITERA SOBRE OS DOCUMENTOS 
-                                for doc in arvoredocs:
-                                    #ITERA SOBRE OS ELEMENTOS COM O SIMBOLO DE RESTRITO
-                                    for elemento in elementos_com_src:
-                                        #VERIFICA SE O DOCUMENTO ESTÁ AO LADO DO SIMBOLO DE RESTRITO
-                                        if elemento in doc.find_elements(By.XPATH, 'following-sibling::*[2]/*'):
-                                            #SE O SIMBOLO DE RESTRITO ESTIVER NO DOCUMENTO ELE INCLUIRÁ NA LISTA DE DOCUMENTOS A SEREM ACESSADOS
-                                            elementos_para_clicar.append(doc.get_attribute("id"))
-                                            break
-
-                                #AGORA COM O ID DO DOCUMENTO ELE CLICARÁ EM CADA DOCUMENTO RESTRITO PARA DEIXAR PUBLICO
-                                for id in elementos_para_clicar:
-                                    #ENCONTRA O ELEMENTO PARA CLICAR
-                                    doc = navegador.find_element(By.ID, id)
-                                    doc.click()
-                                    time.sleep(0.7)
-                                    navegador.switch_to.default_content()
-                                    navegador.switch_to.frame('ifrVisualizacao')
-                                    #CLICA NO SIMBOLO DE ALTERAR DOCUMENTO
-                                    navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[2]').click()
-                                    #SELECIONA A OPCAO DE PUBLICO NO DOCUMENTO
-                                    navegador.find_element(By.XPATH,'//*[@id="divOptPublico"]/div/label').click()
-                                    #SALVA AS MUDANCAS
-                                    navegador.find_element(By.ID,'btnSalvar').click()
-                                    navegador.switch_to.default_content()
-                                    navegador.switch_to.frame('ifrArvore')
-                                navegador.switch_to.default_content()
-                                navegador.switch_to.frame('ifrArvore')
-                                #ENTRA NA PAGINA INICIAL DO PROCESSO
-                                #VERIFICA SE E UM PROCESSO DE DRONE OU IMPORTADO PARA USO PROPRIO
-                                if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Drone", navegador):
-                                    navegador.switch_to.default_content()
-                                    navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processos)
-                                    elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                                    elementos.send_keys(Keys.ENTER)
-                                    #CRIA DESPACHO
-                                    navegador.switch_to.frame('ifrVisualizacao')
-                                    time.sleep(1)
-                                    #CLICA NO INCONE DE INCLUIR DOCUMENTO
-                                    navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]').click()
-                                    time.sleep(1)
-                                    #CLICA NA OPCAO DE DESPACHO DECISORIO
-                                    navegador.find_element(By.XPATH,'//*[@id="tblSeries"]/tbody/tr[16]/td/a[2]').click()
-                                    #SELECIONA TEXTO PADRAO
-                                    navegador.find_element(By.XPATH,'//*[@id="divOptTextoPadrao"]/div').click()
-                                    #ENVIA QUAL DESPACHO DECISORIO DEVE SER CRIADO
-                                    navegador.find_element(By.XPATH,'//*[@id="txtTextoPadrao"]').send_keys('Despacho Decisório de Homologação Drones')
-                                #VERIFICA SE E UM PROCESSO DE DRONE OU IMPORTADO PARA USO PROPRIO
-                                elif check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio", navegador):
-                                    impProp='Sim'
-                                    navegador.switch_to.default_content()
-                                    navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processos)
-                                    elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                                    elementos.send_keys(Keys.ENTER)
-                                    #CRIA DESPACHO
-                                    navegador.switch_to.frame('ifrVisualizacao')
-                                    time.sleep(1)
-                                    #CLICA NO INCONE DE INCLUIR DOCUMENTO
-                                    navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]').click()
-                                    time.sleep(1)
-                                    #CLICA NA OPCAO DE DESPACHO DECISORIO
-                                    navegador.find_element(By.XPATH,'//*[@id="tblSeries"]/tbody/tr[16]/td/a[2]').click()
-                                    #SELECIONA TEXTO PADRAO
-                                    navegador.find_element(By.XPATH,'//*[@id="divOptTextoPadrao"]/div').click()
-                                    #ENVIA QUAL DESPACHO DECISORIO DEVE SER CRIADO
-                                    navegador.find_element(By.XPATH,'//*[@id="txtTextoPadrao"]').send_keys('Despacho Decisório de Homologação não licenciados')
-                                time.sleep(2)
-                                #CLICA NA PRIMEIRA OPCAO
-                                navegador.find_element(By.XPATH,'//*[@id="divInfraAjaxtxtTextoPadrao"]/ul/li/a').click()
-                                #COLOCA O DESPACHO COMO PUBLICO
-                                navegador.find_element(By.XPATH,'//*[@id="divOptPublico"]/div').click()
-                                #SALVA DESPACHO
-                                navegador.find_element(By.ID,'btnSalvar').click()
-                                time.sleep(0.7)
-                                try:
-                                    navegador.switch_to.window(navegador.window_handles[-1])
-                                    navegador.close()
-                                    time.sleep(0.7)
-                                    #MUDA PARA JANELA PRINCIAPL DO PROGRAMA
-                                    navegador.switch_to.window(janela_principal)
-                                except:
-                                    #MUDA PARA JANELA PRINCIAPL DO PROGRAMA
-                                    navegador.switch_to.window(janela_principal)
-                                #MUDA PARA JANELA PRINCIAPL DO PROGRAMA
-                                navegador.switch_to.window(janela_principal)
-                                #INCLUI DESPACHO NO BLOCO
-                                navegador.switch_to.default_content()
-                                navegador.switch_to.frame('ifrArvore')
-                                #CLICA NO DESPACHO DECISORIO
-                                navegador.find_element(By.PARTIAL_LINK_TEXT, "Despacho Decisório").click()
-                                navegador.switch_to.default_content()
-                                navegador.switch_to.frame('ifrVisualizacao')
-                                time.sleep(1)
-                                #CLICA NO ICONE DE LEGO
-                                navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[8]').click()
-                                #SELECIONA BLOCO (SELECIONA O PRIMEIRO DESPACHO PARA DRONES APROVADOS QUE LER)
-                                select_element = navegador.find_element(By.ID, 'selBloco')
-                                select = Select(select_element)
-                                #PROCURA O PRIMEIRO BLOCO QUE TENHA O TEXTO "Despachos para Drones aprovados"
-                                for opcao in select.options:
-                                    if "Despachos para Drones aprovados" in opcao.text:
-                                        select.select_by_visible_text(opcao.text)
-                                        break
-                                #CLICA NO BOTAO DE INCLUIR NO BLOCO
-                                navegador.find_element(By.XPATH, '//*[@id="sbmIncluir"]').click()
-                                #VOLTA PARA PAGINA INICIAL DO PROCESSO
-                                navegador.switch_to.default_content()
-                                navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processos)
-                                elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                                elementos.send_keys(Keys.ENTER)
-                                navegador.switch_to.frame('ifrVisualizacao')
-                                time.sleep(1)
-                                #ADICIONA NOTA PARA AGUARDAR ASSINATURA
-                                #CLICA NO ICONE DE ANOTACAO
-                                navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[17]').click()
-                                #INSERE O TEXTO DA ANOTACAO
-                                navegador.find_element(By.ID, 'txaDescricao').send_keys('Aguardando assinatura.')
-                                #SALVA O TEXTO
-                                navegador.find_element(By.NAME, 'sbmRegistrarAnotacao').click()
-                                #DA COMO APROVADO E ANOTA NO TXT DE PROCESSOS CONFORMES
-                                situacao = 'Aprovado'
-                                print("Próximo processo...")
-
-                            #CONDICAO DE PROCESSO NAO CONFORME
-                            else:
-                                print(f'Tome as medidas necessárias para o processo {processos}.')
-                                #MOSTRA OPCOES DE EXIGENCIA
-                                while True:
-                                    try:
-                                        exigencia = int(input('Se houver alguma exigência digite [1], senão, digite [2]: '))
-                                        if exigencia == 1:
-                                            break
-                                        elif exigencia == 2:
-                                            break
-                                        else:
-                                            print("Opção inválida, tente novamente!")
-                                    except ValueError:
-                                        print("Opção inválida, tente novamente!")
-                                #CONDICAO DE EXIGENCIA
-                                if exigencia == 1:
-                                    navegador.switch_to.default_content()
-                                    navegador.switch_to.frame('ifrArvore')
-                                    #CLICA NA DECLARACAO DE CONFORMIDADE
-                                    navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
-                                    time.sleep(1)
-                                    navegador.switch_to.default_content()
-                                    navegador.switch_to.frame('ifrVisualizacao')
-                                    navegador.switch_to.frame('ifrArvoreHtml')
-                                    #ARMAZENA O EMAIL DO SOLICITANTE
-                                    emailSol = navegador.find_element(By.XPATH, '/html/body/div[3]/a[1]').text
-                                    navegador.switch_to.default_content()
-                                    #RETORNA PARA A PAGINA INICIAL DO PROCESSO
-                                    navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processos)
-                                    elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                                    elementos.send_keys(Keys.ENTER)
-                                    time.sleep(1)
-                                    navegador.switch_to.frame('ifrVisualizacao')
-                                    #CLICA NO ICONE DE ENVIO DE EMAIL
-                                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[11]').click()
-                                    time.sleep(1)
-                                    #VAI PARA A JANELA MAIS RECENTE ABERTA
-                                    navegador.switch_to.window(navegador.window_handles[-1])
-                                    time.sleep(1)
-                                    #ABRE O DROPDOWN COM AS OPCOES DE EMAIL DA ANATEL
-                                    select_element = navegador.find_element(By.XPATH, '//*[@id="selDe"]')
-                                    select = Select(select_element)
-                                    #SELECIONA O EMAIL DA ANATEL
-                                    select.select_by_visible_text('ANATEL/E-mail de replicação <nao-responda@anatel.gov.br>')
-                                    #ESCREVE O EMAIL DO SOLICITANTE
-                                    navegador.find_element(By.XPATH, '//*[@id="s2id_autogen1"]').send_keys(emailSol)
-                                    time.sleep(1)
-                                    #CLICA NO EMAIL DO SOLICITANTE
-                                    navegador.find_element(By.CLASS_NAME, 'select2-result-label').click()
-                                    #MOSTRA AS OPCOES DE EXIGENCIA
-                                    #EXECUTA A CONDICAO PARA CADA EXIGENCIA
-                                    while True:
-                                        try:
-                                            print("Selecione o tipo de exigência abaixo:\n"
-                                                " [1] Falta algum anexo no processo.\n",
-                                                "[2] Erro na declaração de conformidade ou alguma exigência que é necessário abrir novo processo.\n",
-                                                "[3] Outros.")
-                                            time.sleep(0.5)
-                                            exig = int(input("Opção: "))
-                                        except ValueError:
-                                            print("Opção inválida. Digite um número inteiro entre 1 e 3.")
-                                            continue
-                                        if exig in range(1, 4):
-                                            if exig == 1:
-                                                #PUXA FUNCAO INSIRA_ANEXO CONTENDO O CORPO DE EMAIL PEDINDO ANEXOS
-                                                insira_anexo(processos, navegador)
-                                                #PEDE PARA USUARIO CONFERIR SE ESTÁ TUDO CERTO COM O EMAIL
-                                                while True:
-                                                    try:
-                                                        confere = int(input('Caso esteja tudo certo digite [1], caso tenha algum erro digite [2]: '))
-                                                        if confere == 1:
-                                                            break
-                                                        elif confere == 2:
-                                                            break
-                                                        else:
-                                                            print("Opção inválida, tente novamente!")
-                                                    except ValueError:
-                                                        print("Opção inválida, tente novamente!")
-                                                if confere == 1:
-                                                    #ENVIA EMAIL COM A EXIGENCIA
-                                                    navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
-                                                    time.sleep(0.5)
-                                                    #FECHA ALERTA DO NAVEGADOR
-                                                    alert = Alert(navegador)
-                                                    alert.accept()
-                                                    time.sleep(0.5)
-                                                    #VOLTA O FOCO DO SELENIUM PARA A PAGINA PRINCIPAL NOVAMENTE
-                                                    navegador.switch_to.window(janela_principal)
-                                                    navegador.switch_to.default_content()
-                                                    #VOLTA PARA A PAGINA INICIAL DO PROCESSO
-                                                    navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processos) 
-                                                    elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                                                    elementos.send_keys(Keys.ENTER)    
-                                                    time.sleep(1)
-                                                    #INSERE TAG REFERENTE A PROCESSOS INTERCORRENTES
-                                                    navegador.switch_to.frame('ifrVisualizacao')
-                                                    #CLICA NO ICONE DE TAG
-                                                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
-                                                    try:    
-                                                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-                                                    except:
-                                                        navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
-                                                        alert.accept()
-                                                        navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
-                                                        time.sleep(0.5)
-                                                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-                                                    
-                                                    time.sleep(0.5)
-                                                    #CLICA NA TAG DE INTERCORRENTE
-                                                    navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[18]/a').click()
-                                                    #PEDE O TEXTO DA TAG
-                                                    textoTag = input("Insira o texto da tag: ")
-                                                    textoFinaltag = nomeEstag+"\n"+textoTag
-                                                    #COLOCA O TEXTO NA TAG
-                                                    navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoFinaltag)
-                                                    #SALVA TAG
-                                                    navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
-                                                    #DEFINE SITUACAO DO PROCESSO
-                                                    situacao = 'Intercorrente'
-                                                else:
-                                                    #CANCELA ENVIO DO EMAIL SE HOUVER ALGUM ERRO
-                                                    print("Faça as alterações necessárias mais tarde.")
-                                                    navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
-                                                    navegador.switch_to.window(janela_principal)
-                                                    return
-                                            elif exig == 2:
-                                                #PUXA FUNCAO ERRO_DECLARACAO CONTENDO O CORPO DE EMAIL PEDINDO PARA ABRIR NOVO PROCESSO SEI
-                                                erro_declaracao(processos, impProp, navegador)
-                                                #PEDE PARA USUARIO CONFERIR O EMAIL
-                                                while True:
-                                                    try:
-                                                        confere = int(input('Caso esteja tudo certo digite [1], caso tenha algum erro digite [2]: '))
-                                                        if confere == 1:
-                                                            break
-                                                        elif confere == 2:
-                                                            break
-                                                        else:
-                                                            print("Opção inválida, tente novamente!")
-                                                    except ValueError:
-                                                        print("Opção inválida, tente novamente!")
-                                                if confere == 1:
-                                                    #ENVIA O EMAIL COM EXIGENCIA
-                                                    navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
-                                                    time.sleep(0.5)
-                                                    #FECHA ALERTA DO NAVEGADOR
-                                                    alert = Alert(navegador)
-                                                    alert.accept()
-                                                    time.sleep(0.5)
-                                                    #RETORNA O FOCO PARA A JANELA PRINCIPAL
-                                                    navegador.switch_to.window(janela_principal)
-                                                    navegador.switch_to.default_content()
-                                                    #VOLTA PARA PAGINA INICIAL DO PROCESSO
-                                                    navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processos) 
-                                                    elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                                                    elementos.send_keys(Keys.ENTER)    
-                                                    time.sleep(1)
-                                                    #INSERE TAG REFERENTE A PROCESSOS INTERCORRENTES 
-                                                    navegador.switch_to.frame('ifrVisualizacao')
-                                                    #CLICA NO ICONE DE TAG
-                                                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
-                                                    try:    
-                                                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-                                                    except:
-                                                        navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
-                                                        alert.accept()
-                                                        navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
-                                                        time.sleep(0.5)
-                                                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-                                                    
-                                                    #CLICA NO DROPDOWN COM OS TIPOS DE TAG
-                                                    time.sleep(0.5)
-                                                    #CLICA NA TAG DE PENDENCIA
-                                                    navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[19]/a').click()
-                                                    #PEDE O TEXTO DA TAG
-                                                    textoTag = input("Insira o texto da tag: ")
-                                                    textoFinaltag = nomeEstag+"\n"+textoTag
-                                                    navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoFinaltag)
-                                                    #SALVA A TAG
-                                                    navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
-                                                    #DEFINE SITUACAO DO PROCESSO
-                                                    situacao = 'Exigência'
-                                                else:
-                                                    #CANCELA O ENVIO CASO TENHA ALGUM ERRO
-                                                    print("Faça as alterações necessárias mais tarde.")
-                                                    navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
-                                                    navegador.switch_to.window(janela_principal)
-                                                    return
-                                            elif exig == 3:
-                                                #PUXA FUNCAO OUTRO_ERRO EM QUE USUARIO INSERE O EMAIL COMO QUISER
-                                                outro_erro(navegador)
-                                                #PEDE PARA USUARIO ESCREVER EMAIL E DIGITAR 1 PARA CONTINUAR
-                                                while True:
-                                                    try:
-                                                        confere = int(input('Escreva o email da forma que deseja e logo em seguida digite [1], caso queira cancelar digite [2]: '))
-                                                        if confere == 1:
-                                                            break
-                                                        elif confere == 2:
-                                                            break
-                                                        else:
-                                                            print("Opção inválida, tente novamente!")
-                                                    except ValueError:
-                                                        print("Opção inválida, tente novamente!")
-                                                if confere == 1:
-                                                    #ENVIA EMAIL
-                                                    navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
-                                                    time.sleep(0.5)
-                                                    #FECHA ALERTA DO NAVEGADOR
-                                                    alert = Alert(navegador)
-                                                    alert.accept()
-                                                    time.sleep(0.5)
-                                                    #RETORNA O FOCO PARA A JANELA PRINCIPAL
-                                                    navegador.switch_to.window(janela_principal)
-                                                    navegador.switch_to.default_content()
-                                                    #VAI PARA A JANELA INICIAL DO PROCESSO
-                                                    navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processos) 
-                                                    elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                                                    elementos.send_keys(Keys.ENTER)    
-                                                    time.sleep(1)
-                                                    navegador.switch_to.frame('ifrVisualizacao')
-                                                    #CLICA NO ICONE DE TAG
-                                                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
-                                                    try:    
-                                                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-                                                    except:
-                                                        navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
-                                                        alert.accept()
-                                                        navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
-                                                        time.sleep(0.5)
-                                                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-                                                    
-                                                    time.sleep(0.5)
-                                                    #INSERE TAG DE 'PENDENCIAS'
-                                                    navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[19]/a').click()
-                                                    #PEDE TEXTO DA TAG
-                                                    textoTag = input("Insira o texto da tag: ")
-                                                    #INSERE O TEXTO DA TAG
-                                                    navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoTag)
-                                                    #SALVA TAG
-                                                    navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
-                                                    #DEFINE SITUACAO DO PROCESSO
-                                                    situacao = 'Exigência'
-                                                else:
-                                                    #CANCELA ENVIO DO PROCESSO
-                                                    print("Faça as alterações necessárias mais tarde.")
-                                                    navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
-                                                    navegador.switch_to.window(janela_principal)
-                                                    return
-                                            #VOLTA PARA A PAGINA INICIAL DO PROCESSO
-                                            navegador.switch_to.default_content()
-                                            navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processos) 
-                                            elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                                            elementos.send_keys(Keys.ENTER)
-                                            time.sleep(1)
-                                            navegador.switch_to.frame('ifrVisualizacao')
-                                            #CLICA NO ICONE DE CONCLUIR PROCESSO
-                                            navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[20]').click()
-                                            print("Próximo processo...")
-                                            break
-                                        #CONDICAO PARA OPCAO INEXISTENTE
-                                        else:
-                                            print("Opção inválida. Tente novamente.")
-                                #CONDICAO CASO PRECISE PULAR O PROCESSO
-                                else:
-                                    print("Pulando processo.")
-                            #VERIFICA SE O PROCESSO CONTEM ALGUMA SITUACAO ANTES DE ESCREVER SOBRE
-                            #SE HOUVER ALGUM ERRO OU PULAR PROCESSO NAO ESCREVERA NA PLANILHA
-                            if situacao == 'Aprovado' or situacao == 'Exigência' or situacao == 'Intercorrente':
-                                #ENCONTRA O ICONE DO EDGE E ABRE O NAVEGADOR DA PLANILHA
-                                pyautogui.PAUSE = 0.7
-                                edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
-                                #COPIA NUMERO DO PROCESSO
-                                pyperclip.copy(processos)
-                                #CLICA NO NAVEGADOR
-                                pyautogui.click(edge)
-                                time.sleep(0.5)
-                                #PESQUISA PROCESSO NA PLANILHA
-                                pyautogui.hotkey('ctrl', 'l')
-                                time.sleep(0.3)
-                                #COLA NUMERO DO PROCESSO E APERTA ENTER PARA PESQUISAR O PROCESSO
-                                pyautogui.hotkey('ctrl', 'v')
-                                time.sleep(0.3)
-                                pyautogui.press('enter')
-                                time.sleep(0.3)
-                                pyautogui.press('esc')
-                                #COPIA O NUMERO DO PROCESSO NA CELULA PARA SABER SE ELE FOI ENCONTRADO CORRETAMENTE
-                                pyautogui.hotkey('ctrl','c')
-                                time.sleep(0.5)
-                                n_processoConfirmation = pyperclip.paste()
-                                n_processoConfirmation = n_processoConfirmation.replace('\n', '')
-                                n_processoConfirmation = n_processoConfirmation.strip('"')
-                                print(n_processoConfirmation)
-                                print(type(n_processoConfirmation))
-                                if n_processoConfirmation != processos:
-                                    while True:
-                                        procure_manualmente = int(input("Houve um problema para encontrar o processo. Busque o manualmente e digite 1: "))
-                                        if procure_manualmente == 1:
-                                            time.sleep(1)
-                                            pyautogui.click(edge)
-                                            time.sleep(0.7)
-                                            break
-                                        else:
-                                            print("Opcao incorreta")
-                                #NAVEGA ENTRE AS CELULAS E INSERE OS DADOS SOBRE O PROCESSO
-                                pyautogui.press('right')
-                                pyautogui.PAUSE = 0.3
-                                pyperclip.copy(nomeEstag)
-                                pyautogui.hotkey('ctrl', 'v')
-                                pyautogui.press('right')
-                                pyperclip.copy(retido)
-                                pyautogui.hotkey('ctrl', 'v')
-                                pyautogui.press('right')
-                                #VERIFICA SE ESTÁ RETIDO, SE NAO ESTIVER NAO ESCREVE CODIGO DE RASTREIO
-                                if retido == 'Sim':
-                                    pyperclip.copy(codigo_rastreio)
-                                    pyautogui.hotkey('ctrl', 'v')
-                                    pyautogui.press('right')
-                                else:
-                                    pyautogui.press('right')
-                                pyautogui.press('right')
-                                pyperclip.copy(nome_interessado)
-                                pyautogui.hotkey('ctrl', 'v')
-                                pyautogui.press('right')
-                                pyperclip.copy(situacao)
-                                pyautogui.hotkey('ctrl', 'v')
-                                #VOLTA PARA A JANELA DO CHROME
-                                chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
-                                pyautogui.click(chrome)
-                            else:
-                                print('--------------------------------------------------------------------------')
-                                print('--------------------------------------------------------------------------')
-                    except Exception as error:
-                        print(f"Ocorreu um erro: {error}")
-                    #REMOVE O PROCESSO ANALISADO DA LISTA
-                    lista_processos.remove(processos)
-                    break
-                else:
-                    print("Opção inválida, tente novamente!")
-            except ValueError:
-                print("Opção inválida, tente novamente!")
-            pyautogui.PAUSE = 0.7
-
-def analisaUmprocesso(navegador, nomeEstag, planilhaDrones):
-    #LE A PLANILHA DE DRONES PARA USAR COMO CONSULTA NOS PROCESSOS
-    #TRATA A TABELA FORNECIDA PELO PANDAS
-    tabela = pd.read_excel(planilhaDrones)
-    tabela.columns = tabela.iloc[1]
-    tabela = tabela.iloc[2:]
-    tabela = tabela.reset_index(drop=True)
-
-    #VARIAVEL UTILIZADA PARA O SELENIUM RETORNAR PARA A JANELA PRINCIPAL
-    janela_principal = navegador.current_window_handle
-    
-    #ITERA PELOS PROCESSOS CONTIDOS NA LISTA DE PROCESSOS PARA ANALISE
-    #GERA UMA CONDICAO DE SAIDA AO USUARIO PARA CASO QUEIRA PARA DE ANALISAR
-    loop = True
-    while loop:
+def analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones):
+    tabela = corrige_planilha(planilhaDrones)
+    while True:
         #PEDE O PROCESSO A SER ANALISADO
         processo = str(input("Digite o número do processo: " ))
-        try:
-            #FAZ UM LOG DO PROCESSO
-            escrever_informacoes(processo, nomeEstag)
-            #INICIA A VARIAVEL ZERADA
-            impProp=''
-            situacao=''
-            #PESQUISA NUMERO DO PROCESSO NA CAIXA DE PESQUISA DO SEI PARA ACESSAR O PROCESSO
-            navegador.switch_to.default_content()
-            navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
-            elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-            elementos.send_keys(Keys.ENTER)    
-            #TEMPO DEFINIDO PARA QUE A PAGINA CARREGUE
-            time.sleep(1)
-            #ENTRA NO FRAME QUE CONTÉM OS DOCUMENTOS DOS processo
-            #A PAGINA DOS processo SAO DIVIDIDOS EM FRAMES
-            navegador.switch_to.frame('ifrArvore')
-            #VERIFICA SE O PROCESSO JA FOI DESPACHADO, CASO TENHA SIDO ELE PULA O PROCESSO
-            if check_element_exists(By.PARTIAL_LINK_TEXT, 'Despacho Decisório', navegador):
-                print(f"O processo {processo} já foi despachado!")
+        opcao = int(input("Caso deseje analisar este processo, digite [1], caso contrario digite [2]: "))
+        if opcao == 1:
+            analisa(navegador, processo, nomeEstag, tabela)
+        elif opcao != 2 or opcao != 1:
+            print("Alternativa inválida")
+        while True:
+            analisar = int(input("Caso deseje analisar mais um processo digite [1], caso contrario, digite [2]: "))
+            if analisar == 2:
+                return
+            elif analisar == 1:
+                break
             else:
-                #VERIFICA SE HÁ PASTAS NO PROCESSO, SE HOUVER ELE ABRE A PRIMEIRA PARA ENCONTRAR A DECLARACAO DE CONFORMIDADE
-                if check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]', navegador):
-                    navegador.find_element(By.XPATH, '//*[@id="spanPASTA1"]').click()
-                    time.sleep(1)
-                #ENCONTRAR DECLARAÇÃO DE CONFORMIDADE NO PROCESSO DRONE
-                if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Drone", navegador):
-                    #ACESSA O RECIBO PARA PEGAR NOME DO SOLICITANTE
-                    navegador.find_element(By.PARTIAL_LINK_TEXT, 'Recibo Eletrônico').click()
-                    navegador.switch_to.default_content()
-                    #ENTRA NOS FRAMES QUE POSSUE O NOME DO SOLICITANTE
-                    navegador.switch_to.frame('ifrVisualizacao')
-                    navegador.switch_to.frame('ifrArvoreHtml')
-                    #ARMAZENA NOME DO SOLICITANTE NA VARIAVEL
-                    nomeSol = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[1]/td[2]').text
-                    #RETORNA AO FRAME DEFAULT
-                    navegador.switch_to.default_content()
-                    #COLETAR DADOS DA DECLARAÇÃO DE CONFORMIDADE
-                    #RETORNA AO FRAME QUE CONTÉM OS DOCUMENTOS
-                    navegador.switch_to.frame('ifrArvore')
-                    #CLICA NA DECLARACAO DE CONFORMIDADE
-                    navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Drone").click()
-                    time.sleep(1)
-                    #RETORNA AO FRAME DEFAULT E ENTRA NOS FRAMES QUE CONTÉM A VISUALIZACAO DA DECLARACAO
-                    navegador.switch_to.default_content()
-                    navegador.switch_to.frame('ifrVisualizacao')
-                    navegador.switch_to.frame('ifrArvoreHtml')
-                    #EXIBE INFORMACOES DO PROCESSO
-                    print("--------------------------------------------------------------------------")
-                    print('--------------------------------------------------------------------------')
-                    print(f"Processo: {processo}")
+                print("Alternativa inválida")
 
-                    #COLETAR TEXTO NOME DO INTERESSADO
-                    nome_interessado = navegador.find_element(By.XPATH, '/html/body/table[1]/tbody/tr/td').text
-                    #VERIFICA SE O CAMPO ESTÁ VAZIO, CASO ESTEJA DEFINIRA CM NAO INFORMADO
-                    if not nome_interessado.strip():
-                        nome_interessado = 'Não informado'
-                        print("NOME DO INTERESSADO NÃO INFORMADO")
-                    #EXIBE NOMES DO INTERESSADO E SOLICITANTE
-                    print("Interessado: ",nome_interessado)
-                    print("Solicitante: ",nomeSol)
-                    print('\n')
 
-                    #CHECKBOX DE QUEM ESTÁ FAZENDO O PETICIONAMENTO
-                    checkbox=navegador.find_element(By.XPATH,'/html/body/table[2]/tbody/tr[1]/td[1]').text
-                    checkbox2=navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[1]').text
-                    #VERIFICA CAMPO DA CHECKBOX
-                    #SE OS DOIS CAMPOS ESTIVEREM VAZIOS AVISA QUE NAO FOI INFORMADO QUEM ESTÁ FAZENDO O PETICIONAMENTO
-                    if not checkbox.strip() and not checkbox2.strip():
-                        print("O usuário não informou quem está fazendo o peticionamento, confira os nomes do documento.")
-                    elif not checkbox.strip():
-                        procuracao_eletronica = navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[3]').text
-                        print("Peticionamento representando terceiro, Pessoa Jurídica ou Pessoa Física.", f"\nProcuração eletrônica: {procuracao_eletronica}.")
-                    else:
-                        print("Peticionamento em interesse próprio como Pessoa Física.")
-                    print('\n')
-
-                    #CONTA QUANTIDADE DE LINHAS DA TABELA SOBRE O PRODUTO
-                    quantidade_linhas = len(navegador.find_elements(By.XPATH, '/html/body/table[3]/tbody/tr'))
-
-                    #VERIFICA CAMPOS QUE CONTÉM AS INFORMAÇÕES SOBRE O PRODUTO
-                    #ARMAZENA OS MODELOS INFORMADOS PARA VERIFICAR SE ESTÃO NA PLANILHA DE DRONES CONFORMES
-                    modelos = []
-                    for i in range(1, quantidade_linhas, 1):
-                        linha = navegador.find_element('xpath', f'/html/body/table[3]/tbody/tr[{i}]')
-                        celulas = linha.find_elements(By.TAG_NAME,'td')
-                        modelos_produto = [celula.text for celula in celulas]
-                        modelos.append(modelos_produto)
-
-                    #CRIA DATAFRAME PARA PRINTAR AS INFORMAÇÕES DO PRODUTO JÁ TRATADAS
-                    df = pd.DataFrame(modelos)
-                    df.columns = ['Modelo', 'Nome Comercial', 'Número de Série (incluindo rádio controle e óculos)']
-                    df = df[1:]
-                    df = df.replace(' ', np.nan)
-                    df = df.dropna(how='all')
-                    data = df.values.tolist()
-                    headers = df.columns.tolist()
-                    print(tabulate(data, headers=headers, tablefmt='pretty'))
-                    print('\n')
-
-                    #VERIFICA SE O MODELO DO DRONE E RADIO CONTROLE ESTA NA PLANILHA DE DRONES CONFORMES
-                    modelos = df['Modelo']
-                    modelos = modelos.reset_index(drop=True)
-                    checkexcel = modelos.isin(tabela['MODELO'])
-                    for i in range(len(checkexcel)):
-                        if checkexcel[i] == True:
-                            print(f"O modelo {modelos[i]} está na lista de drones conformes.")
-                        else:
-                            print(f"O modelo {modelos[i]} não se encontra na lista de drones conformes")
-                    print('\n')
-                    #EXIBE CÓDIGO DE RASTREIO
-                    #LINHA ESPECIFICA ESCREVE NA PLANILHA SE O PRODUTO ESTA RETIDO E, CASO ESTEJA, ESCREVE O CODIGO DE RASTREIO
-                    codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[4]/tbody/tr/td[2]').text
-                    #VERIFICA SE HÁ ALGUM TEXTO NA TABELA COM O CÓDIGO DE RASTREIO
-                    #SE HOUVER ALGUM TEXTO ELE DA COMO RETIDO, CASO NAO TENHA TEXTO ELE DA COMO NAO RETIDO
-                    if not codigo_rastreio.strip():
-                        print("Produto não retido ou código de rastreio não informado.")
-                        retido='Não'
-                    else:
-                        if not n_serie.strip():
-                            print(f'O código de rastreio é: {codigo_rastreio}.')
-                            retido='Sim'
-                        elif n_serie.strip():
-                            print('Confira se o produto está retido.')
-                            verifica_retido = int(input('O produto está retido? Se sim digite [1], se não digite [2]: '))
-                            if verifica_retido == 1:
-                                retido='Sim'
-                            elif verifica_retido == 2:
-                                retido='Não'
-                    print('\n')
-                    print('Confira o relatório fotográfico e veja se os documentos estão conformes!\n')
-                    print('--------------------------------------------------------------------------')
-                    print('--------------------------------------------------------------------------')
-                    
-                #ENCONTRAR SE HÁ ALGUMA PASTA DE DOCUMENTOS OU DECLARAÇÃO DE CONFORMIDADE NO PROCESSO
-                elif check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio", navegador) or check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]', navegador):
-                    #PEGAR NOME DO SOLICITANTE NO RECIBO ELETRONICO
-                    navegador.find_element(By.PARTIAL_LINK_TEXT, 'Recibo Eletrônico').click()
-                    navegador.switch_to.default_content()
-                    time.sleep(0.5)
-                    navegador.switch_to.frame('ifrVisualizacao')
-                    navegador.switch_to.frame('ifrArvoreHtml')
-                    nomeSol = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[1]/td[2]').text
-                    navegador.switch_to.default_content()
-                    #CLICA NA DECLARACAO DE CONFORMIDADE
-                    #COLETAR DADOS DA DECLARAÇÃO DE CONFORMIDADE
-                    navegador.switch_to.frame('ifrArvore')
-                    navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio").click()
-                    time.sleep(0.5)
-                    navegador.switch_to.default_content()
-                    navegador.switch_to.frame('ifrVisualizacao')
-                    navegador.switch_to.frame('ifrArvoreHtml')
-
-                    #EXIBE INFORMACOES DO PROCESSO
-                    print("--------------------------------------------------------------------------")
-                    print('--------------------------------------------------------------------------')
-                    print(f"Processo: {processo}")
-
-                    #COLETAR TEXTO NOME DO INTERESSADO
-                    nome_interessado=navegador.find_element(By.XPATH, '/html/body/table[1]/tbody/tr/td/p').text
-                    if not nome_interessado.strip():
-                        nome_interessado = 'Não informado'
-                        print("NOME DO INTERESSADO NÃO INFORMADO")
-                    print(nome_interessado)
-                    print(nomeSol)
-                    print('\n')
-                    #CHECKBOX DE QUEM ESTÁ FAZENDO O PETICIONAMENTO
-                    checkbox=navegador.find_element('xpath','/html/body/table[2]/tbody/tr[1]/td[1]/p').text
-                    checkbox2=navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[1]').text
-
-                    #CHECA CAMPO DA CHECKBOX
-                    if not checkbox.strip() and not checkbox2.strip():
-                        print("O usuário não informou quem está fazendo o peticionamento, confira os nomes do documento.")
-                    elif not checkbox.strip():
-                        procuracao_eletronica = navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[3]').text
-                        print("Peticionamento representando terceiro, Pessoa Jurídica ou Pessoa Física.", f"\nProcuração eletrônica: {procuracao_eletronica}.")
-                    else:
-                        print("Peticionamento em interesse próprio como Pessoa Física.")
-                    print('\n')
-
-                    #INFORMA O TIPO DE PRODUTO QUE ESTÁ SENDO TRATADO
-                    print("\nTipo de produto:")
-                    quantidade_linhasPro = len(navegador.find_elements(By.XPATH, '/html/body/table[3]/tbody/tr'))
-                    tipoPro = []
-                    for i in range(1, quantidade_linhasPro, 1):
-                        linhas = navegador.find_element(By.XPATH, f'/html/body/table[3]/tbody/tr[{i}]')
-                        celulas2 = linhas.find_elements(By.TAG_NAME,'td')
-                        produtos = [celula2.text for celula2 in celulas2]
-                        tipoPro.append(produtos)
-                    dfPro = pd.DataFrame(tipoPro)
-                    dfPro.columns = ['Tipo de Equipamento', 'Assinale com um X', 'Observação:']
-                    dfPro = dfPro.drop('Observação:', axis=1)
-                    dfPro = dfPro[1:]
-
-                    #EXIBE A TABELA DO TIPO DE PRODUTO
-                    data = dfPro.values.tolist()
-                    headers = dfPro.columns.tolist()
-                    print(tabulate(data, headers=headers, tablefmt='pretty'))
-                    print('\n')
-
-                    #CONTA QUANTIDADE DE LINHAS DA TABELA SOBRE O PRODUTO
-                    quantidade_linhas = len(navegador.find_elements(By.XPATH, '/html/body/table[4]/tbody/tr'))
-
-                    #VERIFICA CAMPOS QUE CONTÉM AS INFORMAÇÕES SOBRE O PRODUTO
-                    modelos = []
-                    for i in range(1, quantidade_linhas, 1):
-                        linha = navegador.find_element('xpath', f'/html/body/table[4]/tbody/tr[{i}]')
-                        celulas = linha.find_elements(By.TAG_NAME,'td')
-                        modelos_produto = [celula.text for celula in celulas]
-                        modelos.append(modelos_produto)
-                    
-                    #CRIA DATAFRAME E VERIFICA SE OS MODELOS FORNECIDOS ESTÃO NA PLANILHA DE DRONES CONFORMES
-                    df = pd.DataFrame(modelos)
-                    df.columns = ['Modelo', 'Nome Comercial', 'Número de Série']
-                    df = df[1:]
-                    df = df.replace(' ', np.nan)
-                    df = df.dropna(how='all')
-                    modelos = df['Modelo']
-                    modelos = modelos.reset_index(drop=True)
-                    checkexcel = modelos.isin(tabela['MODELO'])                        
-                    print("Modelos:")
-                    #CRIA DATAFRAME PARA PRINTAR AS INFORMAÇÕES DO PRODUTO
-                    data2 = df.values.tolist()
-                    headers2 = df.columns.tolist()
-                    print(tabulate(data2, headers=headers2, tablefmt='pretty'))
-                    print('\n')
-
-                    for i in range(len(checkexcel)):
-                        if checkexcel[i] == True:
-                            print(f"O modelo {modelos[i]} está na lista de drones conformes.")
-                        else:
-                            print(f"O modelo {modelos[i]} não se encontra na lista de drones conformes")
-                    print('\n')
-                    #EXIBE CÓDIGO DE RAST"REIO
-                    #LINHA ESPECIFICA ESCREVE NA PLANILHA SE O PRODUTO ESTA RETIDO E, CASO ESTEJA, ESCREVE O CODIGO DE RASTREIO
-                    codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[4]/tbody/tr/td[2]').text
-                    n_serie = navegador.find_element(By.XPATH, '/html/body/table[3]/tbody/tr[2]/td[3]').text
-                    #VERIFICA SE HÁ ALGUM TEXTO NA TABELA COM O CÓDIGO DE RASTREIO
-                    #SE HOUVER ALGUM TEXTO ELE DA COMO RETIDO, CASO NAO TENHA TEXTO ELE DA COMO NAO RETIDO
-                    if not codigo_rastreio.strip():
-                        print("Produto não retido ou código de rastreio não informado.")
-                        retido='Não'
-                    else:
-                        if not n_serie.strip():
-                            print(f'O código de rastreio é: {codigo_rastreio}.')
-                            retido='Sim'
-                        elif n_serie.strip():
-                            print('Confira se o produto está retido.')
-                            verifica_retido = int(input('O produto está retido? Se sim digite [1], se não digite [2]: '))
-                            if verifica_retido == 1:
-                                retido='Sim'
-                            elif verifica_retido == 2:
-                                retido='Não'
-                    print('\n')
-                    print('Confira o relatório fotográfico e veja se os documentos estão conformes!\n')
-                    print('--------------------------------------------------------------------------')
-                    print('--------------------------------------------------------------------------')
-                    
+def analisa(navegador, processo, nomeEstag, tabela):
+    #VARIAVEL UTILIZADA PARA O SELENIUM RETORNAR PARA A JANELA PRINCIPAL
+    janela_principal = navegador.current_window_handle
+    try:
+        #FAZ UM LOG DO PROCESSO
+        escrever_informacoes(processo, nomeEstag)
+        #INICIA A VARIAVEL ZERADA
+        impProp=''
+        situacao=''
+        #PESQUISA NUMERO DO PROCESSO NA CAIXA DE PESQUISA DO SEI PARA ACESSAR O PROCESSO
+        navegador.switch_to.default_content()
+        navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
+        elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+        elementos.send_keys(Keys.ENTER)    
+        #TEMPO DEFINIDO PARA QUE A PAGINA CARREGUE
+        time.sleep(1)
+        #ENTRA NO FRAME QUE CONTÉM OS DOCUMENTOS DOS PROCESSOS
+        #A PAGINA DOS PROCESSOS SAO DIVIDIDOS EM FRAMES
+        navegador.switch_to.frame('ifrArvore')
+        #VERIFICA SE O PROCESSO JA FOI DESPACHADO, CASO TENHA SIDO ELE PULA O PROCESSO
+        if check_element_exists(By.PARTIAL_LINK_TEXT, 'Despacho Decisório', navegador):
+            print(f"O processo {processo} já foi despachado!")
+        else:
+            #VERIFICA SE HÁ PASTAS NO PROCESSO, SE HOUVER ELE ABRE A PRIMEIRA PARA ENCONTRAR A DECLARACAO DE CONFORMIDADE
+            if check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]', navegador):
+                navegador.find_element(By.XPATH, '//*[@id="spanPASTA1"]').click()
                 time.sleep(1)
+            #ENCONTRAR DECLARAÇÃO DE CONFORMIDADE NO PROCESSO DRONE
+            if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Drone", navegador):
+                #ACESSA O RECIBO PARA PEGAR NOME DO SOLICITANTE
+                navegador.find_element(By.PARTIAL_LINK_TEXT, 'Recibo Eletrônico').click()
                 navegador.switch_to.default_content()
+                #ENTRA NOS FRAMES QUE POSSUE O NOME DO SOLICITANTE
+                navegador.switch_to.frame('ifrVisualizacao')
+                navegador.switch_to.frame('ifrArvoreHtml')
+                #ARMAZENA NOME DO SOLICITANTE NA VARIAVEL
+                nomeSol = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[1]/td[2]').text
+                #RETORNA AO FRAME DEFAULT
+                navegador.switch_to.default_content()
+                #COLETAR DADOS DA DECLARAÇÃO DE CONFORMIDADE
+                #RETORNA AO FRAME QUE CONTÉM OS DOCUMENTOS
+                navegador.switch_to.frame('ifrArvore')
+                #CLICA NA DECLARACAO DE CONFORMIDADE
+                navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Drone").click()
+                time.sleep(1)
+                #RETORNA AO FRAME DEFAULT E ENTRA NOS FRAMES QUE CONTÉM A VISUALIZACAO DA DECLARACAO
+                navegador.switch_to.default_content()
+                navegador.switch_to.frame('ifrVisualizacao')
+                navegador.switch_to.frame('ifrArvoreHtml')
+                #EXIBE INFORMACOES DO PROCESSO
+                print("--------------------------------------------------------------------------")
+                print('--------------------------------------------------------------------------')
+                print(f"Processo: {processo}")
 
-                #CRIA DESPACHO DECISORIO
-                #PEDE PRA USUARIO VERIFICAR SE ESTÁ TUDO CERTO
-                #VOLTA PARA A PAGINA DE INICIO DO PROCESSO
+                #COLETAR TEXTO NOME DO INTERESSADO
+                nome_interessado = navegador.find_element(By.XPATH, '/html/body/table[1]/tbody/tr/td').text
+                #VERIFICA SE O CAMPO ESTÁ VAZIO, CASO ESTEJA DEFINIRA CM NAO INFORMADO
+                if not nome_interessado.strip():
+                    nome_interessado = 'Não informado'
+                    print("NOME DO INTERESSADO NÃO INFORMADO")
+                #EXIBE NOMES DO INTERESSADO E SOLICITANTE
+                print("Interessado: ",nome_interessado)
+                print("Solicitante: ",nomeSol)
+                print('\n')
+
+                #CHECKBOX DE QUEM ESTÁ FAZENDO O PETICIONAMENTO
+                checkbox=navegador.find_element(By.XPATH,'/html/body/table[2]/tbody/tr[1]/td[1]').text
+                checkbox2=navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[1]').text
+                #VERIFICA CAMPO DA CHECKBOX
+                #SE OS DOIS CAMPOS ESTIVEREM VAZIOS AVISA QUE NAO FOI INFORMADO QUEM ESTÁ FAZENDO O PETICIONAMENTO
+                if not checkbox.strip() and not checkbox2.strip():
+                    print("O usuário não informou quem está fazendo o peticionamento, confira os nomes do documento.")
+                elif not checkbox.strip():
+                    procuracao_eletronica = navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[3]').text
+                    print("Peticionamento representando terceiro, Pessoa Jurídica ou Pessoa Física.", f"\nProcuração eletrônica: {procuracao_eletronica}.")
+                else:
+                    print("Peticionamento em interesse próprio como Pessoa Física.")
+                print('\n')
+
+                #CONTA QUANTIDADE DE LINHAS DA TABELA SOBRE O PRODUTO
+                quantidade_linhas = len(navegador.find_elements(By.XPATH, '/html/body/table[3]/tbody/tr'))
+
+                #VERIFICA CAMPOS QUE CONTÉM AS INFORMAÇÕES SOBRE O PRODUTO
+                #ARMAZENA OS MODELOS INFORMADOS PARA VERIFICAR SE ESTÃO NA PLANILHA DE DRONES CONFORMES
+                modelos = []
+                for i in range(1, quantidade_linhas, 1):
+                    linha = navegador.find_element('xpath', f'/html/body/table[3]/tbody/tr[{i}]')
+                    celulas = linha.find_elements(By.TAG_NAME,'td')
+                    modelos_produto = [celula.text for celula in celulas]
+                    modelos.append(modelos_produto)
+
+                #CRIA DATAFRAME PARA PRINTAR AS INFORMAÇÕES DO PRODUTO JÁ TRATADAS
+                df = pd.DataFrame(modelos)
+                df.columns = ['Modelo', 'Nome Comercial', 'Número de Série (incluindo rádio controle e óculos)']
+                df = df[1:]
+                df = df.replace(' ', np.nan)
+                df = df.dropna(how='all')
+                data = df.values.tolist()
+                headers = df.columns.tolist()
+                print(tabulate(data, headers=headers, tablefmt='pretty'))
+                print('\n')
+
+                #VERIFICA SE O MODELO DO DRONE E RADIO CONTROLE ESTA NA PLANILHA DE DRONES CONFORMES
+                modelos = df['Modelo']
+                modelos = modelos.reset_index(drop=True)
+                checkexcel = modelos.isin(tabela['MODELO'])
+                for i in range(len(checkexcel)):
+                    if checkexcel[i] == True:
+                        print(f"O modelo {modelos[i]} está na lista de drones conformes.")
+                    else:
+                        print(f"O modelo {modelos[i]} não se encontra na lista de drones conformes")
+                print('\n')
+                #EXIBE CÓDIGO DE RAST"REIO
+                #LINHA ESPECIFICA ESCREVE NA PLANILHA SE O PRODUTO ESTA RETIDO E, CASO ESTEJA, ESCREVE O CODIGO DE RASTREIO
+                n_serie = navegador.find_element(By.XPATH, '/html/body/table[3]/tbody/tr[2]/td[3]').text
+                codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[4]/tbody/tr/td[2]').text
+                #VERIFICA SE HÁ ALGUM TEXTO NA TABELA COM O CÓDIGO DE RASTREIO
+                #SE HOUVER ALGUM TEXTO ELE DA COMO RETIDO, CASO NAO TENHA TEXTO ELE DA COMO NAO RETIDO
+                if not codigo_rastreio.strip():
+                    print("Produto não retido ou código de rastreio não informado.")
+                    retido='Não'
+                else:
+                    if not n_serie.strip():
+                        print(f'O código de rastreio é: {codigo_rastreio}.')
+                        retido='Sim'
+                    elif n_serie.strip():
+                        print('Confira se o produto está retido.')
+                        verifica_retido = int(input('O produto está retido? Se sim digite [1], se não digite [2]: '))
+                        if verifica_retido == 1:
+                            retido='Sim'
+                        elif verifica_retido == 2:
+                            retido='Não'
+                print('\n')
+                print('Confira o relatório fotográfico e veja se os documentos estão conformes!\n')
+                print('--------------------------------------------------------------------------')
+                print('--------------------------------------------------------------------------')
+                
+            #ENCONTRAR SE HÁ ALGUMA PASTA DE DOCUMENTOS OU DECLARAÇÃO DE CONFORMIDADE NO PROCESSO
+            elif check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio", navegador) or check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]', navegador):
+                #PEGAR NOME DO SOLICITANTE NO RECIBO ELETRONICO
+                navegador.find_element(By.PARTIAL_LINK_TEXT, 'Recibo Eletrônico').click()
+                navegador.switch_to.default_content()
+                time.sleep(0.5)
+                navegador.switch_to.frame('ifrVisualizacao')
+                navegador.switch_to.frame('ifrArvoreHtml')
+                nomeSol = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[1]/td[2]').text
+                navegador.switch_to.default_content()
+                #CLICA NA DECLARACAO DE CONFORMIDADE
+                #COLETAR DADOS DA DECLARAÇÃO DE CONFORMIDADE
+                navegador.switch_to.frame('ifrArvore')
+                navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio").click()
+                time.sleep(0.5)
+                navegador.switch_to.default_content()
+                navegador.switch_to.frame('ifrVisualizacao')
+                navegador.switch_to.frame('ifrArvoreHtml')
+
+                #EXIBE INFORMACOES DO PROCESSO
+                print("--------------------------------------------------------------------------")
+                print('--------------------------------------------------------------------------')
+                print(f"Processo: {processo}")
+
+                #COLETAR TEXTO NOME DO INTERESSADO
+                nome_interessado=navegador.find_element(By.XPATH, '/html/body/table[1]/tbody/tr/td/p').text
+                if not nome_interessado.strip():
+                    nome_interessado = 'Não informado'
+                    print("NOME DO INTERESSADO NÃO INFORMADO")
+                print(nome_interessado)
+                print(nomeSol)
+                print('\n')
+                #CHECKBOX DE QUEM ESTÁ FAZENDO O PETICIONAMENTO
+                checkbox=navegador.find_element('xpath','/html/body/table[2]/tbody/tr[1]/td[1]/p').text
+                checkbox2=navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[1]').text
+
+                #CHECA CAMPO DA CHECKBOX
+                if not checkbox.strip() and not checkbox2.strip():
+                    print("O usuário não informou quem está fazendo o peticionamento, confira os nomes do documento.")
+                elif not checkbox.strip():
+                    procuracao_eletronica = navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[3]').text
+                    print("Peticionamento representando terceiro, Pessoa Jurídica ou Pessoa Física.", f"\nProcuração eletrônica: {procuracao_eletronica}.")
+                else:
+                    print("Peticionamento em interesse próprio como Pessoa Física.")
+                print('\n')
+
+                #INFORMA O TIPO DE PRODUTO QUE ESTÁ SENDO TRATADO
+                print("\nTipo de produto:")
+                quantidade_linhasPro = len(navegador.find_elements(By.XPATH, '/html/body/table[3]/tbody/tr'))
+                tipoPro = []
+                for i in range(1, quantidade_linhasPro, 1):
+                    linhas = navegador.find_element(By.XPATH, f'/html/body/table[3]/tbody/tr[{i}]')
+                    celulas2 = linhas.find_elements(By.TAG_NAME,'td')
+                    produtos = [celula2.text for celula2 in celulas2]
+                    tipoPro.append(produtos)
+                dfPro = pd.DataFrame(tipoPro)
+                dfPro.columns = ['Tipo de Equipamento', 'Assinale com um X', 'Observação:']
+                dfPro = dfPro.drop('Observação:', axis=1)
+                dfPro = dfPro[1:]
+
+                #EXIBE A TABELA DO TIPO DE PRODUTO
+                data = dfPro.values.tolist()
+                headers = dfPro.columns.tolist()
+                print(tabulate(data, headers=headers, tablefmt='pretty'))
+                print('\n')
+
+                #CONTA QUANTIDADE DE LINHAS DA TABELA SOBRE O PRODUTO
+                quantidade_linhas = len(navegador.find_elements(By.XPATH, '/html/body/table[4]/tbody/tr'))
+
+                #VERIFICA CAMPOS QUE CONTÉM AS INFORMAÇÕES SOBRE O PRODUTO
+                modelos = []
+                for i in range(1, quantidade_linhas, 1):
+                    linha = navegador.find_element('xpath', f'/html/body/table[4]/tbody/tr[{i}]')
+                    celulas = linha.find_elements(By.TAG_NAME,'td')
+                    modelos_produto = [celula.text for celula in celulas]
+                    modelos.append(modelos_produto)
+                
+                #CRIA DATAFRAME E VERIFICA SE OS MODELOS FORNECIDOS ESTÃO NA PLANILHA DE DRONES CONFORMES
+                df = pd.DataFrame(modelos)
+                df.columns = ['Modelo', 'Nome Comercial', 'Número de Série']
+                df = df[1:]
+                df = df.replace(' ', np.nan)
+                df = df.dropna(how='all')
+                modelos = df['Modelo']
+                modelos = modelos.reset_index(drop=True)
+                checkexcel = modelos.isin(tabela['MODELO'])                        
+                print("Modelos:")
+                #CRIA DATAFRAME PARA PRINTAR AS INFORMAÇÕES DO PRODUTO
+                data2 = df.values.tolist()
+                headers2 = df.columns.tolist()
+                print(tabulate(data2, headers=headers2, tablefmt='pretty'))
+                print('\n')
+
+                for i in range(len(checkexcel)):
+                    if checkexcel[i] == True:
+                        print(f"O modelo {modelos[i]} está na lista de drones conformes.")
+                    else:
+                        print(f"O modelo {modelos[i]} não se encontra na lista de drones conformes")
+                print('\n')
+                #EXIBE CÓDIGO DE RASTREIO
+                #ESCREVE NA TABELA EXCEL SE ESTA RETIDO, CASO ESTEJA INSERE CODIGO DE RASTREIO
+                n_serie = navegador.find_element(By.XPATH, '/html/body/table[4]/tbody/tr[2]/td[3]').text
+                codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[5]/tbody/tr/td[2]').text
+                if not codigo_rastreio.strip():
+                    print("Produto não retido ou código de rastreio não informado.")
+                    retido='Não'
+                else:
+                    if not n_serie.strip():
+                        print(f'O código de rastreio é: {codigo_rastreio}.')
+                        retido='Sim'
+                    elif n_serie.strip():
+                        print('Confira se o produto está retido.')
+                        verifica_retido = int(input('O produto está retido? Se sim digite [1], se não digite [2]: '))
+                        if verifica_retido == 1:
+                            retido='Sim'
+                        elif verifica_retido == 2:
+                            retido='Não'
+                print('\n')
+                print('Confira o relatório fotográfico e veja se os documentos estão conformes!\n')
+                print('--------------------------------------------------------------------------')
+                print('--------------------------------------------------------------------------')
+                
+            time.sleep(1)
+            navegador.switch_to.default_content()
+
+            #CRIA DESPACHO DECISORIO
+            #PEDE PRA USUARIO VERIFICAR SE ESTÁ TUDO CERTO
+            #VOLTA PARA A PAGINA DE INICIO DO PROCESSO
+            while True:
+                try:
+                    confirmacao = int(input('Caso esteja tudo certo e NÃO HAJA UM DESPACHO JÁ CRIADO digite [1] para continuar, senão, digite [2]: '))
+                    if (nome_interessado == 'Não informado' or '') and confirmacao == 1:
+                        print("Nome do interessado não informado, não é possível criar despacho, selecione outra opção!")
+                    elif confirmacao == 1:
+                        break
+                    elif confirmacao == 2:
+                        break
+                    else:
+                        print("Opção inválida, tente novamente!")
+                except ValueError:
+                    print("Opção inválida, tente novamente!")
+            if confirmacao == 1:
+                navegador.switch_to.frame('ifrArvore')
+                arvoredocs = navegador.find_elements(By.CLASS_NAME, 'infraArvoreNo')
+
+                #VERIFICA SE O DOCUMENTO ESTÁ RESTRITO, SE ESTIVER ELE IRÁ DEIXAR COMO PUBLICO UTILIZANDO O SIMBOLO DE RESTRITO COMO REFERENCIA
+                elementos_com_src = navegador.find_elements(By.CSS_SELECTOR, "[src='svg/processo_restrito.svg?11']")
+                #CRIA UMA LISTA PARA OS DOCUMENTOS QUE DEVERÃO SER DEIXADOS COMO PUBLICO
+                elementos_para_clicar = []
+                #ITERA SOBRE OS DOCUMENTOS 
+                for doc in arvoredocs:
+                    #ITERA SOBRE OS ELEMENTOS COM O SIMBOLO DE RESTRITO
+                    for elemento in elementos_com_src:
+                        #VERIFICA SE O DOCUMENTO ESTÁ AO LADO DO SIMBOLO DE RESTRITO
+                        if elemento in doc.find_elements(By.XPATH, 'following-sibling::*[2]/*'):
+                            #SE O SIMBOLO DE RESTRITO ESTIVER NO DOCUMENTO ELE INCLUIRÁ NA LISTA DE DOCUMENTOS A SEREM ACESSADOS
+                            elementos_para_clicar.append(doc.get_attribute("id"))
+                            break
+
+                #AGORA COM O ID DO DOCUMENTO ELE CLICARÁ EM CADA DOCUMENTO RESTRITO PARA DEIXAR PUBLICO
+                for id in elementos_para_clicar:
+                    #ENCONTRA O ELEMENTO PARA CLICAR
+                    doc = navegador.find_element(By.ID, id)
+                    doc.click()
+                    time.sleep(0.7)
+                    navegador.switch_to.default_content()
+                    navegador.switch_to.frame('ifrVisualizacao')
+                    #CLICA NO SIMBOLO DE ALTERAR DOCUMENTO
+                    navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[2]').click()
+                    #SELECIONA A OPCAO DE PUBLICO NO DOCUMENTO
+                    navegador.find_element(By.XPATH,'//*[@id="divOptPublico"]/div/label').click()
+                    #SALVA AS MUDANCAS
+                    navegador.find_element(By.ID,'btnSalvar').click()
+                    navegador.switch_to.default_content()
+                    navegador.switch_to.frame('ifrArvore')
+                navegador.switch_to.default_content()
+                navegador.switch_to.frame('ifrArvore')
+                #ENTRA NA PAGINA INICIAL DO PROCESSO
+                #VERIFICA SE E UM PROCESSO DE DRONE OU IMPORTADO PARA USO PROPRIO
+                if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Drone", navegador):
+                    navegador.switch_to.default_content()
+                    navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
+                    elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+                    elementos.send_keys(Keys.ENTER)
+                    #CRIA DESPACHO
+                    navegador.switch_to.frame('ifrVisualizacao')
+                    time.sleep(1)
+                    #CLICA NO INCONE DE INCLUIR DOCUMENTO
+                    navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]').click()
+                    time.sleep(1)
+                    #CLICA NA OPCAO DE DESPACHO DECISORIO
+                    navegador.find_element(By.XPATH,'//*[@id="tblSeries"]/tbody/tr[16]/td/a[2]').click()
+                    #SELECIONA TEXTO PADRAO
+                    navegador.find_element(By.XPATH,'//*[@id="divOptTextoPadrao"]/div').click()
+                    #ENVIA QUAL DESPACHO DECISORIO DEVE SER CRIADO
+                    navegador.find_element(By.XPATH,'//*[@id="txtTextoPadrao"]').send_keys('Despacho Decisório de Homologação Drones')
+                #VERIFICA SE E UM PROCESSO DE DRONE OU IMPORTADO PARA USO PROPRIO
+                elif check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio", navegador):
+                    impProp='Sim'
+                    navegador.switch_to.default_content()
+                    navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
+                    elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+                    elementos.send_keys(Keys.ENTER)
+                    #CRIA DESPACHO
+                    navegador.switch_to.frame('ifrVisualizacao')
+                    time.sleep(1)
+                    #CLICA NO INCONE DE INCLUIR DOCUMENTO
+                    navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]').click()
+                    time.sleep(1)
+                    #CLICA NA OPCAO DE DESPACHO DECISORIO
+                    navegador.find_element(By.XPATH,'//*[@id="tblSeries"]/tbody/tr[16]/td/a[2]').click()
+                    #SELECIONA TEXTO PADRAO
+                    navegador.find_element(By.XPATH,'//*[@id="divOptTextoPadrao"]/div').click()
+                    #ENVIA QUAL DESPACHO DECISORIO DEVE SER CRIADO
+                    navegador.find_element(By.XPATH,'//*[@id="txtTextoPadrao"]').send_keys('Despacho Decisório de Homologação não licenciados')
+                time.sleep(2)
+                #CLICA NA PRIMEIRA OPCAO
+                navegador.find_element(By.XPATH,'//*[@id="divInfraAjaxtxtTextoPadrao"]/ul/li/a').click()
+                #COLOCA O DESPACHO COMO PUBLICO
+                navegador.find_element(By.XPATH,'//*[@id="divOptPublico"]/div').click()
+                #SALVA DESPACHO
+                navegador.find_element(By.ID,'btnSalvar').click()
+                time.sleep(0.7)
+                try:
+                    navegador.switch_to.window(navegador.window_handles[-1])
+                    navegador.close()
+                    time.sleep(0.7)
+                    #MUDA PARA JANELA PRINCIAPL DO PROGRAMA
+                    navegador.switch_to.window(janela_principal)
+                except:
+                    #MUDA PARA JANELA PRINCIAPL DO PROGRAMA
+                    navegador.switch_to.window(janela_principal)
+                #MUDA PARA JANELA PRINCIAPL DO PROGRAMA
+                navegador.switch_to.window(janela_principal)
+                #INCLUI DESPACHO NO BLOCO
+                navegador.switch_to.default_content()
+                navegador.switch_to.frame('ifrArvore')
+                #CLICA NO DESPACHO DECISORIO
+                navegador.find_element(By.PARTIAL_LINK_TEXT, "Despacho Decisório").click()
+                navegador.switch_to.default_content()
+                navegador.switch_to.frame('ifrVisualizacao')
+                time.sleep(1)
+                #CLICA NO ICONE DE LEGO
+                navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[8]').click()
+                #SELECIONA BLOCO (SELECIONA O PRIMEIRO DESPACHO PARA DRONES APROVADOS QUE LER)
+                select_element = navegador.find_element(By.ID, 'selBloco')
+                select = Select(select_element)
+                #PROCURA O PRIMEIRO BLOCO QUE TENHA O TEXTO "Despachos para Drones aprovados"
+                for opcao in select.options:
+                    if "Despachos para Drones aprovados" in opcao.text:
+                        select.select_by_visible_text(opcao.text)
+                        break
+                #CLICA NO BOTAO DE INCLUIR NO BLOCO
+                navegador.find_element(By.XPATH, '//*[@id="sbmIncluir"]').click()
+                #VOLTA PARA PAGINA INICIAL DO PROCESSO
+                navegador.switch_to.default_content()
+                navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
+                elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+                elementos.send_keys(Keys.ENTER)
+                navegador.switch_to.frame('ifrVisualizacao')
+                time.sleep(1)
+                #ADICIONA NOTA PARA AGUARDAR ASSINATURA
+                #CLICA NO ICONE DE ANOTACAO
+                navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[17]').click()
+                #INSERE O TEXTO DA ANOTACAO
+                navegador.find_element(By.ID, 'txaDescricao').send_keys('Aguardando assinatura.')
+                #SALVA O TEXTO
+                navegador.find_element(By.NAME, 'sbmRegistrarAnotacao').click()
+                #DA COMO APROVADO E ANOTA NO TXT DE PROCESSOS CONFORMES
+                situacao = 'Aprovado'
+                print("Próximo processo...")
+
+            #CONDICAO DE PROCESSO NAO CONFORME
+            else:
+                print(f'Tome as medidas necessárias para o processo {processo}.')
+                #MOSTRA OPCOES DE EXIGENCIA
                 while True:
                     try:
-                        confirmacao = int(input('Caso esteja tudo certo e NÃO HAJA UM DESPACHO JÁ CRIADO digite [1] para continuar, senão, digite [2]: '))
-                        if (nome_interessado == 'Não informado' or '') and confirmacao == 1:
-                            print("Nome do interessado não informado, não é possível criar despacho, selecione outra opção!")
-                        elif confirmacao == 1:
+                        exigencia = int(input('Se houver alguma exigência digite [1], senão, digite [2]: '))
+                        if exigencia == 1:
                             break
-                        elif confirmacao == 2:
+                        elif exigencia == 2:
                             break
                         else:
                             print("Opção inválida, tente novamente!")
                     except ValueError:
                         print("Opção inválida, tente novamente!")
-                if confirmacao == 1:
-                    navegador.switch_to.frame('ifrArvore')
-                    arvoredocs = navegador.find_elements(By.CLASS_NAME, 'infraArvoreNo')
-
-                    #VERIFICA SE O DOCUMENTO ESTÁ RESTRITO, SE ESTIVER ELE IRÁ DEIXAR COMO PUBLICO UTILIZANDO O SIMBOLO DE RESTRITO COMO REFERENCIA
-                    elementos_com_src = navegador.find_elements(By.CSS_SELECTOR, "[src='svg/processo_restrito.svg?11']")
-                    #CRIA UMA LISTA PARA OS DOCUMENTOS QUE DEVERÃO SER DEIXADOS COMO PUBLICO
-                    elementos_para_clicar = []
-                    #ITERA SOBRE OS DOCUMENTOS 
-                    for doc in arvoredocs:
-                        #ITERA SOBRE OS ELEMENTOS COM O SIMBOLO DE RESTRITO
-                        for elemento in elementos_com_src:
-                            #VERIFICA SE O DOCUMENTO ESTÁ AO LADO DO SIMBOLO DE RESTRITO
-                            if elemento in doc.find_elements(By.XPATH, 'following-sibling::*[2]/*'):
-                                #SE O SIMBOLO DE RESTRITO ESTIVER NO DOCUMENTO ELE INCLUIRÁ NA LISTA DE DOCUMENTOS A SEREM ACESSADOS
-                                elementos_para_clicar.append(doc.get_attribute("id"))
-                                break
-
-                    #AGORA COM O ID DO DOCUMENTO ELE CLICARÁ EM CADA DOCUMENTO RESTRITO PARA DEIXAR PUBLICO
-                    for id in elementos_para_clicar:
-                        #ENCONTRA O ELEMENTO PARA CLICAR
-                        doc = navegador.find_element(By.ID, id)
-                        doc.click()
-                        time.sleep(0.7)
-                        navegador.switch_to.default_content()
-                        navegador.switch_to.frame('ifrVisualizacao')
-                        #CLICA NO SIMBOLO DE ALTERAR DOCUMENTO
-                        navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[2]').click()
-                        #SELECIONA A OPCAO DE PUBLICO NO DOCUMENTO
-                        navegador.find_element(By.XPATH,'//*[@id="divOptPublico"]/div/label').click()
-                        #SALVA AS MUDANCAS
-                        navegador.find_element(By.ID,'btnSalvar').click()
-                        navegador.switch_to.default_content()
-                        navegador.switch_to.frame('ifrArvore')
+                #CONDICAO DE EXIGENCIA
+                if exigencia == 1:
                     navegador.switch_to.default_content()
                     navegador.switch_to.frame('ifrArvore')
-                    #ENTRA NA PAGINA INICIAL DO PROCESSO
-                    #VERIFICA SE E UM PROCESSO DE DRONE OU IMPORTADO PARA USO PROPRIO
-                    if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Drone", navegador):
-                        navegador.switch_to.default_content()
-                        navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
-                        elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                        elementos.send_keys(Keys.ENTER)
-                        #CRIA DESPACHO
-                        navegador.switch_to.frame('ifrVisualizacao')
-                        time.sleep(1)
-                        #CLICA NO INCONE DE INCLUIR DOCUMENTO
-                        navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]').click()
-                        time.sleep(1)
-                        #CLICA NA OPCAO DE DESPACHO DECISORIO
-                        navegador.find_element(By.XPATH,'//*[@id="tblSeries"]/tbody/tr[16]/td/a[2]').click()
-                        #SELECIONA TEXTO PADRAO
-                        navegador.find_element(By.XPATH,'//*[@id="divOptTextoPadrao"]/div').click()
-                        #ENVIA QUAL DESPACHO DECISORIO DEVE SER CRIADO
-                        navegador.find_element(By.XPATH,'//*[@id="txtTextoPadrao"]').send_keys('Despacho Decisório de Homologação Drones')
-                    #VERIFICA SE E UM PROCESSO DE DRONE OU IMPORTADO PARA USO PROPRIO
-                    elif check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio", navegador):
-                        impProp='Sim'
-                        navegador.switch_to.default_content()
-                        navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
-                        elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                        elementos.send_keys(Keys.ENTER)
-                        #CRIA DESPACHO
-                        navegador.switch_to.frame('ifrVisualizacao')
-                        time.sleep(1)
-                        #CLICA NO INCONE DE INCLUIR DOCUMENTO
-                        navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]').click()
-                        time.sleep(1)
-                        #CLICA NA OPCAO DE DESPACHO DECISORIO
-                        navegador.find_element(By.XPATH,'//*[@id="tblSeries"]/tbody/tr[16]/td/a[2]').click()
-                        #SELECIONA TEXTO PADRAO
-                        navegador.find_element(By.XPATH,'//*[@id="divOptTextoPadrao"]/div').click()
-                        #ENVIA QUAL DESPACHO DECISORIO DEVE SER CRIADO
-                        navegador.find_element(By.XPATH,'//*[@id="txtTextoPadrao"]').send_keys('Despacho Decisório de Homologação não licenciados')
-                    time.sleep(2)
-                    #CLICA NA PRIMEIRA OPCAO
-                    navegador.find_element(By.XPATH,'//*[@id="divInfraAjaxtxtTextoPadrao"]/ul/li/a').click()
-                    #COLOCA O DESPACHO COMO PUBLICO
-                    navegador.find_element(By.XPATH,'//*[@id="divOptPublico"]/div').click()
-                    #SALVA DESPACHO
-                    navegador.find_element(By.ID,'btnSalvar').click()
-                    time.sleep(0.7)
-                    try:
-                        navegador.switch_to.window(navegador.window_handles[-1])
-                        navegador.close()
-                        time.sleep(0.7)
-                        #MUDA PARA JANELA PRINCIAPL DO PROGRAMA
-                        navegador.switch_to.window(janela_principal)
-                    except:
-                        #MUDA PARA JANELA PRINCIAPL DO PROGRAMA
-                        navegador.switch_to.window(janela_principal)
-                    #MUDA PARA JANELA PRINCIAPL DO PROGRAMA
-                    navegador.switch_to.window(janela_principal)
-                    #INCLUI DESPACHO NO BLOCO
-                    navegador.switch_to.default_content()
-                    navegador.switch_to.frame('ifrArvore')
-                    #CLICA NO DESPACHO DECISORIO
-                    navegador.find_element(By.PARTIAL_LINK_TEXT, "Despacho Decisório").click()
+                    #CLICA NA DECLARACAO DE CONFORMIDADE
+                    navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
+                    time.sleep(1)
                     navegador.switch_to.default_content()
                     navegador.switch_to.frame('ifrVisualizacao')
-                    time.sleep(1)
-                    #CLICA NO ICONE DE LEGO
-                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[8]').click()
-                    #SELECIONA BLOCO (SELECIONA O PRIMEIRO DESPACHO PARA DRONES APROVADOS QUE LER)
-                    select_element = navegador.find_element(By.ID, 'selBloco')
-                    select = Select(select_element)
-                    #PROCURA O PRIMEIRO BLOCO QUE TENHA O TEXTO "Despachos para Drones aprovados"
-                    for opcao in select.options:
-                        if "Despachos para Drones aprovados" in opcao.text:
-                            select.select_by_visible_text(opcao.text)
-                            break
-                    #CLICA NO BOTAO DE INCLUIR NO BLOCO
-                    navegador.find_element(By.XPATH, '//*[@id="sbmIncluir"]').click()
-                    #VOLTA PARA PAGINA INICIAL DO PROCESSO
+                    navegador.switch_to.frame('ifrArvoreHtml')
+                    #ARMAZENA O EMAIL DO SOLICITANTE
+                    emailSol = navegador.find_element(By.XPATH, '/html/body/div[3]/a[1]').text
                     navegador.switch_to.default_content()
+                    #RETORNA PARA A PAGINA INICIAL DO PROCESSO
                     navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
                     elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
                     elementos.send_keys(Keys.ENTER)
-                    navegador.switch_to.frame('ifrVisualizacao')
                     time.sleep(1)
-                    #ADICIONA NOTA PARA AGUARDAR ASSINATURA
-                    #CLICA NO ICONE DE ANOTACAO
-                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[17]').click()
-                    #INSERE O TEXTO DA ANOTACAO
-                    navegador.find_element(By.ID, 'txaDescricao').send_keys('Aguardando assinatura.')
-                    #SALVA O TEXTO
-                    navegador.find_element(By.NAME, 'sbmRegistrarAnotacao').click()
-                    #DA COMO APROVADO E ANOTA NO TXT DE processo CONFORMES
-                    situacao = 'Aprovado'
-                    print("Próximo processo...")
-
-                #CONDICAO DE PROCESSO NAO CONFORME
-                else:
-                    print(f'Tome as medidas necessárias para o processo {processo}.')
-                    #MOSTRA OPCOES DE EXIGENCIA
+                    navegador.switch_to.frame('ifrVisualizacao')
+                    #CLICA NO ICONE DE ENVIO DE EMAIL
+                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[11]').click()
+                    time.sleep(1)
+                    #VAI PARA A JANELA MAIS RECENTE ABERTA
+                    navegador.switch_to.window(navegador.window_handles[-1])
+                    time.sleep(1)
+                    #ABRE O DROPDOWN COM AS OPCOES DE EMAIL DA ANATEL
+                    select_element = navegador.find_element(By.XPATH, '//*[@id="selDe"]')
+                    select = Select(select_element)
+                    #SELECIONA O EMAIL DA ANATEL
+                    select.select_by_visible_text('ANATEL/E-mail de replicação <nao-responda@anatel.gov.br>')
+                    #ESCREVE O EMAIL DO SOLICITANTE
+                    navegador.find_element(By.XPATH, '//*[@id="s2id_autogen1"]').send_keys(emailSol)
+                    time.sleep(1)
+                    #CLICA NO EMAIL DO SOLICITANTE
+                    navegador.find_element(By.CLASS_NAME, 'select2-result-label').click()
+                    #MOSTRA AS OPCOES DE EXIGENCIA
+                    #EXECUTA A CONDICAO PARA CADA EXIGENCIA
                     while True:
                         try:
-                            exigencia = int(input('Se houver alguma exigência digite [1], senão, digite [2]: '))
-                            if exigencia == 1:
-                                break
-                            elif exigencia == 2:
-                                break
-                            else:
-                                print("Opção inválida, tente novamente!")
+                            print("Selecione o tipo de exigência abaixo:\n"
+                                " [1] Falta algum anexo no processo.\n",
+                                "[2] Erro na declaração de conformidade ou alguma exigência que é necessário abrir novo processo.\n",
+                                "[3] Outros.")
+                            time.sleep(0.5)
+                            exig = int(input("Opção: "))
                         except ValueError:
-                            print("Opção inválida, tente novamente!")
-                    #CONDICAO DE EXIGENCIA
-                    if exigencia == 1:
-                        navegador.switch_to.default_content()
-                        navegador.switch_to.frame('ifrArvore')
-                        #CLICA NA DECLARACAO DE CONFORMIDADE
-                        navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
-                        time.sleep(1)
-                        navegador.switch_to.default_content()
-                        navegador.switch_to.frame('ifrVisualizacao')
-                        navegador.switch_to.frame('ifrArvoreHtml')
-                        #ARMAZENA O EMAIL DO SOLICITANTE
-                        emailSol = navegador.find_element(By.XPATH, '/html/body/div[3]/a[1]').text
-                        navegador.switch_to.default_content()
-                        #RETORNA PARA A PAGINA INICIAL DO PROCESSO
-                        navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
-                        elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                        elementos.send_keys(Keys.ENTER)
-                        time.sleep(1)
-                        navegador.switch_to.frame('ifrVisualizacao')
-                        #CLICA NO ICONE DE ENVIO DE EMAIL
-                        navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[11]').click()
-                        time.sleep(1)
-                        #VAI PARA A JANELA MAIS RECENTE ABERTA
-                        navegador.switch_to.window(navegador.window_handles[-1])
-                        time.sleep(1)
-                        #ABRE O DROPDOWN COM AS OPCOES DE EMAIL DA ANATEL
-                        select_element = navegador.find_element(By.XPATH, '//*[@id="selDe"]')
-                        select = Select(select_element)
-                        #SELECIONA O EMAIL DA ANATEL
-                        select.select_by_visible_text('ANATEL/E-mail de replicação <nao-responda@anatel.gov.br>')
-                        #ESCREVE O EMAIL DO SOLICITANTE
-                        navegador.find_element(By.XPATH, '//*[@id="s2id_autogen1"]').send_keys(emailSol)
-                        time.sleep(1)
-                        #CLICA NO EMAIL DO SOLICITANTE
-                        navegador.find_element(By.CLASS_NAME, 'select2-result-label').click()
-                        #MOSTRA AS OPCOES DE EXIGENCIA
-                        #EXECUTA A CONDICAO PARA CADA EXIGENCIA
-                        while True:
-                            try:
-                                print("Selecione o tipo de exigência abaixo:\n"
-                                    " [1] Falta algum anexo no processo.\n",
-                                    "[2] Erro na declaração de conformidade ou alguma exigência que é necessário abrir novo processo.\n",
-                                    "[3] Outros.")
-                                time.sleep(0.5)
-                                exig = int(input("Opção: "))
-                            except ValueError:
-                                print("Opção inválida. Digite um número inteiro entre 1 e 3.")
-                                continue
-                            if exig in range(1, 4):
-                                if exig == 1:
-                                    #PUXA FUNCAO INSIRA_ANEXO CONTENDO O CORPO DE EMAIL PEDINDO ANEXOS
-                                    insira_anexo(processo, navegador)
-                                    #PEDE PARA USUARIO CONFERIR SE ESTÁ TUDO CERTO COM O EMAIL
-                                    while True:
-                                        try:
-                                            confere = int(input('Caso esteja tudo certo digite [1], caso tenha algum erro digite [2]: '))
-                                            if confere == 1:
-                                                break
-                                            elif confere == 2:
-                                                break
-                                            else:
-                                                print("Opção inválida, tente novamente!")
-                                        except ValueError:
+                            print("Opção inválida. Digite um número inteiro entre 1 e 3.")
+                            continue
+                        if exig in range(1, 4):
+                            if exig == 1:
+                                #PUXA FUNCAO INSIRA_ANEXO CONTENDO O CORPO DE EMAIL PEDINDO ANEXOS
+                                insira_anexo(processo, navegador)
+                                #PEDE PARA USUARIO CONFERIR SE ESTÁ TUDO CERTO COM O EMAIL
+                                while True:
+                                    try:
+                                        confere = int(input('Caso esteja tudo certo digite [1], caso tenha algum erro digite [2]: '))
+                                        if confere == 1:
+                                            break
+                                        elif confere == 2:
+                                            break
+                                        else:
                                             print("Opção inválida, tente novamente!")
-                                    if confere == 1:
-                                        #ENVIA EMAIL COM A EXIGENCIA
-                                        navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
-                                        time.sleep(0.5)
-                                        #FECHA ALERTA DO NAVEGADOR
-                                        alert = Alert(navegador)
+                                    except ValueError:
+                                        print("Opção inválida, tente novamente!")
+                                if confere == 1:
+                                    #ENVIA EMAIL COM A EXIGENCIA
+                                    navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
+                                    time.sleep(0.5)
+                                    #FECHA ALERTA DO NAVEGADOR
+                                    alert = Alert(navegador)
+                                    alert.accept()
+                                    time.sleep(0.5)
+                                    #VOLTA O FOCO DO SELENIUM PARA A PAGINA PRINCIPAL NOVAMENTE
+                                    navegador.switch_to.window(janela_principal)
+                                    navegador.switch_to.default_content()
+                                    #VOLTA PARA A PAGINA INICIAL DO PROCESSO
+                                    navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
+                                    elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+                                    elementos.send_keys(Keys.ENTER)    
+                                    time.sleep(1)
+                                    #INSERE TAG REFERENTE A PROCESSOS INTERCORRENTES
+                                    navegador.switch_to.frame('ifrVisualizacao')
+                                    #CLICA NO ICONE DE TAG
+                                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
+                                    try:    
+                                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                                    except:
+                                        navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
                                         alert.accept()
+                                        navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
                                         time.sleep(0.5)
-                                        #VOLTA O FOCO DO SELENIUM PARA A PAGINA PRINCIPAL NOVAMENTE
-                                        navegador.switch_to.window(janela_principal)
-                                        navegador.switch_to.default_content()
-                                        #VOLTA PARA A PAGINA INICIAL DO PROCESSO
-                                        navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
-                                        elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                                        elementos.send_keys(Keys.ENTER)    
-                                        time.sleep(1)
-                                        #INSERE TAG REFERENTE A processo INTERCORRENTES
-                                        navegador.switch_to.frame('ifrVisualizacao')
-                                        #CLICA NO ICONE DE TAG
-                                        navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
-                                        try:    
-                                            navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-                                        except:
-                                            navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
-                                            alert.accept()
-                                            navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
-                                            time.sleep(0.5)
-                                            navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-                                        
-                                        time.sleep(0.5)
-                                        #CLICA NA TAG DE INTERCORRENTE
-                                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[18]/a').click()
-                                        #PEDE O TEXTO DA TAG
-                                        textoTag = input("Insira o texto da tag: ")
-                                        textoFinaltag = nomeEstag+"\n"+textoTag
-                                        #COLOCA O TEXTO NA TAG
-                                        navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoFinaltag)
-                                        #SALVA TAG
-                                        navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
-                                        #DEFINE SITUACAO DO PROCESSO
-                                        situacao = 'Intercorrente'
-                                    else:
-                                        #CANCELA ENVIO DO EMAIL SE HOUVER ALGUM ERRO
-                                        print("Faça as alterações necessárias mais tarde.")
-                                        navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
-                                        navegador.switch_to.window(janela_principal)
-                                        return
-                                elif exig == 2:
-                                    #PUXA FUNCAO ERRO_DECLARACAO CONTENDO O CORPO DE EMAIL PEDINDO PARA ABRIR NOVO PROCESSO SEI
-                                    erro_declaracao(processo, impProp, navegador)
-                                    #PEDE PARA USUARIO CONFERIR O EMAIL
-                                    while True:
-                                        try:
-                                            confere = int(input('Caso esteja tudo certo digite [1], caso tenha algum erro digite [2]: '))
-                                            if confere == 1:
-                                                break
-                                            elif confere == 2:
-                                                break
-                                            else:
-                                                print("Opção inválida, tente novamente!")
-                                        except ValueError:
+                                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                                    
+                                    time.sleep(0.5)
+                                    #CLICA NA TAG DE INTERCORRENTE
+                                    navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[18]/a').click()
+                                    #PEDE O TEXTO DA TAG
+                                    textoTag = input("Insira o texto da tag: ")
+                                    textoFinaltag = nomeEstag+"\n"+textoTag
+                                    #COLOCA O TEXTO NA TAG
+                                    navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoFinaltag)
+                                    #SALVA TAG
+                                    navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
+                                    #DEFINE SITUACAO DO PROCESSO
+                                    situacao = 'Intercorrente'
+                                else:
+                                    #CANCELA ENVIO DO EMAIL SE HOUVER ALGUM ERRO
+                                    print("Faça as alterações necessárias mais tarde.")
+                                    navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
+                                    navegador.switch_to.window(janela_principal)
+                                    return
+                            elif exig == 2:
+                                #PUXA FUNCAO ERRO_DECLARACAO CONTENDO O CORPO DE EMAIL PEDINDO PARA ABRIR NOVO PROCESSO SEI
+                                erro_declaracao(processo, impProp, navegador)
+                                #PEDE PARA USUARIO CONFERIR O EMAIL
+                                while True:
+                                    try:
+                                        confere = int(input('Caso esteja tudo certo digite [1], caso tenha algum erro digite [2]: '))
+                                        if confere == 1:
+                                            break
+                                        elif confere == 2:
+                                            break
+                                        else:
                                             print("Opção inválida, tente novamente!")
-                                    if confere == 1:
-                                        #ENVIA O EMAIL COM EXIGENCIA
-                                        navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
-                                        time.sleep(0.5)
-                                        #FECHA ALERTA DO NAVEGADOR
-                                        alert = Alert(navegador)
+                                    except ValueError:
+                                        print("Opção inválida, tente novamente!")
+                                if confere == 1:
+                                    #ENVIA O EMAIL COM EXIGENCIA
+                                    navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
+                                    time.sleep(0.5)
+                                    #FECHA ALERTA DO NAVEGADOR
+                                    alert = Alert(navegador)
+                                    alert.accept()
+                                    time.sleep(0.5)
+                                    #RETORNA O FOCO PARA A JANELA PRINCIPAL
+                                    navegador.switch_to.window(janela_principal)
+                                    navegador.switch_to.default_content()
+                                    #VOLTA PARA PAGINA INICIAL DO PROCESSO
+                                    navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
+                                    elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+                                    elementos.send_keys(Keys.ENTER)    
+                                    time.sleep(1)
+                                    #INSERE TAG REFERENTE A PROCESSOS INTERCORRENTES 
+                                    navegador.switch_to.frame('ifrVisualizacao')
+                                    #CLICA NO ICONE DE TAG
+                                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
+                                    try:    
+                                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                                    except:
+                                        navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
                                         alert.accept()
+                                        navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
                                         time.sleep(0.5)
-                                        #RETORNA O FOCO PARA A JANELA PRINCIPAL
-                                        navegador.switch_to.window(janela_principal)
-                                        navegador.switch_to.default_content()
-                                        #VOLTA PARA PAGINA INICIAL DO PROCESSO
-                                        navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
-                                        elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                                        elementos.send_keys(Keys.ENTER)    
-                                        time.sleep(1)
-                                        #INSERE TAG REFERENTE A processo INTERCORRENTES 
-                                        navegador.switch_to.frame('ifrVisualizacao')
-                                        #CLICA NO ICONE DE TAG
-                                        navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
-                                        try:    
-                                            navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-                                        except:
-                                            navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
-                                            alert.accept()
-                                            navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
-                                            time.sleep(0.5)
-                                            navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-                                        
-                                        #CLICA NO DROPDOWN COM OS TIPOS DE TAG
-                                        time.sleep(0.5)
-                                        #CLICA NA TAG DE PENDENCIA
-                                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[19]/a').click()
-                                        #PEDE O TEXTO DA TAG
-                                        textoTag = input("Insira o texto da tag: ")
-                                        textoFinaltag = nomeEstag+"\n"+textoTag
-                                        navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoFinaltag)
-                                        #SALVA A TAG
-                                        navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
-                                        #DEFINE SITUACAO DO PROCESSO
-                                        situacao = 'Exigência'
-                                    else:
-                                        #CANCELA O ENVIO CASO TENHA ALGUM ERRO
-                                        print("Faça as alterações necessárias mais tarde.")
-                                        navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
-                                        navegador.switch_to.window(janela_principal)
-                                        return
-                                elif exig == 3:
-                                    #PUXA FUNCAO OUTRO_ERRO EM QUE USUARIO INSERE O EMAIL COMO QUISER
-                                    outro_erro(navegador)
-                                    #PEDE PARA USUARIO ESCREVER EMAIL E DIGITAR 1 PARA CONTINUAR
-                                    while True:
-                                        try:
-                                            confere = int(input('Escreva o email da forma que deseja e logo em seguida digite [1], caso queira cancelar digite [2]: '))
-                                            if confere == 1:
-                                                break
-                                            elif confere == 2:
-                                                break
-                                            else:
-                                                print("Opção inválida, tente novamente!")
-                                        except ValueError:
+                                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                                    
+                                    #CLICA NO DROPDOWN COM OS TIPOS DE TAG
+                                    time.sleep(0.5)
+                                    #CLICA NA TAG DE PENDENCIA
+                                    navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[19]/a').click()
+                                    #PEDE O TEXTO DA TAG
+                                    textoTag = input("Insira o texto da tag: ")
+                                    textoFinaltag = nomeEstag+"\n"+textoTag
+                                    navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoFinaltag)
+                                    #SALVA A TAG
+                                    navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
+                                    #DEFINE SITUACAO DO PROCESSO
+                                    situacao = 'Exigência'
+                                else:
+                                    #CANCELA O ENVIO CASO TENHA ALGUM ERRO
+                                    print("Faça as alterações necessárias mais tarde.")
+                                    navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
+                                    navegador.switch_to.window(janela_principal)
+                                    return
+                            elif exig == 3:
+                                #PUXA FUNCAO OUTRO_ERRO EM QUE USUARIO INSERE O EMAIL COMO QUISER
+                                outro_erro(navegador)
+                                #PEDE PARA USUARIO ESCREVER EMAIL E DIGITAR 1 PARA CONTINUAR
+                                while True:
+                                    try:
+                                        confere = int(input('Escreva o email da forma que deseja e logo em seguida digite [1], caso queira cancelar digite [2]: '))
+                                        if confere == 1:
+                                            break
+                                        elif confere == 2:
+                                            break
+                                        else:
                                             print("Opção inválida, tente novamente!")
-                                    if confere == 1:
-                                        #ENVIA EMAIL
-                                        navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
-                                        time.sleep(0.5)
-                                        #FECHA ALERTA DO NAVEGADOR
-                                        alert = Alert(navegador)
+                                    except ValueError:
+                                        print("Opção inválida, tente novamente!")
+                                if confere == 1:
+                                    #ENVIA EMAIL
+                                    navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
+                                    time.sleep(0.5)
+                                    #FECHA ALERTA DO NAVEGADOR
+                                    alert = Alert(navegador)
+                                    alert.accept()
+                                    time.sleep(0.5)
+                                    #RETORNA O FOCO PARA A JANELA PRINCIPAL
+                                    navegador.switch_to.window(janela_principal)
+                                    navegador.switch_to.default_content()
+                                    #VAI PARA A JANELA INICIAL DO PROCESSO
+                                    navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
+                                    elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+                                    elementos.send_keys(Keys.ENTER)    
+                                    time.sleep(1)
+                                    navegador.switch_to.frame('ifrVisualizacao')
+                                    #CLICA NO ICONE DE TAG
+                                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
+                                    try:    
+                                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                                    except:
+                                        navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
                                         alert.accept()
+                                        navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
                                         time.sleep(0.5)
-                                        #RETORNA O FOCO PARA A JANELA PRINCIPAL
-                                        navegador.switch_to.window(janela_principal)
-                                        navegador.switch_to.default_content()
-                                        #VAI PARA A JANELA INICIAL DO PROCESSO
-                                        navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
-                                        elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                                        elementos.send_keys(Keys.ENTER)    
-                                        time.sleep(1)
-                                        navegador.switch_to.frame('ifrVisualizacao')
-                                        #CLICA NO ICONE DE TAG
-                                        navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
-                                        try:    
-                                            navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-                                        except:
-                                            navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
-                                            alert.accept()
-                                            navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
-                                            time.sleep(0.5)
-                                            navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-                                        
-                                        time.sleep(0.5)
-                                        #INSERE TAG DE 'PENDENCIAS'
-                                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[19]/a').click()
-                                        #PEDE TEXTO DA TAG
-                                        textoTag = input("Insira o texto da tag: ")
-                                        #INSERE O TEXTO DA TAG
-                                        navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoTag)
-                                        #SALVA TAG
-                                        navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
-                                        #DEFINE SITUACAO DO PROCESSO
-                                        situacao = 'Exigência'
-                                    else:
-                                        #CANCELA ENVIO DO PROCESSO
-                                        print("Faça as alterações necessárias mais tarde.")
-                                        navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
-                                        navegador.switch_to.window(janela_principal)
-                                        return
-                                #VOLTA PARA A PAGINA INICIAL DO PROCESSO
-                                navegador.switch_to.default_content()
-                                navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
-                                elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                                elementos.send_keys(Keys.ENTER)
-                                time.sleep(1)
-                                navegador.switch_to.frame('ifrVisualizacao')
-                                #CLICA NO ICONE DE CONCLUIR PROCESSO
-                                navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[20]').click()
-                                print("Próximo processo...")
-                                break
-                            #CONDICAO PARA OPCAO INEXISTENTE
-                            else:
-                                print("Opção inválida. Tente novamente.")
-                    #CONDICAO CASO PRECISE PULAR O PROCESSO
-                    else:
-                        print("Pulando processo.")
-                #VERIFICA SE O PROCESSO CONTEM ALGUMA SITUACAO ANTES DE ESCREVER SOBRE
-                #SE HOUVER ALGUM ERRO OU PULAR PROCESSO NAO ESCREVERA NA PLANILHA
-                if situacao == 'Aprovado' or situacao == 'Exigência' or situacao == 'Intercorrente':
-                    #ENCONTRA O ICONE DO EDGE E ABRE O NAVEGADOR DA PLANILHA
-                    pyautogui.PAUSE = 0.7
-                    edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
-                    #COPIA NUMERO DO PROCESSO
-                    pyperclip.copy(processo)
-                    #CLICA NO NAVEGADOR
-                    pyautogui.click(edge)
-                    time.sleep(0.5)
-                    #PESQUISA PROCESSO NA PLANILHA
-                    pyautogui.hotkey('ctrl', 'l')
-                    time.sleep(0.3)
-                    #COLA NUMERO DO PROCESSO E APERTA ENTER PARA PESQUISAR O PROCESSO
-                    pyautogui.hotkey('ctrl', 'v')
-                    time.sleep(0.3)
-                    pyautogui.press('enter')
-                    time.sleep(0.3)
-                    pyautogui.press('esc')
-                    #COPIA O NUMERO DO PROCESSO NA CELULA PARA SABER SE ELE FOI ENCONTRADO CORRETAMENTE
-                    pyautogui.hotkey('ctrl','c')
-                    time.sleep(0.5)
-                    n_processoConfirmation = pyperclip.paste()
-                    n_processoConfirmation = n_processoConfirmation.replace('\n', '')
-                    n_processoConfirmation = n_processoConfirmation.strip('"')
-                    print(n_processoConfirmation)
-                    print(type(n_processoConfirmation))
-                    if n_processoConfirmation != processo:
-                        while True:
-                            procure_manualmente = int(input("Houve um problema para encontrar o processo. Busque o manualmente e digite 1: "))
-                            if procure_manualmente == 1:
-                                time.sleep(1)
-                                pyautogui.click(edge)
-                                time.sleep(0.7)
-                                break
-                            else:
-                                print("Opcao incorreta")
-                    #NAVEGA ENTRE AS CELULAS E INSERE OS DADOS SOBRE O PROCESSO
-                    pyautogui.press('right')
-                    pyautogui.PAUSE = 0.3
-                    pyperclip.copy(nomeEstag)
-                    pyautogui.hotkey('ctrl', 'v')
-                    pyautogui.press('right')
-                    pyperclip.copy(retido)
-                    pyautogui.hotkey('ctrl', 'v')
-                    pyautogui.press('right')
-                    #VERIFICA SE ESTÁ RETIDO, SE NAO ESTIVER NAO ESCREVE CODIGO DE RASTREIO
-                    if retido == 'Sim':
-                        pyperclip.copy(codigo_rastreio)
-                        pyautogui.hotkey('ctrl', 'v')
-                        pyautogui.press('right')
-                    else:
-                        pyautogui.press('right')
-                    pyautogui.press('right')
-                    pyperclip.copy(nome_interessado)
-                    pyautogui.hotkey('ctrl', 'v')
-                    pyautogui.press('right')
-                    pyperclip.copy(situacao)
-                    pyautogui.hotkey('ctrl', 'v')
-                    #VOLTA PARA A JANELA DO CHROME
-                    chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
-                    pyautogui.click(chrome)
+                                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                                    
+                                    time.sleep(0.5)
+                                    #INSERE TAG DE 'PENDENCIAS'
+                                    navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[19]/a').click()
+                                    #PEDE TEXTO DA TAG
+                                    textoTag = input("Insira o texto da tag: ")
+                                    #INSERE O TEXTO DA TAG
+                                    navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoTag)
+                                    #SALVA TAG
+                                    navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
+                                    #DEFINE SITUACAO DO PROCESSO
+                                    situacao = 'Exigência'
+                                else:
+                                    #CANCELA ENVIO DO PROCESSO
+                                    print("Faça as alterações necessárias mais tarde.")
+                                    navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
+                                    navegador.switch_to.window(janela_principal)
+                                    return
+                            #VOLTA PARA A PAGINA INICIAL DO PROCESSO
+                            navegador.switch_to.default_content()
+                            navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
+                            elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+                            elementos.send_keys(Keys.ENTER)
+                            time.sleep(1)
+                            navegador.switch_to.frame('ifrVisualizacao')
+                            #CLICA NO ICONE DE CONCLUIR PROCESSO
+                            navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[20]').click()
+                            print("Próximo processo...")
+                            break
+                        #CONDICAO PARA OPCAO INEXISTENTE
+                        else:
+                            print("Opção inválida. Tente novamente.")
+                #CONDICAO CASO PRECISE PULAR O PROCESSO
                 else:
-                    print('--------------------------------------------------------------------------')
-                    print('--------------------------------------------------------------------------')
-        except Exception as error:
-                print(f"Ocorreu um erro: {error}")
-        pyautogui.PAUSE = 0.7
-        while True:
-            analisar = int(input("Caso deseje analisar mais um processo digite [1], caso contrario, digite [2]: "))
-            if analisar == 2:
-                loop = False
-                break
-            elif analisar == 1:
-                loop = True
-                break
+                    print("Pulando processo.")
+            #VERIFICA SE O PROCESSO CONTEM ALGUMA SITUACAO ANTES DE ESCREVER SOBRE
+            #SE HOUVER ALGUM ERRO OU PULAR PROCESSO NAO ESCREVERA NA PLANILHA
+            if situacao == 'Aprovado' or situacao == 'Exigência' or situacao == 'Intercorrente':
+                #ENCONTRA O ICONE DO EDGE E ABRE O NAVEGADOR DA PLANILHA
+                pyautogui.PAUSE = 0.7
+                edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+                #COPIA NUMERO DO PROCESSO
+                pyperclip.copy(processo)
+                #CLICA NO NAVEGADOR
+                pyautogui.click(edge)
+                time.sleep(0.5)
+                #PESQUISA PROCESSO NA PLANILHA
+                pyautogui.hotkey('ctrl', 'l')
+                time.sleep(0.3)
+                #COLA NUMERO DO PROCESSO E APERTA ENTER PARA PESQUISAR O PROCESSO
+                pyautogui.hotkey('ctrl', 'v')
+                time.sleep(0.3)
+                pyautogui.press('enter')
+                time.sleep(0.3)
+                pyautogui.press('esc')
+                #COPIA O NUMERO DO PROCESSO NA CELULA PARA SABER SE ELE FOI ENCONTRADO CORRETAMENTE
+                pyautogui.hotkey('ctrl','c')
+                time.sleep(0.5)
+                n_processoConfirmation = pyperclip.paste()
+                n_processoConfirmation = n_processoConfirmation.replace('\n', '')
+                n_processoConfirmation = n_processoConfirmation.strip('"')
+                print(n_processoConfirmation)
+                print(type(n_processoConfirmation))
+                if n_processoConfirmation != processo:
+                    while True:
+                        procure_manualmente = int(input("Houve um problema para encontrar o processo. Busque o manualmente e digite 1: "))
+                        if procure_manualmente == 1:
+                            time.sleep(1)
+                            pyautogui.click(edge)
+                            time.sleep(0.7)
+                            break
+                        else:
+                            print("Opcao incorreta")
+                #NAVEGA ENTRE AS CELULAS E INSERE OS DADOS SOBRE O PROCESSO
+                pyautogui.press('right')
+                pyautogui.PAUSE = 0.3
+                pyperclip.copy(nomeEstag)
+                pyautogui.hotkey('ctrl', 'v')
+                pyautogui.press('right')
+                pyperclip.copy(retido)
+                pyautogui.hotkey('ctrl', 'v')
+                pyautogui.press('right')
+                #VERIFICA SE ESTÁ RETIDO, SE NAO ESTIVER NAO ESCREVE CODIGO DE RASTREIO
+                if retido == 'Sim':
+                    pyperclip.copy(codigo_rastreio)
+                    pyautogui.hotkey('ctrl', 'v')
+                    pyautogui.press('right')
+                else:
+                    pyautogui.press('right')
+                pyautogui.press('right')
+                pyperclip.copy(nome_interessado)
+                pyautogui.hotkey('ctrl', 'v')
+                pyautogui.press('right')
+                pyperclip.copy(situacao)
+                pyautogui.hotkey('ctrl', 'v')
+                #VOLTA PARA A JANELA DO CHROME
+                chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
+                pyautogui.click(chrome)
             else:
-                print("Alternativa inválida")
-        
+                print('--------------------------------------------------------------------------')
+                print('--------------------------------------------------------------------------')
+    except Exception as error:
+        print(f"Ocorreu um erro: {error}")
+    pyautogui.PAUSE = 0.7
+
 
 
 #FUNCAO PARA CONCLUIR PROCESSO
