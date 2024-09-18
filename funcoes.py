@@ -235,37 +235,119 @@ def outro_erro(navegador):
     assunto  = input("Insira o assunto do email: ")
     navegador.find_element(By.ID, 'txtAssunto').send_keys(assunto)
 
+#FUNCAO QUE VERIFICA SE OS MODELOS INFORMADOS ESTAO NA LISTA DE DRONES CONFORMES
+def verifica_conformidade(modelos, tabela_modelos):
+    # Verificação de conformidade
+    checkexcel = [False] * len(modelos)  # Inicializa a lista com False
+
+    # Comparação de modelos
+    for modelo_solicitante in range(len(modelos)):
+        for j in range(len(tabela_modelos)):
+            try:
+                if str(modelos[modelo_solicitante]).lower().replace(' ','').strip('\n') == str(tabela_modelos[j]).lower().replace(' ',''):
+                    checkexcel[modelo_solicitante] = True
+                    break
+            except KeyError as e:
+                print(f"Erro ao acessar os índices: {e}")
+                continue
+    return checkexcel
+
+#FUNCAO QUE FORMATA A PLANILHA DE DRONES CONFORMES
 def corrige_planilha(planilhaDrones):
     tabela = pd.read_excel(planilhaDrones)
     tabela.columns = tabela.iloc[1]
     tabela = tabela.iloc[2:]
     tabela = tabela.reset_index(drop=True)
+    tabela = tabela['MODELO']
     return tabela
 
+#FUNCAO QUE PREENCHE A PLANILHA GERAL
+def preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastreio, nome_interessado):
+    #ENCONTRA O ICONE DO EDGE E ABRE O NAVEGADOR DA PLANILHA
+    pyautogui.PAUSE = 0.7
+    edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+    #COPIA NUMERO DO PROCESSO
+    pyperclip.copy(processo)
+    #CLICA NO NAVEGADOR
+    pyautogui.click(edge)
+    time.sleep(0.5)
+    #PESQUISA PROCESSO NA PLANILHA
+    pyautogui.hotkey('ctrl', 'l')
+    time.sleep(0.3)
+    #COLA NUMERO DO PROCESSO E APERTA ENTER PARA PESQUISAR O PROCESSO
+    pyautogui.hotkey('ctrl', 'v')
+    time.sleep(0.3)
+    pyautogui.press('enter')
+    time.sleep(0.3)
+    pyautogui.press('esc')
+    #COPIA O NUMERO DO PROCESSO NA CELULA PARA SABER SE ELE FOI ENCONTRADO CORRETAMENTE
+    pyautogui.hotkey('ctrl','c')
+    time.sleep(0.3)
+    celula_encontrada = pyperclip.paste()
+    celula_encontrada = celula_encontrada.replace('\n', '').strip('"')
+    print(f'Célula encontrada: {celula_encontrada}')
+    if celula_encontrada != processo:
+        while True:
+            procure_manualmente = int(input("Houve um problema para encontrar o processo. Busque o manualmente e digite 1: "))
+            if procure_manualmente == 1:
+                time.sleep(1)
+                pyautogui.click(edge)
+                time.sleep(0.7)
+                break
+            else:
+                print("Opcao incorreta")
+    #NAVEGA ENTRE AS CELULAS E INSERE OS DADOS SOBRE O PROCESSO
+    pyautogui.press('right')
+    pyautogui.PAUSE = 0.3
+    pyperclip.copy(nomeEstag)
+    pyautogui.hotkey('ctrl', 'v')
+    pyautogui.press('right')
+    pyperclip.copy(retido)
+    pyautogui.hotkey('ctrl', 'v')
+    pyautogui.press('right')
+    #VERIFICA SE ESTÁ RETIDO, SE NAO ESTIVER NAO ESCREVE CODIGO DE RASTREIO
+    if retido == 'Sim':
+        pyperclip.copy(codigo_rastreio)
+        pyautogui.hotkey('ctrl', 'v')
+        pyautogui.press('right')
+    else:
+        pyautogui.press('right')
+    pyautogui.press('right')
+    pyperclip.copy(nome_interessado)
+    pyautogui.hotkey('ctrl', 'v')
+    pyautogui.press('right')
+    pyperclip.copy(situacao)
+    pyautogui.hotkey('ctrl', 'v')
+    #VOLTA PARA A JANELA DO CHROME
+    chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
+    pyautogui.click(chrome)
+
+#FUNCAO QUE ANALISA TODOS OS PROCESSOS NA CAIXA DO USUARIO
 def analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrones):
-    tabela = corrige_planilha(planilhaDrones)
+    tabela_modelos = corrige_planilha(planilhaDrones)
     for processos in lista_processos[:]:
-        analisa(navegador, processos, nomeEstag, tabela)
+        analisa(navegador, processos, nomeEstag, tabela_modelos)
         #REMOVE O PROCESSO ANALISADO DA LISTA
         lista_processos.remove(processos)
-        analisar = int(input("Caso deseje analisar o próximo processo digite [1], caso contrario, digite [2]: "))
+        opcao = int(input("Caso deseje analisar o próximo processo digite [1], caso contrario, digite [2]: "))
         while True:
-            if analisar == 2:
+            if opcao == 2:
                 return
-            elif analisar == 1:
+            elif opcao == 1:
                 break
             else:
                 print("Alternativa inválida")
     return
 
+#FUNCAO QUE ANALISA UM PROCESSO ESPECIFICO
 def analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones):
-    tabela = corrige_planilha(planilhaDrones)
+    tabela_modelos = corrige_planilha(planilhaDrones)
     while True:
         #PEDE O PROCESSO A SER ANALISADO
         processo = str(input("Digite o número do processo: " ))
         opcao = int(input("Caso deseje analisar este processo, digite [1], caso contrario digite [2]: "))
         if opcao == 1:
-            analisa(navegador, processo, nomeEstag, tabela)
+            analisa(navegador, processo, nomeEstag, tabela_modelos)
         elif opcao != 2 or opcao != 1:
             print("Alternativa inválida")
         while True:
@@ -277,8 +359,8 @@ def analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones):
             else:
                 print("Alternativa inválida")
 
-
-def analisa(navegador, processo, nomeEstag, tabela):
+#FUNCAO PARA ANALISAR PROCESSO
+def analisa(navegador, processo, nomeEstag, tabela_modelos):
     #VARIAVEL UTILIZADA PARA O SELENIUM RETORNAR PARA A JANELA PRINCIPAL
     janela_principal = navegador.current_window_handle
     try:
@@ -383,7 +465,8 @@ def analisa(navegador, processo, nomeEstag, tabela):
                 #VERIFICA SE O MODELO DO DRONE E RADIO CONTROLE ESTA NA PLANILHA DE DRONES CONFORMES
                 modelos = df['Modelo']
                 modelos = modelos.reset_index(drop=True)
-                checkexcel = modelos.isin(tabela['MODELO'])
+                checkexcel = verifica_conformidade(modelos, tabela_modelos)
+                
                 for i in range(len(checkexcel)):
                     if checkexcel[i] == True:
                         print(f"O modelo {modelos[i]} está na lista de drones conformes.")
@@ -500,7 +583,7 @@ def analisa(navegador, processo, nomeEstag, tabela):
                 df = df.dropna(how='all')
                 modelos = df['Modelo']
                 modelos = modelos.reset_index(drop=True)
-                checkexcel = modelos.isin(tabela['MODELO'])                        
+                checkexcel = verifica_conformidade(modelos, tabela_modelos)                        
                 print("Modelos:")
                 #CRIA DATAFRAME PARA PRINTAR AS INFORMAÇÕES DO PRODUTO
                 data2 = df.values.tolist()
@@ -955,66 +1038,7 @@ def analisa(navegador, processo, nomeEstag, tabela):
             #VERIFICA SE O PROCESSO CONTEM ALGUMA SITUACAO ANTES DE ESCREVER SOBRE
             #SE HOUVER ALGUM ERRO OU PULAR PROCESSO NAO ESCREVERA NA PLANILHA
             if situacao == 'Aprovado' or situacao == 'Exigência' or situacao == 'Intercorrente':
-                #ENCONTRA O ICONE DO EDGE E ABRE O NAVEGADOR DA PLANILHA
-                pyautogui.PAUSE = 0.7
-                edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
-                #COPIA NUMERO DO PROCESSO
-                pyperclip.copy(processo)
-                #CLICA NO NAVEGADOR
-                pyautogui.click(edge)
-                time.sleep(0.5)
-                #PESQUISA PROCESSO NA PLANILHA
-                pyautogui.hotkey('ctrl', 'l')
-                time.sleep(0.3)
-                #COLA NUMERO DO PROCESSO E APERTA ENTER PARA PESQUISAR O PROCESSO
-                pyautogui.hotkey('ctrl', 'v')
-                time.sleep(0.3)
-                pyautogui.press('enter')
-                time.sleep(0.3)
-                pyautogui.press('esc')
-                #COPIA O NUMERO DO PROCESSO NA CELULA PARA SABER SE ELE FOI ENCONTRADO CORRETAMENTE
-                pyautogui.hotkey('ctrl','c')
-                time.sleep(0.5)
-                n_processoConfirmation = pyperclip.paste()
-                n_processoConfirmation = n_processoConfirmation.replace('\n', '')
-                n_processoConfirmation = n_processoConfirmation.strip('"')
-                print(n_processoConfirmation)
-                print(type(n_processoConfirmation))
-                if n_processoConfirmation != processo:
-                    while True:
-                        procure_manualmente = int(input("Houve um problema para encontrar o processo. Busque o manualmente e digite 1: "))
-                        if procure_manualmente == 1:
-                            time.sleep(1)
-                            pyautogui.click(edge)
-                            time.sleep(0.7)
-                            break
-                        else:
-                            print("Opcao incorreta")
-                #NAVEGA ENTRE AS CELULAS E INSERE OS DADOS SOBRE O PROCESSO
-                pyautogui.press('right')
-                pyautogui.PAUSE = 0.3
-                pyperclip.copy(nomeEstag)
-                pyautogui.hotkey('ctrl', 'v')
-                pyautogui.press('right')
-                pyperclip.copy(retido)
-                pyautogui.hotkey('ctrl', 'v')
-                pyautogui.press('right')
-                #VERIFICA SE ESTÁ RETIDO, SE NAO ESTIVER NAO ESCREVE CODIGO DE RASTREIO
-                if retido == 'Sim':
-                    pyperclip.copy(codigo_rastreio)
-                    pyautogui.hotkey('ctrl', 'v')
-                    pyautogui.press('right')
-                else:
-                    pyautogui.press('right')
-                pyautogui.press('right')
-                pyperclip.copy(nome_interessado)
-                pyautogui.hotkey('ctrl', 'v')
-                pyautogui.press('right')
-                pyperclip.copy(situacao)
-                pyautogui.hotkey('ctrl', 'v')
-                #VOLTA PARA A JANELA DO CHROME
-                chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
-                pyautogui.click(chrome)
+                preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastreio, nome_interessado)
             else:
                 print('--------------------------------------------------------------------------')
                 print('--------------------------------------------------------------------------')

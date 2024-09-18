@@ -3,62 +3,65 @@ import pandas as pd
 from tabulate import tabulate
 import numpy as np
 import funcoes as fc
+import pyautogui
+import pyperclip
+import time
 
-preenchido = {'Modelo': [np.nan, "RM330"], 'Nome Comercial': ["MINI 3", "C5"], 'Número de Série (incluindo rádio controle e óculos)': ["1581FFGDF564GFDRA45", "5HAZ54GDGDG6"] }
+# Criação do DataFrame
+preenchido = {'Modelo': [np.nan, "RM 330"], 'Nome Comercial': ["MINI 3", "C5"], 'Número de Série (incluindo rádio controle e óculos)': ["1581FFGDF564GFDRA45", "5HAZ54GDGDG6"]}
 df = pd.DataFrame(preenchido)
-modelos = df['Modelo']
-modelos = modelos.reset_index(drop=True)
-modelos = modelos.dropna()
+modelos = df['Modelo'].dropna().reset_index(drop=True)
+
 print(df)
 print(modelos)
 print("\n")
-df = df.replace(' ', np.nan)
-df = df.dropna(how='all')
+
+# Exibe a tabela formatada
+df = df.replace(' ', np.nan).dropna(how='all')
 data = df.values.tolist()
 headers = df.columns.tolist()
 print(tabulate(data, headers=headers, tablefmt='pretty'))
 print('\n')
-planilhaDrones = input("Insira o caminho da planilha/lista de drones conformes: ")
-#RETIRA ASPAS CASO EXISTA NO CAMINHO DA PLANILHA
-planilhaDrones = planilhaDrones.replace('"' , '')
-tabela = fc.corrige_planilha(planilhaDrones)
-tabela = tabela['MODELO']
+
+planilhaDrones = input("Insira o caminho da planilha/lista de drones conformes: ").replace('"' , '')
+
+# Tenta carregar a planilha de drones conformes
+try:
+    tabela = fc.corrige_planilha(planilhaDrones)
+    tabela_modelos = tabela['MODELO'].astype(str)  # Garante que os modelos estão como strings
+except Exception as e:
+    print(f"Erro ao carregar a planilha: {e}")
+    exit()
+
 # checkexcel = modelos.isin(tabela['MODELO'])
 # checkexcel = tabela['MODELO'].isin(modelos)
     
-checkexcel = []
-for i in modelos:
-    checkexcel.append(0)
-for modelo_solicitante in range(len(modelos)):
-    j = 0
-    while j < len(tabela):
-        if modelos[modelo_solicitante].lower() == str(tabela[j]).lower():
-            checkexcel[modelo_solicitante] = True
-            break
-        else:
-            checkexcel[modelo_solicitante] = False
-            j+=1
+# Verificação de conformidade
+checkexcel = [False] * len(modelos)  # Inicializa a lista com False
 
-# for i in tabela:
-#     for j in range(len(modelos)):
-#         if modelos[j].lower() == str(i).lower():
-#             checkexcel[j] = True
-#             print("modelo é igual")
+# for modelo_solicitante in range(len(modelos)):
+#     j = 0
+#     while j < len(tabela):
+#         if modelos[modelo_solicitante].lower() == str(tabela[j]).lower():
+#             checkexcel[modelo_solicitante] = True
+#             break
 #         else:
-#             if not checkexcel[j]:
-#                 checkexcel[j] = False
-# for i in range(len(tabela)):
-#     tabela[i] = str(tabela[i])
-#     tabela[i] = tabela[i].lower()
-    
+#             checkexcel[modelo_solicitante] = False
+#             j+=1
 
-# for modelo in modelos:
-#     if modelo.lower() in tabela:
-#         print(f"O modelo {modelo} está na lista de drones conformes.")
-#     else:
-#         print(f"O modelo {modelo} não se encontra na lista de drones conformes")
+# Comparação de modelos
+for modelo_solicitante in range(len(modelos)):
+    for j in range(len(tabela_modelos)):
+        try:
+            if modelos[modelo_solicitante].lower().replace(' ','').strip('\n') == tabela_modelos[j].lower().replace(' ',''):
+                checkexcel[modelo_solicitante] = True
+                break
+        except KeyError as e:
+            print(f"Erro ao acessar os índices: {e}")
+            continue
 
-
+# Exibe o resultado
+print("Resultados da verificação de conformidade:", checkexcel)
             
 print(checkexcel)
 input()
@@ -68,3 +71,4 @@ for i in range(len(checkexcel)):
     else:
         print(f"O modelo {modelos[i]} não se encontra na lista de drones conformes")
 print('\n')
+
