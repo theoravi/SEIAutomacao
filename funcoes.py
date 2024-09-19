@@ -817,15 +817,15 @@ def analisa(navegador, processo, nomeEstag, tabela_modelos):
                     select.select_by_visible_text('ANATEL/E-mail de replicação <nao-responda@anatel.gov.br>')
                     #ESCREVE O EMAIL DO SOLICITANTE
                     navegador.find_element(By.XPATH, '//*[@id="s2id_autogen1"]').send_keys(emailSol)
-                    time.sleep(1)
+                    time.sleep(1.2)
                     #CLICA NO EMAIL DO SOLICITANTE
                     navegador.find_element(By.CLASS_NAME, 'select2-result-label').click()
                     #MOSTRA AS OPCOES DE EXIGENCIA
                     #EXECUTA A CONDICAO PARA CADA EXIGENCIA
                     while True:
                         try:
-                            print("Selecione o tipo de exigência abaixo:\n"
-                                " [1] Falta algum anexo no processo.\n",
+                            print("Selecione o tipo de exigência abaixo:\n",
+                                "[1] Falta algum anexo no processo.\n",
                                 "[2] Erro na declaração de conformidade ou alguma exigência que é necessário abrir novo processo.\n",
                                 "[3] Outros.")
                             time.sleep(0.5)
@@ -868,6 +868,7 @@ def analisa(navegador, processo, nomeEstag, tabela_modelos):
                                     #INSERE TAG REFERENTE A PROCESSOS INTERCORRENTES
                                     navegador.switch_to.frame('ifrVisualizacao')
                                     #CLICA NO ICONE DE TAG
+                                    time.sleep(0.5)
                                     navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
                                     try:    
                                         navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
@@ -930,6 +931,7 @@ def analisa(navegador, processo, nomeEstag, tabela_modelos):
                                     #INSERE TAG REFERENTE A PROCESSOS INTERCORRENTES 
                                     navegador.switch_to.frame('ifrVisualizacao')
                                     #CLICA NO ICONE DE TAG
+                                    time.sleep(0.5)
                                     navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
                                     try:    
                                         navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
@@ -991,6 +993,7 @@ def analisa(navegador, processo, nomeEstag, tabela_modelos):
                                     time.sleep(1)
                                     navegador.switch_to.frame('ifrVisualizacao')
                                     #CLICA NO ICONE DE TAG
+                                    time.sleep(0.5)
                                     navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
                                     try:    
                                         navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
@@ -1045,8 +1048,6 @@ def analisa(navegador, processo, nomeEstag, tabela_modelos):
     except Exception as error:
         print(f"Ocorreu um erro: {error}")
     pyautogui.PAUSE = 0.7
-
-
 
 #FUNCAO PARA CONCLUIR PROCESSO
 def concluiProcesso(navegador, lista_procConformes):
@@ -1231,6 +1232,7 @@ Anatel - Agência Nacional de Telecomunicações'''
                         #SALVA ANOTACAO
                         navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosSuperior"]/button').click()
                         #CLICA NO ICONE DE TAG
+                        time.sleep(0.5)
                         navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
                         try:
                             navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click() 
@@ -1353,6 +1355,7 @@ Anatel - Agência Nacional de Telecomunicações'''
                         #SALVA MUDANCAS
                         navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosSuperior"]/button').click()
                         #INSERE TAG NO PROCESSO
+                        time.sleep(0.5)
                         navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
                         try:  
                             navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
