@@ -1,0 +1,10 @@
+pip install numpy
+pip install pandas
+pip install pyautogui
+pip install pyperclip
+pip install undetected-chromedriver
+pip install Unicode
+pip install selenium
+pip install tabulate
+pip install webdriver-manager
+pip install opencv-python
