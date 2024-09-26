@@ -1385,6 +1385,7 @@ Anatel - Agência Nacional de Telecomunicações'''
                         time.sleep(1)
                         navegador.switch_to.frame('ifrVisualizacao')
                         #CLICA NO ICONE DE ANOTACAO
+                        time.sleep(0.7)
                         navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[17]').click()
                         #APAGA ANOTACAO DE AGUARDANDO ASSINATURA
                         navegador.find_element(By.XPATH, '//*[@id="txaDescricao"]').clear()
