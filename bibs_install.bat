@@ -14,3 +14,4 @@ pip install selenium
 pip install tabulate
 pip install webdriver-manager
 pip install opencv-python
+pip install PyInstaller
