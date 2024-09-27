@@ -1,10 +1,13 @@
+#Para gerar o executável, execute o comando abaixo:
+#python -m PyInstaller --icon="T_logo-1-.ico" --onefile theomation.py --clean
+
+
 #IMPORTS NECESSÁRIOS PARA O FUNCIONAMENTO DO CÓDIGO
 import unidecode
 from concurrent.futures import ThreadPoolExecutor
 from selenium.webdriver.common.by import By
 import funcoes as fc
 
-#python -m PyInstaller --onefile theomation.py
 def main():
     reset = True
     while reset:
@@ -22,6 +25,8 @@ def main():
                 break
             #CASO NAO ENCONTRE O FILTRO DE PROCESSOS ELE INFOMA QUE NAO ENTROU NO SEI
             else:
+                #APAGA O USUÁRIO
+                navegador.find_element(By.XPATH,'//*[@id="txtUsuario"]').clear()
                 print('Usuário ou senha incorretos. Digite novamente')
         
         #PEGA O CORPO DA TABELA NO NAVEGADOR

@@ -1127,6 +1127,16 @@ def analisa(navegador, processo, nomeEstag, tabela_modelos):
         print(f"Ocorreu um erro: {error}")
     pyautogui.PAUSE = 0.7
 
+
+#FUNCAO PARA INSERIR O EMAIL
+def endereco_email(endereco, navegador):
+    navegador.find_element(By.XPATH, '//*[@id="s2id_autogen1"]').send_keys(endereco)
+    time.sleep(1)
+    #CLICA NO EMAIL DO SOLICITANTE
+    navegador.find_element(By.XPATH, '//*[@id="select2-drop"]/ul').click()
+    time.sleep(0.2)
+
+
 #FUNCAO PARA CONCLUIR PROCESSO
 def concluiProcesso(navegador, lista_procConformes):
     #DEFINE EMAIL PARA PROCESSO RETIDO
@@ -1192,9 +1202,22 @@ Anatel - Agência Nacional de Telecomunicações'''
     #VARIAVEL PARA VOLTAR À JANELA INICIAL
     janela_principal = navegador.current_window_handle
 
+    caminho = input("Insira o caminho da planilha geral: ")
+    file_path = caminho.replace('"','').replace('\\','/')
+
+    # Carrega a planilha geral de processos com apenas a primeira coluna de processos (índice 0) 
+    # e a terceira coluna que informa se está retido ou não (índice 2)
+    df = pd.read_excel(file_path, usecols=[0,2])
+
     #ITERA SOBRE OS processo DA LISTA DE PROCESSOS CONFORMES
     for processosAssinados in lista_procConformes[:]:
         print(f'Concluindo processo nº {processosAssinados}')
+
+        # Procura o processo na primeira coluna (número de processo)
+        resultado = df[df['Nº do Processo SEI'] == processosAssinados]
+        # Pega o valor da terceira coluna (retido)
+        retido = resultado.iloc[0]['Retido']  
+
         try:
             #ENTRA NA PAGINA DO PROCESSO
             navegador.switch_to.default_content()
