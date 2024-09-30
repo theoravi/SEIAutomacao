@@ -1142,39 +1142,39 @@ def concluiProcesso(navegador, lista_procConformes):
     #DEFINE EMAIL PARA PROCESSO RETIDO
     textoRetido = '''Prezado(a) Senhor(a),
 
-Em atenção ao pedido de homologação constante do processo SEI em referência, informamos que:
+    Em atenção ao pedido de homologação constante do processo SEI em referência, informamos que:
 
-1. O pedido foi APROVADO
-2. O Despacho Decisório que aprovou o pedido está disponível publicamente por meio do sistema SEI na área de Pesquisa Pública, no link:
+    1. O pedido foi APROVADO
+    2. O Despacho Decisório que aprovou o pedido está disponível publicamente por meio do sistema SEI na área de Pesquisa Pública, no link:
 
         https://sei.anatel.gov.br/sei/modulos/pesquisa/md_pesq_processo_pesquisar.php?acao_externa=protocolo_pesquisar&acao_origem_externa=protocolo_pesquisar&id_orgao_acesso_externo=0
 
 
-3. O Despacho Decisório deverá ser portado junto ao Equipamento (fisicamente ou eletronicamente), para que as autoridades competentes possam conferir a regularidade, quando necessário.
-4. Visto que o produto se encontra retido, para que seja informado o número de série, solicitamos que acesse o sistema SEI da Anatel por meio do seguinte link:
+    3. O Despacho Decisório deverá ser portado junto ao Equipamento (fisicamente ou eletronicamente), para que as autoridades competentes possam conferir a regularidade, quando necessário.
+    4. Visto que o produto se encontra retido, para que seja informado o número de série, solicitamos que acesse o sistema SEI da Anatel por meio do seguinte link:
 
 
-             https://sei.anatel.gov.br/sei/controlador_externo.php?acao=usuario_externo_logar&id_orgao_acesso_externo=0.
+                https://sei.anatel.gov.br/sei/controlador_externo.php?acao=usuario_externo_logar&id_orgao_acesso_externo=0.
 
 
-5. Após autenticação no sistema SEI, solicitamos que inclua os documentos selecionando a opção "Intercorrente" e informando o número do processo em referência.
+    5. Após autenticação no sistema SEI, solicitamos que inclua os documentos selecionando a opção "Intercorrente" e informando o número do processo em referência.
 
-6. Em caso de equipamento retido, recomendamos que apresente cópia do Despacho decisório ao e-mail corporativo, para que seja liberada a entrega da encomenda retida, de acordo com o local onde está sendo feita a fiscalização.
+    6. Em caso de equipamento retido, recomendamos que apresente cópia do Despacho decisório ao e-mail corporativo, para que seja liberada a entrega da encomenda retida, de acordo com o local onde está sendo feita a fiscalização.
 
-Caso encomenda retida no Paraná, encaminhar email para - documentacao.pr@anatel.gov.br
-Caso encomenda retida em São Paulo, encaminhar email para - documentacao.sp@anatel.gov.br
-Caso encomenda retida em Rio de Janeiro, encaminhar email para - documentacao.rj@anatel.gov.br
+    Caso encomenda retida no Paraná, encaminhar email para - documentacao.pr@anatel.gov.br
+    Caso encomenda retida em São Paulo, encaminhar email para - documentacao.sp@anatel.gov.br
+    Caso encomenda retida em Rio de Janeiro, encaminhar email para - documentacao.rj@anatel.gov.br
 
 
-FAVOR NÃO RESPONDER ESTE E-MAIL.
+    FAVOR NÃO RESPONDER ESTE E-MAIL.
 
-Atenciosamente,
+    Atenciosamente,
 
-ORCN - Gerência de Certificação e Numeração
+    ORCN - Gerência de Certificação e Numeração
 
-SOR - Superintendência de Outorga e Recursos à Prestação
+    SOR - Superintendência de Outorga e Recursos à Prestação
 
-Anatel - Agência Nacional de Telecomunicações'''
+    Anatel - Agência Nacional de Telecomunicações'''
 
     #DEFINE EMAIL PARA PROCESSO NAO RETIDO
     textoNaoRetido = '''Prezado(a) Senhor(a),
@@ -1207,256 +1207,164 @@ Anatel - Agência Nacional de Telecomunicações'''
 
     # Carrega a planilha geral de processos com apenas a primeira coluna de processos (índice 0) 
     # e a terceira coluna que informa se está retido ou não (índice 2)
-    df = pd.read_excel(file_path, usecols=[0,2])
+    df = pd.read_excel(file_path, usecols=[0,2,3])
 
     #ITERA SOBRE OS processo DA LISTA DE PROCESSOS CONFORMES
     for processosAssinados in lista_procConformes[:]:
         print(f'Concluindo processo nº {processosAssinados}')
 
-        # Procura o processo na primeira coluna (número de processo)
+        # Verificar se o processo está na planilha
         resultado = df[df['Nº do Processo SEI'] == processosAssinados]
-        # Pega o valor da terceira coluna (retido)
-        retido = resultado.iloc[0]['Retido']  
+
+        if not resultado.empty:
+            # Se o processo for encontrado, pegar o valor da coluna 'Retido'
+            retido = resultado.iloc[0]['Retido']
+            codRastreio = resultado.iloc[0]['NumerodoRastreio']
+            print(f"O processo {processosAssinados} está retido: {retido}, com código de rastreio {codRastreio}")
+            retido = retido.lower()
+        else:
+            print(f"Processo {processosAssinados} não encontrado na planilha.")
+            continue  # Pula para o próximo processo 
 
         try:
-            #ENTRA NA PAGINA DO PROCESSO
+            # Interagir com o navegador para acessar a página do processo
             navegador.switch_to.default_content()
             navegador.find_element(By.ID, 'txtPesquisaRapida').clear()
             navegador.find_element(By.ID, 'txtPesquisaRapida').send_keys(processosAssinados)
-            elementos = navegador.find_element(By.ID, 'txtPesquisaRapida')
-            elementos.send_keys(Keys.ENTER)
+            navegador.find_element(By.ID, 'txtPesquisaRapida').send_keys(Keys.ENTER)
             time.sleep(1.5)
+            
             #PEGA DADOS DA DECLARACAO DE CONFORMIDADE
             navegador.switch_to.frame('ifrArvore')
+
             #CONFERE SE EXISTE A DECLARACAO DE CONFORMIDADE OU UMA PASTA
-            if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade", navegador) or check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]', navegador):
-                #CASO HAJA PASTA ELE CLICARA NA PRIMEIRA
-                if check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]', navegador):
-                    navegador.find_element(By.XPATH, '//*[@id="spanPASTA1"]').click()
-                    time.sleep(1)
-            #CLICA NA DECLARACAO DE CONFORMIDADE
-            navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
-            #CONFERE SE HÁ CODIGO DE RASTREIO
+            if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade", navegador):
+                navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
+                time.sleep(0.3)
+            elif check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]', navegador):
+                navegador.find_element(By.XPATH, '//*[@id="spanPASTA1"]').click()
+                time.sleep(1)
+                navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
+                time.sleep(0.3)
+            else:
+                print("Declaração de Conformidade ou Pasta não foi achada")
+
             navegador.switch_to.default_content()
             navegador.switch_to.frame('ifrVisualizacao')
             navegador.switch_to.frame('ifrArvoreHtml')
-            tabela_cod = navegador.find_element(By.XPATH, '/html/body/table[4]/tbody/tr/td[1]').text
-            #FLUXO DE DRONES PRE APROVADOS
-            #CONFERE SE HÁ CÓDIGO DE RASTREIO E SE É PRE APROVADO PELO INDICE DAS TABELAS E O SEU TEXTO
-            if check_element_exists(By.XPATH, '/html/body/table[4]/tbody/tr/td[2]', navegador) and tabela_cod == 'Código de rastreio':
-                #ARMAZENA CODIGO DE RASTREIO
-                codigo_rastreioConforme = navegador.find_element(By.XPATH, '/html/body/table[4]/tbody/tr/td[2]').text
-                #ARMAZENA EMAIL DO SOLICITANTE
-                emailSol = navegador.find_element(By.XPATH, '/html/body/div[3]/a[1]').text
-                time.sleep(0.2)
+
+            #ARMAZENA EMAIL DO SOLICITANTE
+            emailSol = navegador.find_element(By.XPATH, '/html/body/div[3]/a[1]').text
+
+            navegador.switch_to.default_content()
+            navegador.switch_to.frame('ifrArvore')
+
+            #VERIFICA SE EXISTE O DESPACHO DECISORIO
+            if check_element_exists(By.PARTIAL_LINK_TEXT, "Despacho Decisório", navegador):
+                #CLICA NO DESPACHO DECISORIO
+                navegador.find_element(By.PARTIAL_LINK_TEXT, "Despacho Decisório").click()
                 navegador.switch_to.default_content()
-                navegador.switch_to.frame('ifrArvore')
-                #VERIFICA SE EXISTE O DESPACHO DECISORIO
-                if check_element_exists(By.PARTIAL_LINK_TEXT, "Despacho Decisório", navegador):
-                    #CLICA NO DESPACHO DECISORIO
-                    navegador.find_element(By.PARTIAL_LINK_TEXT, "Despacho Decisório").click()
+                navegador.switch_to.frame('ifrVisualizacao')
+                navegador.switch_to.frame('ifrArvoreHtml')
+                #VERIFICA SE EXISTE ASSINATURA DO GERENTE
+                if check_element_exists(By.XPATH, "/html/body/div[1]/table[1]", navegador):
                     navegador.switch_to.default_content()
                     navegador.switch_to.frame('ifrVisualizacao')
-                    navegador.switch_to.frame('ifrArvoreHtml')
-                    #VERIFICA SE EXISTE ASSINATURA DO GERENTE
-                    if check_element_exists(By.XPATH, "/html/body/div[1]/table[1]", navegador):
-                        navegador.switch_to.default_content()
-                        navegador.switch_to.frame('ifrVisualizacao')
-                        #CLICA NO ICONE DE EMAIL
-                        navegador.find_element(By.XPATH, "//img[@title='Enviar Documento por Correio Eletrônico']").click()
-                        time.sleep(0.5)
-                        #MUDA PARA A JANELA MAIS RECENTE
-                        navegador.switch_to.window(navegador.window_handles[-1])
-                        time.sleep(1)
-                        #SELECIONA O DROPDOWN COM AS OPCOES DE EMAIL
-                        select_element = navegador.find_element(By.XPATH, '//*[@id="selDe"]')
-                        select = Select(select_element)
-                        #SELECIONA A OPCAO DE EMAIL ANATEL
-                        select.select_by_visible_text('ANATEL/E-mail de replicação <nao-responda@anatel.gov.br>')
-                        #INSERE EMAIL DO SOLICITANTE
-                        navegador.find_element(By.XPATH, '//*[@id="s2id_autogen1"]').send_keys(emailSol)
-                        time.sleep(1)
-                        #CLICA NO EMAIL DO SOLICITANTE
-                        navegador.find_element(By.XPATH, '//*[@id="select2-result-label-2"]').click()
-                        #INSERE ASSUNTO DO EMAIL
-                        navegador.find_element(By.ID, 'txtAssunto').send_keys(f'Processo SEI nº {processosAssinados} - Aprovado')
-                        #VERIFICA SE HA CODIGO DE RASTREIO
-                        #SE NAO HA INSERE TEXTO DE NAO RETIDO
-                        if not codigo_rastreioConforme.strip():
-                            navegador.find_element(By.ID, 'txaMensagem').send_keys(textoNaoRetido)
-                            prod = 'naoRetido'
-                        #SE HA INSERE TEXTO DE RETIDO
-                        else:
-                            navegador.find_element(By.ID, 'txaMensagem').send_keys(textoRetido)
-                            prod = 'Retido'
-                        #ENVIA EMAIL
-                        navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
-                        #FECHA ALERTA DO NAVEGADOR
-                        alert = Alert(navegador)
-                        alert.accept()
-                        #RETORNA PARA A JANELA PRINCIPAL
-                        navegador.switch_to.window(janela_principal)
-                        navegador.switch_to.default_content()
-                        #VOLTA PARA A JANELA INICIAL DO PROCESSO
-                        navegador.find_element(By.ID, 'txtPesquisaRapida').send_keys(processosAssinados)
-                        elementos = navegador.find_element(By.ID, 'txtPesquisaRapida')
-                        elementos.send_keys(Keys.ENTER)
-                        time.sleep(1)
-                        #CLICA NO ICONE DE ANOTACAO
-                        navegador.switch_to.frame('ifrVisualizacao')
-                        time.sleep(0.7)
-                        navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[17]').click()
-                        #LIMPA O TEXTO DA ANOTACAO
-                        navegador.find_element(By.XPATH, '//*[@id="txaDescricao"]').clear()
-                        #SALVA ANOTACAO
-                        navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosSuperior"]/button').click()
-                        #CLICA NO ICONE DE TAG
-                        time.sleep(0.5)
-                        navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
-                        try:
-                            navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click() 
-                        except:
-                            navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
-                            alert.accept()
-                            navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
-                            time.sleep(0.5)
-                            navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-                        #CLICA NO DROPDOWN DE TAG
-                        time.sleep(0.5)
-                        #VERIFICA SE ESTA RETIDO
-                        if prod == 'naoRetido':
-                            #CLICA NA TAG DE NAO RETIDO
-                            navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[16]').click()
-                        else:
-                            #CLICA NA TAG DE RETIDO
-                            navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[17]').click()
-                        #SALVA TAG
-                        navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
-                        navegador.switch_to.default_content()
-                        #ENTRA NA PAGINA INICIAL DO PROCESSO
-                        navegador.find_element(By.ID, 'txtPesquisaRapida').send_keys(processosAssinados)
-                        elementos = navegador.find_element(By.ID, 'txtPesquisaRapida')
-                        elementos.send_keys(Keys.ENTER)
-                        time.sleep(1)
-                        #CONCLUI PROCESSO
-                        navegador.switch_to.frame('ifrVisualizacao')
-                        navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[20]').click()
-                        time.sleep(0.3)
-                        navegador.switch_to.default_content()
+                    #CLICA NO ICONE DE EMAIL
+                    navegador.find_element(By.XPATH, "//img[@title='Enviar Documento por Correio Eletrônico']").click()
+                    time.sleep(0.5)
+                    #MUDA PARA A JANELA MAIS RECENTE
+                    navegador.switch_to.window(navegador.window_handles[-1])
+                    time.sleep(1)
+                    #SELECIONA O DROPDOWN COM AS OPCOES DE EMAIL
+                    select_element = navegador.find_element(By.XPATH, '//*[@id="selDe"]')
+                    select = Select(select_element)
+                    #SELECIONA A OPCAO DE EMAIL ANATEL
+                    select.select_by_visible_text('ANATEL/E-mail de replicação <nao-responda@anatel.gov.br>')
+                    #INSERE EMAIL DO SOLICITANTE E CLICA NO EMAIL DO SOLICITANTE
+                    navegador.find_element(By.XPATH, '//*[@id="s2id_autogen1"]').send_keys(emailSol)
+                    time.sleep(1)
+                    #CLICA NO EMAIL DO SOLICITANTE
+                    navegador.find_element(By.XPATH, '//*[@id="select2-result-label-2"]').click()
+                    #INSERE ASSUNTO DO EMAIL E TEXTO DO EMAIL
+                    if retido == "sim":
+                        endereco_email("documentacao.sp@anatel.gov.br", navegador)
+                        endereco_email("documentacao.rj@anatel.gov.br", navegador)
+                        endereco_email("documentacao.pr@anatel.gov.br", navegador)
+                        navegador.find_element(By.ID, 'txtAssunto').send_keys(f'Processo SEI nº {processosAssinados} - Aprovado ({codRastreio})')
+                        navegador.find_element(By.ID, 'txaMensagem').send_keys(textoRetido)
                     else:
-                        #NAO ENVIA EMAIL CASO NAO ESTEJA COM DESPACHO
-                        print(f"O despacho do processo {processosAssinados} ainda não foi assinado, execute o script novamente após conter a assinatura do gerente.")
-                        time.sleep(0.5)
-            #FLUXO DE DRONES IMPORTADOS PRA USO PROPRIO           
-            elif check_element_exists(By.XPATH, '/html/body/table[5]/tbody/tr/td[2]', navegador) and tabela_cod != 'Código de rastreio':
-                #CONFERE SE ESTA RETIDO PELO INDICE E TEXTO DA TABELA DE CODIGO DE RASTREIO
-                codigo_rastreioConforme = navegador.find_element(By.XPATH, '/html/body/table[5]/tbody/tr/td[2]').text
-                #ARMAZENA EMAIL DO SOLICITANTE
-                emailSol = navegador.find_element(By.XPATH, '/html/body/div[3]/a[1]').text
-                navegador.switch_to.default_content()
-                navegador.switch_to.frame('ifrArvore')
-                #VERIFICA SE EXISTE DESPACHO
-                if check_element_exists(By.PARTIAL_LINK_TEXT, "Despacho Decisório", navegador):
-                    #CLICA NO DESPACHO
-                    navegador.find_element(By.PARTIAL_LINK_TEXT, "Despacho Decisório").click()
-                    navegador.switch_to.default_content()
-                    navegador.switch_to.frame('ifrVisualizacao')
-                    navegador.switch_to.frame('ifrArvoreHtml')
-                    #VERIFICA ASSINATURA DO DESPACHO DECISORIO  
-                    if check_element_exists(By.XPATH, "/html/body/div[1]/table[1]", navegador):
-                        #ENVIA EMAIL DE APROVACAO DO PROCESSO
-                        navegador.switch_to.default_content()
-                        navegador.switch_to.frame('ifrVisualizacao')
-                        #CLICA NO ICONE DE ENVIAR EMAIL
-                        navegador.find_element(By.XPATH, "//img[@title='Enviar Documento por Correio Eletrônico']").click()
-                        time.sleep(0.5)
-                        #MUDA PARA JANELA MAIS RECENTE
-                        navegador.switch_to.window(navegador.window_handles[-1])
-                        time.sleep(1)
-                        #SELECIONA EMAIL DA ANATEL
-                        select_element = navegador.find_element(By.ID, 'selDe')
-                        select = Select(select_element)
-                        select.select_by_visible_text('ANATEL/E-mail de replicação <nao-responda@anatel.gov.br>')
-                        #ESCREVE EMAIL DO SOLICITANTE
-                        navegador.find_element(By.XPATH, '//*[@id="s2id_autogen1"]').send_keys(emailSol)
-                        time.sleep(1)
-                        #CLICA NO EMAIL DO SOLICITANTE
-                        navegador.find_element(By.XPATH, '//*[@id="select2-result-label-2"]').click()
-                        #ESCREVE ASSUNTO DO EMAIL
                         navegador.find_element(By.ID, 'txtAssunto').send_keys(f'Processo SEI nº {processosAssinados} - Aprovado')
-                        #DIFERE O EMAIL PARA PRODUTO RETIDO E NAO RETIDO
-                        if not codigo_rastreioConforme.strip():
-                            #EMAIL PARA NAO RETIDO
-                            navegador.find_element(By.ID, 'txaMensagem').send_keys(textoNaoRetido)
-                            prod = 'naoRetido'
-                        else:
-                            #EMAIL PARA RETIDO
-                            navegador.find_element(By.ID, 'txaMensagem').send_keys(textoRetido)
-                            prod = 'Retido'
-                        #ENVIA EMAIL
-                        navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosSuperior"]/button[1]').click()
-                        #FECHA ALERTA DO NAVEGADOR
-                        alert = Alert(navegador)
-                        alert.accept()      
-                        #MUDA PARA JANELA PRINCIPAL
-                        navegador.switch_to.window(janela_principal)
-                        navegador.switch_to.default_content()
-                        #RETORNA PARA PAGINA INICIAL DO PROCESSO
-                        navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processosAssinados)
-                        elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                        elementos.send_keys(Keys.ENTER)
-                        time.sleep(1)
-                        navegador.switch_to.frame('ifrVisualizacao')
-                        #CLICA NO ICONE DE ANOTACAO
-                        time.sleep(0.7)
-                        navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[17]').click()
-                        #APAGA ANOTACAO DE AGUARDANDO ASSINATURA
-                        navegador.find_element(By.XPATH, '//*[@id="txaDescricao"]').clear()
-                        #SALVA MUDANCAS
-                        navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosSuperior"]/button').click()
-                        #INSERE TAG NO PROCESSO
+                        navegador.find_element(By.ID, 'txaMensagem').send_keys(textoNaoRetido)
+
+                    #ENVIA EMAIL
+                    navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
+                    #FECHA ALERTA DO NAVEGADOR
+                    alert = Alert(navegador)
+                    alert.accept()
+                    #RETORNA PARA A JANELA PRINCIPAL
+                    navegador.switch_to.window(janela_principal)
+                    navegador.switch_to.default_content()
+                    #VOLTA PARA A JANELA INICIAL DO PROCESSO
+                    navegador.find_element(By.ID, 'txtPesquisaRapida').send_keys(processosAssinados)
+                    elementos = navegador.find_element(By.ID, 'txtPesquisaRapida')
+                    elementos.send_keys(Keys.ENTER)
+                    time.sleep(1)
+                    #CLICA NO ICONE DE ANOTACAO
+                    navegador.switch_to.frame('ifrVisualizacao')
+                    time.sleep(1)
+                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[17]').click()
+                    #LIMPA O TEXTO DA ANOTACAO
+                    navegador.find_element(By.XPATH, '//*[@id="txaDescricao"]').clear()
+                    #SALVA ANOTACAO
+                    navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosSuperior"]/button').click()
+                    #CLICA NO ICONE DE TAG
+                    time.sleep(0.5)
+                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
+                    try:
+                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click() 
+                    except:
+                        navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
+                        alert.accept()
+                        navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
                         time.sleep(0.5)
-                        navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
-                        try:  
-                            navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-                        except:
-                            navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
-                            alert.accept()
-                            navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
-                            time.sleep(0.5)
-                            navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-                        time.sleep(0.5)
-                        #DIFERE A TAG PARA RETIDO E NAO RETIDO
-                        if prod == 'naoRetido':
-                            #TAG DE NAO RETIDO
-                            navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[16]').click()                            
-                        else:
-                            #TAG DE RETIDO
-                            navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[17]').click()
-                        #SALVA TAG
-                        navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
-                        navegador.switch_to.default_content()
-                        time.sleep(0.3)
-                        #VOLTA PARA PAGINA INICIAL DO PROCESSO
-                        navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processosAssinados)
-                        elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                        elementos.send_keys(Keys.ENTER)
-                        time.sleep(1)
-                        navegador.switch_to.frame('ifrVisualizacao')
-                        #CONCLUI PROCESSO
-                        navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[20]').click()
-                        time.sleep(0.3)
-                        navegador.switch_to.default_content()                   
-                    #CASO O DESPACHO NAO ESTEJA ASSINADO ELE PEDE PARA AGUARDAR
+                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                    #CLICA NO DROPDOWN DE TAG
+                    time.sleep(0.5)
+                    #VERIFICA SE ESTA RETIDO
+                    if retido == 'não':
+                        #CLICA NA TAG DE NAO RETIDO
+                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[16]').click()
+                    else:
+                        #CLICA NA TAG DE RETIDO
+                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[17]').click()
+                    #SALVA TAG
+                    navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
+                    navegador.switch_to.default_content()
+                    #ENTRA NA PAGINA INICIAL DO PROCESSO
+                    navegador.find_element(By.ID, 'txtPesquisaRapida').send_keys(processosAssinados)
+                    elementos = navegador.find_element(By.ID, 'txtPesquisaRapida')
+                    elementos.send_keys(Keys.ENTER)
+                    time.sleep(1)
+                    #CONCLUI PROCESSO
+                    navegador.switch_to.frame('ifrVisualizacao')
+                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[20]').click()
+                    time.sleep(0.3)
+                    navegador.switch_to.default_content()
                 else:
+                    #NAO ENVIA EMAIL CASO NAO ESTEJA COM DESPACHO
                     print(f"O despacho do processo {processosAssinados} ainda não foi assinado, execute o script novamente após conter a assinatura do gerente.")
-                    time.sleep(0.5)       
+                    time.sleep(0.5)
+
+
         #CONDICAO DE ERRO
         except Exception as e:
             print("Ocorreu algum erro.\nPulando processo...")
             print(e)
-            break
+            continue  # Não interrompe, mas pula para o próximo processo
+        
         finally:
+            # Remover o processo da lista fora da iteração original
             lista_procConformes.remove(processosAssinados) 
 
 
