@@ -1,3 +1,5 @@
+#Para baixar as bibliotecas, execute o arquivo bibs_install.bat
+
 #Para gerar o executável, execute o comando abaixo:
 #python -m PyInstaller --icon="T_logo-1-.ico" --onefile theomation.py --clean
 
