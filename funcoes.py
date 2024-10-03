@@ -251,8 +251,8 @@ def verifica_conformidade(modelos, tabela_modelos):
     return checkexcel
 
 #FUNCAO QUE FORMATA A PLANILHA DE DRONES CONFORMES
-def corrige_planilha(planilhaDrones):
-    tabela = pd.read_excel(planilhaDrones)
+def corrige_planilha(planilha):
+    tabela = pd.read_excel(planilha)
     tabela.columns = tabela.iloc[1]
     tabela = tabela.iloc[2:]
     tabela = tabela.reset_index(drop=True)
@@ -398,7 +398,12 @@ def iniciaJanela(navegador):
     root.mainloop()
     #ACESSA O SEI
     time.sleep(1)
-    navegador.find_element(By.XPATH,'//*[@id="sbmAcessar"]').click()
+    navegador.find_element(By.XPATH, '//*[@id="txtUsuario"]').click()
+    pyautogui.hotkey('ctrl', 'a')
+    pyautogui.hotkey('ctrl', 'c')
+    user_name = pyperclip.paste()
+    navegador.find_element(By.XPATH, '//*[@id="sbmAcessar"]').click()
+    return user_name
 
 #FUNCAO QUE ANALISA TODOS OS PROCESSOS NA CAIXA DO USUARIO
 def analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrones):

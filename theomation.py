@@ -9,6 +9,7 @@ import unidecode
 from concurrent.futures import ThreadPoolExecutor
 from selenium.webdriver.common.by import By
 import funcoes as fc
+import json
 
 def main():
     reset = True
@@ -17,7 +18,7 @@ def main():
         while True:
             #INICIA JANELA
             try:
-                fc.iniciaJanela(navegador)
+                user_name = fc.iniciaJanela(navegador)
             #CONDICAO DE ERRO PARA CASO O USUÁRIO ERRE O SEU LOGIN 
             except Exception:
                 print('Ocorreu um erro, tente novamente.')
@@ -54,14 +55,32 @@ def main():
         print("Quantidade de processos para analisar",len(lista_processos))
         print("Quantidade de processos para concluir", len(lista_procConformes))
 
-        #COLETA NOME DO ESTAGIARIO
-        nomeEstag=input('Insira seu nome completo: ')
-        nomeEstag_sem_acento = unidecode.unidecode(nomeEstag)
+        #ABRE DICIONARIO
+        with open('usuarios/usuarios.json', 'r') as arquivo:
+            usuarios = json.load(arquivo)
 
-        #COLETA CAMINHO DA PLANILHA DE DRONES CONFORMES
-        planilhaDrones = input("Insira o caminho da planilha/lista de drones conformes: ")
-        #RETIRA ASPAS CASO EXISTA NO CAMINHO DA PLANILHA
-        planilhaDrones = planilhaDrones.replace('"' , '')
+        try: 
+            nomeEstag = usuarios[user_name]
+            print("Coletado nome do usuário: ", nomeEstag)
+        except:
+            while True:
+                nomeEstag = str(input("Como é seu primeiro acesso, digite seu nome completo: "))
+                opcao = int(input("Caso esteja tudo certo, digite [1]. Caso contrario, digite [2]: "))
+                if opcao == 1:
+                    usuarios[user_name] = nomeEstag
+                    break
+            with open('usuarios/usuarios.json', 'w') as arquivo:
+                json.dump(usuarios, arquivo)
+        finally:
+            nomeEstag_sem_acento = unidecode.unidecode(nomeEstag)
+
+        #COLETA CAMINHO DAS PLANILHAS DE EQUIPAMENTOS CONFORMES
+        planilhaDrones = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - Drones\\Lista de Drones Anatel_Corrigida.xlsx"
+        planilhaRadios = f"C:\\Users\\{user_name}\\ANATEL\ORCN - Rádios\\Lista Radiamador.xlsx"
+        
+        #IMPRIME CAMINHOS ENCONTRADOS
+        print("Coletado caminho da planilha de drones conformes", planilhaDrones)
+        print("Coletado caminho da planilha de rádios conformes", planilhaRadios)
         while True:
             #MOSTRA OPÇÕES DE EXECUCAO PARA O USUARIO
             print("O que deseja fazer?\n",
