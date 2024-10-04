@@ -1143,7 +1143,7 @@ def endereco_email(endereco, navegador):
 
 
 #FUNCAO PARA CONCLUIR PROCESSO
-def concluiProcesso(navegador, lista_procConformes):
+def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
     #DEFINE EMAIL PARA PROCESSO RETIDO
     textoRetido = '''Prezado(a) Senhor(a),
 
@@ -1207,12 +1207,9 @@ def concluiProcesso(navegador, lista_procConformes):
     #VARIAVEL PARA VOLTAR À JANELA INICIAL
     janela_principal = navegador.current_window_handle
 
-    caminho = input("Insira o caminho da planilha geral: ")
-    file_path = caminho.replace('"','').replace('\\','/')
-
     # Carrega a planilha geral de processos com apenas a primeira coluna de processos (índice 0) 
     # e a terceira coluna que informa se está retido ou não (índice 2)
-    df = pd.read_excel(file_path, usecols=[0,2,3])
+    df = pd.read_excel(planilhaGeral, usecols=[0,2,3])
 
     #ITERA SOBRE OS processo DA LISTA DE PROCESSOS CONFORMES
     for processosAssinados in lista_procConformes[:]:
@@ -1343,6 +1340,8 @@ def concluiProcesso(navegador, lista_procConformes):
                     else:
                         #CLICA NA TAG DE RETIDO
                         navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[17]').click()
+                        time.sleep(0.2)
+                        navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(nomeEstag)
                     #SALVA TAG
                     navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
                     navegador.switch_to.default_content()
@@ -1393,10 +1392,8 @@ def atribuir_processos(file_path, num_processos):
     return lista_processos_atr, df_com_datas
 
 
-def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag):
+def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral):
     # Exemplo de uso
-    caminho = input("Insira o caminho da planilha geral: ")
-    file_path = caminho.replace('"','').replace('\\','/')
     navegador.switch_to.default_content()
     try:    
         navegador.find_element(By.ID, 'lnkControleProcessos').click()
@@ -1415,7 +1412,7 @@ def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag):
     except Exception as e:
         print(e)
     num_processos = int(input('Digite a quantidade de processos que deseja atribuir: '))
-    lista_processos_atr, df_com_datas = atribuir_processos(file_path, num_processos)
+    lista_processos_atr, df_com_datas = atribuir_processos(planilhaGeral, num_processos)
     print('Lista de processos a serem atribuídos:', lista_processos_atr)
     navegador.find_element(By.PARTIAL_LINK_TEXT, 'chirlene.colab').click()
 

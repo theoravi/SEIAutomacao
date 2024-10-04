@@ -99,3 +99,15 @@ N do processo 53500.065544/2024-28 | Estagiario responsavel André Jacinto Rodrig
 N do processo 53500.074911/2024-84 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 03/10/2024 14:47:53
 N do processo 53500.074893/2024-31 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 03/10/2024 14:48:02
 N do processo 53500.081329/2024-74 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 03/10/2024 14:51:13
+N do processo 53500.065544/2024-28 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 04/10/2024 13:06:40
+N do processo 53500.074911/2024-84 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 04/10/2024 13:06:50
+N do processo 53500.074893/2024-31 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 04/10/2024 13:07:06
+N do processo 53500.074886/2024-39 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 04/10/2024 13:20:29
+N do processo 53500.074886/2024-39 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 04/10/2024 13:20:52
+N do processo 53500.074880/2024-61 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 04/10/2024 13:29:07
+N do processo 53500.074863/2024-24 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 04/10/2024 13:30:48
+N do processo 53500.074857/2024-77 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 04/10/2024 13:34:35
+N do processo 53500.074855/2024-88 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 04/10/2024 13:39:54
+N do processo 53500.074836/2024-51 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 04/10/2024 13:55:27
+N do processo 53500.075016/2024-87 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 04/10/2024 14:00:17
+N do processo 53500.075051/2024-04 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 04/10/2024 14:17:43

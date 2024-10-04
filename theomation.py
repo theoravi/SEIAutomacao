@@ -75,12 +75,31 @@ def main():
             nomeEstag_sem_acento = unidecode.unidecode(nomeEstag)
 
         #COLETA CAMINHO DAS PLANILHAS DE EQUIPAMENTOS CONFORMES
-        planilhaDrones = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - Drones\\Lista de Drones Anatel_Corrigida.xlsx"
-        planilhaRadios = f"C:\\Users\\{user_name}\\ANATEL\ORCN - Rádios\\Lista Radiamador.xlsx"
+        try:
+            planilhaDrones = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - Drones\\Lista de Drones Anatel_Corrigida.xlsx"
+        except Exception as e:
+            print("Ocorreu um erro:", e)
+            planilhaDrones = str(input("Ocorreu um erro a resgatar a planilha. Insira o endereço manualmente: "))
+            planilhaDrones = planilhaDrones.replace('"' , '')
         
+        try:
+            planilhaRadios = f"C:\\Users\\{user_name}\\ANATEL\ORCN - Rádios\\Lista Radiamador.xlsx"
+        except Exception as e:
+            print("Ocorreu um erro:", e)
+            planilhaRadios = str(input("Ocorreu um erro a resgatar a planilha. Insira o endereço manualmente: "))
+            planilhaRadios = planilhaRadios.replace('"' , '')
+
+        try:
+            planilhaGeral = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - DRONES SEI PLANILHA\\Distribuição Processo Drone.xlsx"
+        except Exception as e:
+            print("Ocorreu um erro:", e)
+            planilhaGeral = str(input("Ocorreu um erro a resgatar a planilha. Insira o endereço manualmente: "))
+            planilhaGeral = planilhaGeral.replace('"' , '')
+
         #IMPRIME CAMINHOS ENCONTRADOS
         print("Coletado caminho da planilha de drones conformes", planilhaDrones)
         print("Coletado caminho da planilha de rádios conformes", planilhaRadios)
+        print("Coletado caminho da planilha geral", planilhaGeral)
         while True:
             #MOSTRA OPÇÕES DE EXECUCAO PARA O USUARIO
             print("O que deseja fazer?\n",
@@ -98,12 +117,12 @@ def main():
                 print("Análise finalizada.")
             elif opcoes == 2:
                 #EXECUTA FUNCAO PARA CONCLUIR PROCESSO
-                fc.concluiProcesso(navegador, lista_procConformes)
+                fc.concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral)
                 print("Todos os processos foram concluídos.")
             elif opcoes == 3:
                 try:
                     #EXECUTA FUNCAO PARA ATRIBUIR PROCESSOS
-                    fc.atribuicao(navegador, nomeEstag_sem_acento, nomeEstag)
+                    fc.atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral)
                 except Exception as e:
                     print(f"Ocorreu um erro! {e}")
             elif opcoes == 4:
