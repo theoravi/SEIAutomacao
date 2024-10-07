@@ -13,6 +13,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from tabulate import tabulate
 from tkinter import scrolledtext
 from webdriver_manager.chrome import ChromeDriverManager
@@ -322,6 +324,30 @@ def preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastrei
     #VOLTA PARA A JANELA DO CHROME
     chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
     pyautogui.click(chrome)
+
+#FUNCAO QUE ESPERA UM ELEMENTO CARREGAR NA TELA E CLICA NELE
+def clica_noelemento(navegador, modo_procura, element_id):
+    # Espera até que o elemento seja carregado (exemplo: elemento localizado por ID)
+    try:
+        element = WebDriverWait(navegador, 10).until(
+            EC.element_to_be_clickable((modo_procura, element_id))
+        )
+        # Clica no elemento
+        element.click()
+    except TimeoutException:
+        print(f"Elemento {element_id} não foi carregado no tempo esperado")
+
+#FUNCAO QUE ESPERA UM ELEMENTO CARREGAR NA TELA E ENVIA TEXTO NELE
+def sendkeys_elemento(navegador, modo_procura, element_id, texto):
+# Espera até que o elemento seja carregado (exemplo: elemento localizado por ID)
+    try:
+        element = WebDriverWait(navegador, 10).until(
+            EC.presence_of_element_located((modo_procura, element_id))
+        )
+        # Envia texto no elemento
+        element.send_keys(texto)
+    except TimeoutException:
+        print(f"Elemento {element_id} não foi carregado no tempo esperado")
 
 #FUNCAO QUE ABRE O CHROME E O EDGE
 def abreChromeEdge():
