@@ -1,5 +1,6 @@
 
 import pandas as pd
+from openpyxl import load_workbook
 # from tabulate import tabulate
 # import numpy as np
 # import funcoes as fc
@@ -75,5 +76,15 @@ import pandas as pd
 # finally:
 #     nomeEstag_sem_acento = unidecode.unidecode(nomeEstag)
 
-planilhaRadios = pd.read_excel("C:\\Users\\andrej.estagio\\ANATEL\\ORCN - Rádios\\Lista Radiamador.xlsx")
-print(planilhaRadios)
+# wb = load_workbook(filename = "C:\\Users\\andrej.estagio\\ANATEL\\ORCN - Rádios\\Lista Radiamador.xlsx")
+# sheet_ranges = pd.DataFrame(wb['CONFORMES'].values)
+# print(sheet_ranges)
+
+# Abre um arquivo Excel e carrega uma página específica como DataFrame
+file_path = "C:\\Users\\andrej.estagio\\ANATEL\\ORCN - Rádios\\Lista Radiamador.xlsx"
+
+# Para carregar uma página específica
+df = pd.read_excel(file_path, sheet_name='CONFORMES', engine='openpyxl')
+
+# Mostra as primeiras linhas do DataFrame
+print(df.head())
