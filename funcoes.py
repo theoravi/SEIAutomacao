@@ -27,12 +27,15 @@ def preencher_campos(user_var, senha_var, navegador, root):
     navegador.find_element(By.XPATH,'//*[@id="pwdSenha"]').send_keys(f"{senha}")
     root.destroy()
 
-#FUNÇÃO PARA VERIFICAR A EXISTÊNCIA DE ELEMENTOS NA TELA UTILIZANDO O SELENIUM
+# FUNÇÃO PARA VERIFICAR A EXISTÊNCIA DE ELEMENTOS NA TELA UTILIZANDO O SELENIUM
 def check_element_exists(by, value, navegador):
+    # Opcional: aguardar um pouco antes de verificar
+    time.sleep(0.5)  # Espera de meio segundo antes da verificação
     try:
         navegador.find_element(by, value)
         return True
     except NoSuchElementException:
+        print(f"Elemento não encontrado: {value}")  # Log de erro
         return False
     
 #FUNÇÃO QUE FAZ O LOG EM UM TXT COM O NOME DO USUÁRIO   
