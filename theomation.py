@@ -75,31 +75,16 @@ def main():
             nomeEstag_sem_acento = unidecode.unidecode(nomeEstag)
 
         #COLETA CAMINHO DAS PLANILHAS DE EQUIPAMENTOS CONFORMES
-        try:
-            planilhaDrones = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - Drones\\Lista de Drones Anatel_Corrigida.xlsx"
-        except Exception as e:
-            print("Ocorreu um erro:", e)
-            planilhaDrones = str(input("Ocorreu um erro a resgatar a planilha. Insira o endereço manualmente: "))
-            planilhaDrones = planilhaDrones.replace('"' , '')
-        
-        try:
-            planilhaRadios = f"C:\\Users\\{user_name}\\ANATEL\ORCN - Rádios\\Lista Radiamador.xlsx"
-        except Exception as e:
-            print("Ocorreu um erro:", e)
-            planilhaRadios = str(input("Ocorreu um erro a resgatar a planilha. Insira o endereço manualmente: "))
-            planilhaRadios = planilhaRadios.replace('"' , '')
+   
+        planilhaDrones = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - Drones\\Lista de Drones Anatel_Corrigida.xlsx"
+        planilhaRadios = f"C:\\Users\\{user_name}\\ANATEL\ORCN - Rádios\\Lista Radiamador.xlsx"
+        planilhaGeral = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - DRONES SEI PLANILHA\\Distribuição Processo Drone.xlsx"
 
-        try:
-            planilhaGeral = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - DRONES SEI PLANILHA\\Distribuição Processo Drone.xlsx"
-        except Exception as e:
-            print("Ocorreu um erro:", e)
-            planilhaGeral = str(input("Ocorreu um erro a resgatar a planilha. Insira o endereço manualmente: "))
-            planilhaGeral = planilhaGeral.replace('"' , '')
+        # #IMPRIME CAMINHOS ENCONTRADOS
+        # print("Coletado caminho da planilha de drones conformes", planilhaDrones)
+        # print("Coletado caminho da planilha de rádios conformes", planilhaRadios)
+        # print("Coletado caminho da planilha geral", planilhaGeral)
 
-        #IMPRIME CAMINHOS ENCONTRADOS
-        print("Coletado caminho da planilha de drones conformes", planilhaDrones)
-        print("Coletado caminho da planilha de rádios conformes", planilhaRadios)
-        print("Coletado caminho da planilha geral", planilhaGeral)
         while True:
             #MOSTRA OPÇÕES DE EXECUCAO PARA O USUARIO
             print("O que deseja fazer?\n",
@@ -113,7 +98,7 @@ def main():
             opcoes = int(input("Opção: "))
             if opcoes == 1:
                 #EXECUTA FUNCAO PARA ANALISAR PROCESSO
-                fc.analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrones)
+                fc.analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrones, planilhaRadios)
                 print("Análise finalizada.")
             elif opcoes == 2:
                 #EXECUTA FUNCAO PARA CONCLUIR PROCESSO
@@ -127,7 +112,7 @@ def main():
                     print(f"Ocorreu um erro! {e}")
             elif opcoes == 4:
                 #EXECUTA FUNCAO PARA ANALISAR  UM ÚNICO PROCESSO
-                fc.analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones)
+                fc.analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones, planilhaRadios)
             elif opcoes == 5:
                 print("Reiniciando programa")
                 reset = True

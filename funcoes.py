@@ -258,11 +258,9 @@ def verifica_conformidade(modelos, tabela_modelos):
 
 #FUNCAO QUE FORMATA A PLANILHA DE DRONES CONFORMES
 def corrige_planilha(planilha):
-    tabela = pd.read_excel(planilha)
-    tabela.columns = tabela.iloc[1]
+    tabela = pd.read_excel(planilha, usecols=[2])
     tabela = tabela.iloc[2:]
     tabela = tabela.reset_index(drop=True)
-    tabela = tabela['MODELO']
     return tabela
 
 #FUNCAO QUE PREENCHE A PLANILHA GERAL
@@ -436,10 +434,12 @@ def iniciaJanela(navegador):
     return user_name
 
 #FUNCAO QUE ANALISA TODOS OS PROCESSOS NA CAIXA DO USUARIO
-def analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrones):
-    tabela_modelos = corrige_planilha(planilhaDrones)
+def analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrones, planilhaRadios):
+    drone_modelos = corrige_planilha(planilhaDrones)
+    radio_modelos = corrige_planilha(planilhaRadios)
+
     for processos in lista_processos[:]:
-        analisa(navegador, processos, nomeEstag, tabela_modelos)
+        analisa(navegador, processos, nomeEstag, drone_modelos, radio_modelos)
         #REMOVE O PROCESSO ANALISADO DA LISTA
         lista_processos.remove(processos)
         opcao = int(input("Caso deseje analisar o próximo processo digite [1], caso contrario, digite [2]: "))
@@ -453,14 +453,17 @@ def analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrone
     return
 
 #FUNCAO QUE ANALISA UM PROCESSO ESPECIFICO
-def analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones):
-    tabela_modelos = corrige_planilha(planilhaDrones)
+def analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones, planilhaRadios):
+    
+    drone_modelos = corrige_planilha(planilhaDrones)
+    radio_modelos = corrige_planilha(planilhaRadios)
+
     while True:
         #PEDE O PROCESSO A SER ANALISADO
         processo = str(input("Digite o número do processo: " ))
         opcao = int(input("Caso deseje analisar este processo, digite [1], caso contrario digite [2]: "))
         if opcao == 1:
-            analisa(navegador, processo, nomeEstag, tabela_modelos)
+            analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos)
         elif opcao != 2 or opcao != 1:
             print("Alternativa inválida")
         while True:
@@ -473,7 +476,7 @@ def analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones):
                 print("Alternativa inválida")
 
 #FUNCAO PARA ANALISAR PROCESSO
-def analisa(navegador, processo, nomeEstag, tabela_modelos):
+def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
     #VARIAVEL UTILIZADA PARA O SELENIUM RETORNAR PARA A JANELA PRINCIPAL
     janela_principal = navegador.current_window_handle
     try:
@@ -496,10 +499,16 @@ def analisa(navegador, processo, nomeEstag, tabela_modelos):
         if check_element_exists(By.PARTIAL_LINK_TEXT, 'Despacho Decisório', navegador):
             print(f"O processo {processo} já foi despachado!")
         else:
-            #VERIFICA SE HÁ PASTAS NO PROCESSO, SE HOUVER ELE ABRE A PRIMEIRA PARA ENCONTRAR A DECLARACAO DE CONFORMIDADE
-            if check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]', navegador):
+            #CONFERE SE EXISTE A DECLARACAO DE CONFORMIDADE OU UMA PASTA
+            if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade", navegador):
+                navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
+                time.sleep(0.3)
+            elif check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]', navegador):
                 navegador.find_element(By.XPATH, '//*[@id="spanPASTA1"]').click()
                 time.sleep(1)
+                navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
+                time.sleep(0.3)
+
             #ENCONTRAR DECLARAÇÃO DE CONFORMIDADE NO PROCESSO DRONE
             if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Drone", navegador):
                 #ACESSA O RECIBO PARA PEGAR NOME DO SOLICITANTE
@@ -1278,8 +1287,6 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
                 time.sleep(1)
                 navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
                 time.sleep(0.3)
-            else:
-                print("Declaração de Conformidade ou Pasta não foi achada")
 
             navegador.switch_to.default_content()
             navegador.switch_to.frame('ifrVisualizacao')
