@@ -38,7 +38,7 @@ def check_element_exists(by, value, navegador):
         navegador.find_element(by, value)
         return True
     except NoSuchElementException:
-        print(f"Elemento não encontrado: {value}")  # Log de erro
+        #print(f"Elemento não encontrado: {value}")  # Log de erro
         return False
     
 #FUNÇÃO QUE FAZ O LOG EM UM TXT COM O NOME DO USUÁRIO   
@@ -509,25 +509,37 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
                 time.sleep(0.3)
 
-            #ENCONTRAR DECLARAÇÃO DE CONFORMIDADE NO PROCESSO DRONE
+            #CONFERE QUAL É O TIPO DE PROCESSO
             if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Drone", navegador):
-                #ACESSA O RECIBO PARA PEGAR NOME DO SOLICITANTE
-                navegador.find_element(By.PARTIAL_LINK_TEXT, 'Recibo Eletrônico').click()
-                navegador.switch_to.default_content()
-                #ENTRA NOS FRAMES QUE POSSUE O NOME DO SOLICITANTE
-                navegador.switch_to.frame('ifrVisualizacao')
-                navegador.switch_to.frame('ifrArvoreHtml')
-                #ARMAZENA NOME DO SOLICITANTE NA VARIAVEL
-                nomeSol = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[1]/td[2]').text
-                #RETORNA AO FRAME DEFAULT
-                navegador.switch_to.default_content()
-                #COLETAR DADOS DA DECLARAÇÃO DE CONFORMIDADE
-                #RETORNA AO FRAME QUE CONTÉM OS DOCUMENTOS
-                navegador.switch_to.frame('ifrArvore')
+                tipo_processo = "Drone"
+            elif check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio", navegador):
+                tipo_processo = "Importado"
+
+            #ESCREVER AS INFORMAÇÕES DO PROCESSO NO CONSOLE
+            #ACESSA O RECIBO PARA PEGAR NOME DO SOLICITANTE
+            navegador.find_element(By.PARTIAL_LINK_TEXT, 'Recibo Eletrônico').click()
+            navegador.switch_to.default_content()
+            #ENTRA NOS FRAMES QUE POSSUE O NOME DO SOLICITANTE
+            navegador.switch_to.frame('ifrVisualizacao')
+            navegador.switch_to.frame('ifrArvoreHtml')
+            #ARMAZENA NOME DO SOLICITANTE NA VARIAVEL
+            nomeSol = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[1]/td[2]').text
+            #RETORNA AO FRAME DEFAULT
+            navegador.switch_to.default_content()
+            #COLETAR DADOS DA DECLARAÇÃO DE CONFORMIDADE
+            #RETORNA AO FRAME QUE CONTÉM OS DOCUMENTOS
+            navegador.switch_to.frame('ifrArvore')
+
+            if tipo_processo == "Drone":
                 #CLICA NA DECLARACAO DE CONFORMIDADE
                 navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Drone").click()
                 time.sleep(1)
-                #RETORNA AO FRAME DEFAULT E ENTRA NOS FRAMES QUE CONTÉM A VISUALIZACAO DA DECLARACAO
+            elif tipo_processo == "Importado":
+                #CLICA NA DECLARACAO DE CONFORMIDADE
+                navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio").click()
+                time.sleep(1)
+
+            #RETORNA AO FRAME DEFAULT E ENTRA NOS FRAMES QUE CONTÉM A VISUALIZACAO DA DECLARACAO 
                 navegador.switch_to.default_content()
                 navegador.switch_to.frame('ifrVisualizacao')
                 navegador.switch_to.frame('ifrArvoreHtml')
@@ -536,136 +548,41 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 print('--------------------------------------------------------------------------')
                 print(f"Processo: {processo}")
 
-                #COLETAR TEXTO NOME DO INTERESSADO
+            #COLETAR TEXTO NOME DO INTERESSADO
+            if tipo_processo == "Drone":
                 nome_interessado = navegador.find_element(By.XPATH, '/html/body/table[1]/tbody/tr/td').text
-                #VERIFICA SE O CAMPO ESTÁ VAZIO, CASO ESTEJA DEFINIRA CM NAO INFORMADO
-                if not nome_interessado.strip():
-                    nome_interessado = 'Não informado'
-                    print("NOME DO INTERESSADO NÃO INFORMADO")
-                #EXIBE NOMES DO INTERESSADO E SOLICITANTE
-                print("Interessado: ",nome_interessado)
-                print("Solicitante: ",nomeSol)
-                print('\n')
+            elif tipo_processo == "Importado":
+                nome_interessado=navegador.find_element(By.XPATH, '/html/body/table[1]/tbody/tr/td/p').text
 
-                #CHECKBOX DE QUEM ESTÁ FAZENDO O PETICIONAMENTO
+            #VERIFICA SE O CAMPO ESTÁ VAZIO, CASO ESTEJA DEFINIRA CM NAO INFORMADO
+            if not nome_interessado.strip():
+                nome_interessado = 'Não informado'
+                print("NOME DO INTERESSADO NÃO INFORMADO")
+            #EXIBE NOMES DO INTERESSADO E SOLICITANTE
+            print("Interessado: ",nome_interessado)
+            print("Solicitante: ",nomeSol)
+            print('\n')
+
+            #CHECKBOX DE QUEM ESTÁ FAZENDO O PETICIONAMENTO
+            if tipo_processo == "Drone":
                 checkbox=navegador.find_element(By.XPATH,'/html/body/table[2]/tbody/tr[1]/td[1]').text
                 checkbox2=navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[1]').text
-                #VERIFICA CAMPO DA CHECKBOX
-                #SE OS DOIS CAMPOS ESTIVEREM VAZIOS AVISA QUE NAO FOI INFORMADO QUEM ESTÁ FAZENDO O PETICIONAMENTO
-                if not checkbox.strip() and not checkbox2.strip():
-                    print("O usuário não informou quem está fazendo o peticionamento, confira os nomes do documento.")
-                elif not checkbox.strip():
-                    procuracao_eletronica = navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[3]').text
-                    print("Peticionamento representando terceiro, Pessoa Jurídica ou Pessoa Física.", f"\nProcuração eletrônica: {procuracao_eletronica}.")
-                else:
-                    print("Peticionamento em interesse próprio como Pessoa Física.")
-                print('\n')
-
-                #CONTA QUANTIDADE DE LINHAS DA TABELA SOBRE O PRODUTO
-                quantidade_linhas = len(navegador.find_elements(By.XPATH, '/html/body/table[3]/tbody/tr'))
-
-                #VERIFICA CAMPOS QUE CONTÉM AS INFORMAÇÕES SOBRE O PRODUTO
-                #ARMAZENA OS MODELOS INFORMADOS PARA VERIFICAR SE ESTÃO NA PLANILHA DE DRONES CONFORMES
-                modelos = []
-                for i in range(1, quantidade_linhas, 1):
-                    linha = navegador.find_element('xpath', f'/html/body/table[3]/tbody/tr[{i}]')
-                    celulas = linha.find_elements(By.TAG_NAME,'td')
-                    modelos_produto = [celula.text for celula in celulas]
-                    modelos.append(modelos_produto)
-
-                #CRIA DATAFRAME PARA PRINTAR AS INFORMAÇÕES DO PRODUTO JÁ TRATADAS
-                df = pd.DataFrame(modelos)
-                df.columns = ['Modelo', 'Nome Comercial', 'Número de Série (incluindo rádio controle e óculos)']
-                df = df[1:]
-                df = df.replace(' ', np.nan)
-                df = df.dropna(how='all')
-                data = df.values.tolist()
-                headers = df.columns.tolist()
-                print(tabulate(data, headers=headers, tablefmt='pretty'))
-                print('\n')
-
-                #VERIFICA SE O MODELO DO DRONE E RADIO CONTROLE ESTA NA PLANILHA DE DRONES CONFORMES
-                modelos = df['Modelo']
-                modelos = modelos.reset_index(drop=True)
-                checkexcel = verifica_conformidade(modelos, tabela_modelos)
-                
-                for i in range(len(checkexcel)):
-                    if checkexcel[i] == True:
-                        print(f"O modelo {modelos[i]} está na lista de drones conformes.")
-                    else:
-                        print(f"O modelo {modelos[i]} não se encontra na lista de drones conformes")
-                print('\n')
-                #EXIBE CÓDIGO DE RAST"REIO
-                #LINHA ESPECIFICA ESCREVE NA PLANILHA SE O PRODUTO ESTA RETIDO E, CASO ESTEJA, ESCREVE O CODIGO DE RASTREIO
-                n_serie = navegador.find_element(By.XPATH, '/html/body/table[3]/tbody/tr[2]/td[3]').text
-                codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[4]/tbody/tr/td[2]').text
-                #VERIFICA SE HÁ ALGUM TEXTO NA TABELA COM O CÓDIGO DE RASTREIO
-                #SE HOUVER ALGUM TEXTO ELE DA COMO RETIDO, CASO NAO TENHA TEXTO ELE DA COMO NAO RETIDO
-                if not codigo_rastreio.strip():
-                    print("Produto não retido ou código de rastreio não informado.")
-                    retido='Não'
-                else:
-                    if not n_serie.strip():
-                        print(f'O código de rastreio é: {codigo_rastreio}.')
-                        retido='Sim'
-                    elif n_serie.strip():
-                        print('Confira se o produto está retido.')
-                        verifica_retido = int(input('O produto está retido? Se sim digite [1], se não digite [2]: '))
-                        if verifica_retido == 1:
-                            retido='Sim'
-                        elif verifica_retido == 2:
-                            retido='Não'
-                print('\n')
-                print('Confira o relatório fotográfico e veja se os documentos estão conformes!\n')
-                print('--------------------------------------------------------------------------')
-                print('--------------------------------------------------------------------------')
-                
-            #ENCONTRAR SE HÁ ALGUMA PASTA DE DOCUMENTOS OU DECLARAÇÃO DE CONFORMIDADE NO PROCESSO
-            elif check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio", navegador) or check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]', navegador):
-                #PEGAR NOME DO SOLICITANTE NO RECIBO ELETRONICO
-                navegador.find_element(By.PARTIAL_LINK_TEXT, 'Recibo Eletrônico').click()
-                navegador.switch_to.default_content()
-                time.sleep(0.5)
-                navegador.switch_to.frame('ifrVisualizacao')
-                navegador.switch_to.frame('ifrArvoreHtml')
-                nomeSol = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[1]/td[2]').text
-                navegador.switch_to.default_content()
-                #CLICA NA DECLARACAO DE CONFORMIDADE
-                #COLETAR DADOS DA DECLARAÇÃO DE CONFORMIDADE
-                navegador.switch_to.frame('ifrArvore')
-                navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio").click()
-                time.sleep(0.5)
-                navegador.switch_to.default_content()
-                navegador.switch_to.frame('ifrVisualizacao')
-                navegador.switch_to.frame('ifrArvoreHtml')
-
-                #EXIBE INFORMACOES DO PROCESSO
-                print("--------------------------------------------------------------------------")
-                print('--------------------------------------------------------------------------')
-                print(f"Processo: {processo}")
-
-                #COLETAR TEXTO NOME DO INTERESSADO
-                nome_interessado=navegador.find_element(By.XPATH, '/html/body/table[1]/tbody/tr/td/p').text
-                if not nome_interessado.strip():
-                    nome_interessado = 'Não informado'
-                    print("NOME DO INTERESSADO NÃO INFORMADO")
-                print(nome_interessado)
-                print(nomeSol)
-                print('\n')
-                #CHECKBOX DE QUEM ESTÁ FAZENDO O PETICIONAMENTO
+            elif tipo_processo == "Importado":
                 checkbox=navegador.find_element('xpath','/html/body/table[2]/tbody/tr[1]/td[1]/p').text
                 checkbox2=navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[1]').text
 
-                #CHECA CAMPO DA CHECKBOX
-                if not checkbox.strip() and not checkbox2.strip():
-                    print("O usuário não informou quem está fazendo o peticionamento, confira os nomes do documento.")
-                elif not checkbox.strip():
-                    procuracao_eletronica = navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[3]').text
-                    print("Peticionamento representando terceiro, Pessoa Jurídica ou Pessoa Física.", f"\nProcuração eletrônica: {procuracao_eletronica}.")
-                else:
-                    print("Peticionamento em interesse próprio como Pessoa Física.")
-                print('\n')
+            #VERIFICA CAMPO DA CHECKBOX
+            #SE OS DOIS CAMPOS ESTIVEREM VAZIOS AVISA QUE NAO FOI INFORMADO QUEM ESTÁ FAZENDO O PETICIONAMENTO
+            if not checkbox.strip() and not checkbox2.strip():
+                print("O usuário não informou quem está fazendo o peticionamento, confira os nomes do documento.")
+            elif not checkbox.strip():
+                procuracao_eletronica = navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[3]').text
+                print("Peticionamento representando terceiro, Pessoa Jurídica ou Pessoa Física.", f"\nProcuração eletrônica: {procuracao_eletronica}.")
+            else:
+                print("Peticionamento em interesse próprio como Pessoa Física.")
+            print('\n')
 
+            if tipo_processo == "Importado":
                 #INFORMA O TIPO DE PRODUTO QUE ESTÁ SENDO TRATADO
                 print("\nTipo de produto:")
                 quantidade_linhasPro = len(navegador.find_elements(By.XPATH, '/html/body/table[3]/tbody/tr'))
@@ -686,7 +603,19 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 print(tabulate(data, headers=headers, tablefmt='pretty'))
                 print('\n')
 
-                #CONTA QUANTIDADE DE LINHAS DA TABELA SOBRE O PRODUTO
+            #CONTA QUANTIDADE DE LINHAS DA TABELA SOBRE O PRODUTO
+            if tipo_processo == "Drone":
+                quantidade_linhas = len(navegador.find_elements(By.XPATH, '/html/body/table[3]/tbody/tr'))
+
+                #VERIFICA CAMPOS QUE CONTÉM AS INFORMAÇÕES SOBRE O PRODUTO
+                #ARMAZENA OS MODELOS INFORMADOS PARA VERIFICAR SE ESTÃO NA PLANILHA DE DRONES CONFORMES
+                modelos = []
+                for i in range(1, quantidade_linhas, 1):
+                    linha = navegador.find_element('xpath', f'/html/body/table[3]/tbody/tr[{i}]')
+                    celulas = linha.find_elements(By.TAG_NAME,'td')
+                    modelos_produto = [celula.text for celula in celulas]
+                    modelos.append(modelos_produto)
+            elif tipo_processo == "Importado":
                 quantidade_linhas = len(navegador.find_elements(By.XPATH, '/html/body/table[4]/tbody/tr'))
 
                 #VERIFICA CAMPOS QUE CONTÉM AS INFORMAÇÕES SOBRE O PRODUTO
@@ -696,54 +625,67 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     celulas = linha.find_elements(By.TAG_NAME,'td')
                     modelos_produto = [celula.text for celula in celulas]
                     modelos.append(modelos_produto)
-                
-                #CRIA DATAFRAME E VERIFICA SE OS MODELOS FORNECIDOS ESTÃO NA PLANILHA DE DRONES CONFORMES
-                df = pd.DataFrame(modelos)
-                df.columns = ['Modelo', 'Nome Comercial', 'Número de Série']
-                df = df[1:]
-                df = df.replace(' ', np.nan)
-                df = df.dropna(how='all')
-                modelos = df['Modelo']
-                modelos = modelos.reset_index(drop=True)
-                checkexcel = verifica_conformidade(modelos, tabela_modelos)                        
-                print("Modelos:")
-                #CRIA DATAFRAME PARA PRINTAR AS INFORMAÇÕES DO PRODUTO
-                data2 = df.values.tolist()
-                headers2 = df.columns.tolist()
-                print(tabulate(data2, headers=headers2, tablefmt='pretty'))
-                print('\n')
 
-                for i in range(len(checkexcel)):
-                    if checkexcel[i] == True:
-                        print(f"O modelo {modelos[i]} está na lista de drones conformes.")
-                    else:
-                        print(f"O modelo {modelos[i]} não se encontra na lista de drones conformes")
-                print('\n')
-                #EXIBE CÓDIGO DE RASTREIO
-                #ESCREVE NA TABELA EXCEL SE ESTA RETIDO, CASO ESTEJA INSERE CODIGO DE RASTREIO
+
+            #CRIA DATAFRAME PARA PRINTAR AS INFORMAÇÕES DO PRODUTO JÁ TRATADAS
+            df = pd.DataFrame(modelos)
+            if tipo_processo == "Drone":
+                df.columns = ['Modelo', 'Nome Comercial', 'Número de Série (incluindo rádio controle e óculos)']
+            elif tipo_processo == "Importado":
+                df.columns = ['Modelo', 'Nome Comercial', 'Número de Série']
+            df = df[1:]
+            df = df.replace(' ', np.nan)
+            df = df.dropna(how='all')
+            data = df.values.tolist()
+            headers = df.columns.tolist()
+            print(tabulate(data, headers=headers, tablefmt='pretty'))
+            print('\n')
+
+            #VERIFICA SE O MODELO DO DRONE E RADIO CONTROLE ESTA NA PLANILHA DE DRONES CONFORMES
+            modelos = df['Modelo']
+            modelos = modelos.reset_index(drop=True)
+            checkexcel = verifica_conformidade(modelos, drone_modelos)
+            
+            for i in range(len(checkexcel)):
+                if checkexcel[i] == True:
+                    print(f"O modelo {modelos[i]} está na lista de drones conformes.")
+                else:
+                    print(f"O modelo {modelos[i]} não se encontra na lista de drones conformes")
+            print('\n')
+
+            #EXIBE CÓDIGO DE RASTREIO
+            #LINHA ESPECIFICA ESCREVE NA PLANILHA SE O PRODUTO ESTA RETIDO E, CASO ESTEJA, ESCREVE O CODIGO DE RASTREIO
+            if tipo_processo == "Drone":
+                n_serie = navegador.find_element(By.XPATH, '/html/body/table[3]/tbody/tr[2]/td[3]').text
+                codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[4]/tbody/tr/td[2]').text
+            elif tipo_processo == "Importado":
                 n_serie = navegador.find_element(By.XPATH, '/html/body/table[4]/tbody/tr[2]/td[3]').text
                 codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[5]/tbody/tr/td[2]').text
-                if not codigo_rastreio.strip():
-                    print("Produto não retido ou código de rastreio não informado.")
-                    retido='Não'
-                else:
-                    if not n_serie.strip():
-                        print(f'O código de rastreio é: {codigo_rastreio}.')
+            #VERIFICA SE HÁ ALGUM TEXTO NA TABELA COM O CÓDIGO DE RASTREIO
+            #SE HOUVER ALGUM TEXTO ELE DA COMO RETIDO, CASO NAO TENHA TEXTO ELE DA COMO NAO RETIDO
+            if not codigo_rastreio.strip():
+                print("Produto não retido ou código de rastreio não informado.")
+                retido='Não'
+            else:
+                if not n_serie.strip():
+                    print(f'O código de rastreio é: {codigo_rastreio}.')
+                    retido='Sim'
+                elif n_serie.strip():
+                    print('Confira se o produto está retido.')
+                    verifica_retido = int(input('O produto está retido? Se sim digite [1], se não digite [2]: '))
+                    if verifica_retido == 1:
                         retido='Sim'
-                    elif n_serie.strip():
-                        print('Confira se o produto está retido.')
-                        verifica_retido = int(input('O produto está retido? Se sim digite [1], se não digite [2]: '))
-                        if verifica_retido == 1:
-                            retido='Sim'
-                        elif verifica_retido == 2:
-                            retido='Não'
-                print('\n')
-                print('Confira o relatório fotográfico e veja se os documentos estão conformes!\n')
-                print('--------------------------------------------------------------------------')
-                print('--------------------------------------------------------------------------')
-                
+                    elif verifica_retido == 2:
+                        retido='Não'
+            print('\n')
+            print('Confira o relatório fotográfico e veja se os documentos estão conformes!\n')
+            print('--------------------------------------------------------------------------')
+            print('--------------------------------------------------------------------------')
+
             time.sleep(1)
             navegador.switch_to.default_content()
+
+            # MINHA ALTERAÇÃO SÓ FOI ATÈ AQUI AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
             #CRIA DESPACHO DECISORIO
             #PEDE PRA USUARIO VERIFICAR SE ESTÁ TUDO CERTO
