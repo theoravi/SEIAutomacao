@@ -33,8 +33,6 @@ def preencher_campos(user_var, senha_var, navegador, root):
 
 # FUNÇÃO PARA VERIFICAR A EXISTÊNCIA DE ELEMENTOS NA TELA UTILIZANDO O SELENIUM
 def check_element_exists(by, value, navegador):
-    # Opcional: aguardar um pouco antes de verificar
-    time.sleep(0.5)  # Espera de meio segundo antes da verificação
     try:
         navegador.find_element(by, value)
         return True
