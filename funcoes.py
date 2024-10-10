@@ -21,9 +21,10 @@ from tkinter import scrolledtext
 from webdriver_manager.chrome import ChromeDriverManager
 
 def preencher_campos(user_var, senha_var, navegador, root):
+    global user_name
     user = user_var.get()
     senha = senha_var.get()
-    
+    user_name = user
     navegador.find_element(By.XPATH,'//*[@id="txtUsuario"]').clear()
     navegador.find_element(By.XPATH,'//*[@id="pwdSenha"]').clear()
     navegador.find_element(By.XPATH,'//*[@id="txtUsuario"]').send_keys(f"{user}")
@@ -32,13 +33,10 @@ def preencher_campos(user_var, senha_var, navegador, root):
 
 # FUNÇÃO PARA VERIFICAR A EXISTÊNCIA DE ELEMENTOS NA TELA UTILIZANDO O SELENIUM
 def check_element_exists(by, value, navegador):
-    # Opcional: aguardar um pouco antes de verificar
-    time.sleep(0.5)  # Espera de meio segundo antes da verificação
     try:
         navegador.find_element(by, value)
         return True
     except NoSuchElementException:
-        #print(f"Elemento não encontrado: {value}")  # Log de erro
         return False
     
 #FUNÇÃO QUE FAZ O LOG EM UM TXT COM O NOME DO USUÁRIO   
@@ -240,17 +238,22 @@ def outro_erro(navegador):
     navegador.find_element(By.ID, 'txtAssunto').send_keys(assunto)
 
 #FUNCAO QUE VERIFICA SE OS MODELOS INFORMADOS ESTAO NA LISTA DE DRONES CONFORMES
-def verifica_conformidade(modelos, tabela_modelos):
-    # Verificação de conformidade
-    checkexcel = [False] * len(modelos)  # Inicializa a lista com False
+def verifica_conformidade(modelos, tabela_modelos, num):
+    # Inicializa a lista com False
+    checkexcel = [False] * len(modelos)
 
     # Comparação de modelos
     for modelo_solicitante in range(len(modelos)):
         for j in range(len(tabela_modelos)):
             try:
-                if str(modelos[modelo_solicitante]).lower().replace(' ','').strip('\n') == str(tabela_modelos[j]).lower().replace(' ',''):
-                    checkexcel[modelo_solicitante] = True
-                    break
+                if num == 0:
+                    if str(modelos[modelo_solicitante]).lower().replace(' ','').strip('\n') == str(tabela_modelos[j]).lower().replace(' ',''):
+                        checkexcel[modelo_solicitante] = True
+                        break
+                elif num == 1:
+                    if str(modelos[modelo_solicitante]).lower().replace(' ','').replace('-','').strip('\n') == str(tabela_modelos[j]).lower().replace(' ','').replace('-',''):
+                        checkexcel[modelo_solicitante] = True
+                        break
             except KeyError as e:
                 print(f"Erro ao acessar os índices: {e}")
                 continue
@@ -258,9 +261,11 @@ def verifica_conformidade(modelos, tabela_modelos):
 
 #FUNCAO QUE FORMATA A PLANILHA DE DRONES CONFORMES
 def corrige_planilha(planilha):
-    tabela = pd.read_excel(planilha, usecols=[2])
+    tabela = pd.read_excel(planilha)
+    tabela.columns = tabela.iloc[1]
     tabela = tabela.iloc[2:]
     tabela = tabela.reset_index(drop=True)
+    tabela = tabela['MODELO']
     return tabela
 
 #FUNCAO QUE PREENCHE A PLANILHA GERAL
@@ -426,12 +431,7 @@ def iniciaJanela(navegador):
     root.mainloop()
     #ACESSA O SEI
     time.sleep(1)
-    navegador.find_element(By.XPATH, '//*[@id="txtUsuario"]').click()
-    pyautogui.hotkey('ctrl', 'a')
-    pyautogui.hotkey('ctrl', 'c')
-    user_name = pyperclip.paste()
     navegador.find_element(By.XPATH, '//*[@id="sbmAcessar"]').click()
-    return user_name
 
 #FUNCAO QUE ANALISA TODOS OS PROCESSOS NA CAIXA DO USUARIO
 def analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrones, planilhaRadios):
@@ -869,7 +869,14 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 time.sleep(1)
                 navegador.switch_to.frame('ifrVisualizacao')
                 #CLICA NO ICONE DE ENVIO DE EMAIL
-                navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[11]').click()
+                try:
+                        element = WebDriverWait(navegador, 10).until(
+                            EC.presence_of_element_located((By.XPATH, '//*[@id="divArvoreAcoes"]/a[11]'))
+                        )
+                        element.click()
+                    except TimeoutException:
+                        print("Elemento não foi carregado no tempo esperado")
+                        return
                 time.sleep(1)
                 #VAI PARA A JANELA MAIS RECENTE ABERTA
                 navegador.switch_to.window(navegador.window_handles[-1])
