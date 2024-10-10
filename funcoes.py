@@ -1418,8 +1418,15 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
 
 def atribuir_processos(file_path, num_processos):
     # Lê a planilha do Excel
-    df = pd.read_excel(file_path)
-
+    try:
+        df = pd.read_excel(file_path)
+    except Exception as e:
+        print("Ocorreu um erro ao buscar o caminho da pasta geral")
+        print(e)
+        file_path = input("Digite o caminho da planilha geral manualmente: ").strip('"')
+        file_path = file_path.replace("\\", "\\\\")
+        df = pd.read_excel(file_path)
+        
     # Filtra as linhas onde a segunda coluna (Estagiário responsável) é uma data
     df['Estagiario responsável'] = pd.to_datetime(df['Estagiario responsável'], format='%d/%m/%Y', errors='coerce')
     df_com_datas = df.dropna(subset=['Estagiario responsável'])
