@@ -874,9 +874,9 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                             EC.presence_of_element_located((By.XPATH, '//*[@id="divArvoreAcoes"]/a[11]'))
                         )
                         element.click()
-                    except TimeoutException:
-                        print("Elemento não foi carregado no tempo esperado")
-                        return
+                except TimeoutException:
+                    print("Elemento não foi carregado no tempo esperado")
+                    return
                 time.sleep(1)
                 #VAI PARA A JANELA MAIS RECENTE ABERTA
                 navegador.switch_to.window(navegador.window_handles[-1])
