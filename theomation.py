@@ -7,7 +7,9 @@
 #IMPORTS NECESSÁRIOS PARA O FUNCIONAMENTO DO CÓDIGO
 import unidecode
 from concurrent.futures import ThreadPoolExecutor
+from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.common.by import By
+import time
 import funcoes as fc
 import json
 
@@ -23,15 +25,21 @@ def main():
             #CONDICAO DE ERRO PARA CASO O USUÁRIO ERRE O SEU LOGIN 
             except Exception:
                 print('Ocorreu um erro, tente novamente.')
-            #ENTRAR NA CAIXA DE PROCESSOS ATRIBUIDOS AO USUARIO
-            if fc.check_element_exists(By.XPATH,'//*[@id="divFiltro"]/div[2]/a', navegador):
-                navegador.find_element(By.XPATH,'//*[@id="divFiltro"]/div[2]/a').click()
-                break
-            #CASO NAO ENCONTRE O FILTRO DE PROCESSOS ELE INFOMA QUE NAO ENTROU NO SEI
-            else:
-                #APAGA O USUÁRIO
-                navegador.find_element(By.XPATH,'//*[@id="txtUsuario"]').clear()
-                print('Usuário ou senha incorretos. Digite novamente')
+            try:
+                #FECHA ALERTA DO NAVEGADOR
+                time.sleep(1)
+                alert = Alert(navegador)
+                alert.accept()
+            except:
+                #ENTRAR NA CAIXA DE PROCESSOS ATRIBUIDOS AO USUARIO
+                if fc.check_element_exists(By.XPATH,'//*[@id="divFiltro"]/div[2]/a', navegador):
+                    navegador.find_element(By.XPATH,'//*[@id="divFiltro"]/div[2]/a').click()
+                    break
+                #CASO NAO ENCONTRE O FILTRO DE PROCESSOS ELE INFOMA QUE NAO ENTROU NO SEI
+                else:
+                    #APAGA O USUÁRIO
+                    navegador.find_element(By.XPATH,'//*[@id="txtUsuario"]').clear()
+                    print('Usuário ou senha incorretos. Digite novamente')
         
         #PEGA O CORPO DA TABELA NO NAVEGADOR
         tbody = navegador.find_element(By.XPATH, '//*[@id="tblProcessosRecebidos"]/tbody')
@@ -62,7 +70,7 @@ def main():
 
         try: 
             nomeEstag = usuarios[user_name]
-            print("Coletado nome do usuário: ", nomeEstag)
+            print("Coletado nome do usuário:", nomeEstag)
         except:
             while True:
                 nomeEstag = str(input("Como é seu primeiro acesso, digite seu nome completo: "))

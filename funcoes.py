@@ -715,9 +715,9 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
 
                 for i in range(len(checkexcel)):
                     if checkexcel[i] == True:
-                        print(f"O modelo {modelos[i]} está na lista de drones conformes.")
+                        print(f"O modelo {modelos[i]} está na lista de rádios conformes.")
                     else:
-                        print(f"O modelo {modelos[i]} não se encontra na lista de drones conformes")
+                        print(f"O modelo {modelos[i]} não se encontra na lista de rádios conformes")
                 print('\n')
                 #EXIBE CÓDIGO DE RASTREIO
                 #ESCREVE NA TABELA EXCEL SE ESTA RETIDO, CASO ESTEJA INSERE CODIGO DE RASTREIO
