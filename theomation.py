@@ -18,7 +18,8 @@ def main():
         while True:
             #INICIA JANELA
             try:
-                user_name = fc.iniciaJanela(navegador)
+                fc.iniciaJanela(navegador)
+                user_name = fc.user_name
             #CONDICAO DE ERRO PARA CASO O USUÁRIO ERRE O SEU LOGIN 
             except Exception:
                 print('Ocorreu um erro, tente novamente.')
