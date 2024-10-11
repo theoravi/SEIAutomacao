@@ -613,6 +613,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                         verifica_retido = int(input('O produto está retido? Se sim digite [1], se não digite [2]: '))
                         if verifica_retido == 1:
                             retido='Sim'
+                            print('O código de rastreio é:', codigo_rastreio)
                         elif verifica_retido == 2:
                             retido='Não'
                 print('\n')
