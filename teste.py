@@ -1,6 +1,11 @@
 
-import pandas as pd
-from openpyxl import load_workbook
+# import pandas as pd
+import pyautogui
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
+import undetected_chromedriver as uc
+# import time
 # from tabulate import tabulate
 # import numpy as np
 # import funcoes as fc
@@ -53,38 +58,67 @@ from openpyxl import load_workbook
 #         print(f"O modelo {modelos[i]} não se encontra na lista de rádios conformes\n", "Lista de modelos parecidos na tabela:", lista_parecidos)
 # print('\n')
 
-# usuarios = {"anasantos.estagio": "Ana Karolina Fernandes dos Santos", "andrej.estagio": "Andr\u00e9 Jacinto Rodrigues", "italoc.estagio": "\u00cdtalo Costa Cavalcante", "jhessica.estagio": "Jhessica Isabel Coelho Souza", "lucast.estagio": "Lucas Oliveira Torres Machado", "lucca.estagio": "Lucca Lopes de Medeiros", "lukasa.estagio": "Lukas Ara\u00fajo da Silva", "victorc.estagio": "Victor Andrade Cavalcante"}
-# import json
+# # Abre um arquivo Excel e carrega uma página específica como DataFrame
+# file_path = "C:\\Users\\andrej.estagio\\ANATEL\\ORCN - Rádios\\Lista Radiamador.xlsx"
 
-# #ABRE DICIONARIO
-# with open('usuarios/usuarios.json', 'r') as arquivo:
-#     usuarios = json.load(arquivo)
-#     print(usuarios)
+# # Para carregar uma página específica
+# df = pd.read_excel(file_path, sheet_name='CONFORMES', engine='openpyxl')
 
-# # Salvando o dicionário em um arquivo JSON
-# with open('usuarios/usuarios.json', 'w') as arquivo:
-#     json.dump(usuarios, arquivo)
+textoRetido = '''Prezado(a) Senhor(a),
 
-# try: 
-#     nomeEstag = usuarios[user_name]
-#     print(nomeEstag)
-# except:
-#     nomeEstag = str(input("Como é seu primeiro acesso, digite seu nome completo: "))
-#     usuarios[user_name] = nomeEstag
-#     with open('usuarios/usuarios.json', 'w') as arquivo:
-#         json.dump(usuarios, arquivo)
-# finally:
-#     nomeEstag_sem_acento = unidecode.unidecode(nomeEstag)
+Em atenção ao pedido de homologação constante do processo SEI em referência, informamos que:
 
-# wb = load_workbook(filename = "C:\\Users\\andrej.estagio\\ANATEL\\ORCN - Rádios\\Lista Radiamador.xlsx")
-# sheet_ranges = pd.DataFrame(wb['CONFORMES'].values)
-# print(sheet_ranges)
+1. O pedido foi APROVADO
+2. O Despacho Decisório que aprovou o pedido está disponível publicamente por meio do sistema SEI na área de Pesquisa Pública, no link:
 
-# Abre um arquivo Excel e carrega uma página específica como DataFrame
-file_path = "C:\\Users\\andrej.estagio\\ANATEL\\ORCN - Rádios\\Lista Radiamador.xlsx"
+    https://sei.anatel.gov.br/sei/modulos/pesquisa/md_pesq_processo_pesquisar.php?acao_externa=protocolo_pesquisar&acao_origem_externa=protocolo_pesquisar&id_orgao_acesso_externo=0
 
-# Para carregar uma página específica
-df = pd.read_excel(file_path, sheet_name='CONFORMES', engine='openpyxl')
 
-# Mostra as primeiras linhas do DataFrame
-print(df.head())
+3. O Despacho Decisório deverá ser portado junto ao Equipamento (fisicamente ou eletronicamente), para que as autoridades competentes possam conferir a regularidade, quando necessário.
+4. Visto que o produto se encontra retido, para que seja informado o número de série, solicitamos que acesse o sistema SEI da Anatel por meio do seguinte link:
+
+
+            https://sei.anatel.gov.br/sei/controlador_externo.php?acao=usuario_externo_logar&id_orgao_acesso_externo=0.
+
+
+5. Após autenticação no sistema SEI, solicitamos que inclua os documentos selecionando a opção "Intercorrente" e informando o número do processo em referência.
+
+6. Em caso de equipamento retido, recomendamos que apresente cópia do Despacho decisório ao e-mail corporativo, para que seja liberada a entrega da encomenda retida, de acordo com o local onde está sendo feita a fiscalização.
+
+Caso encomenda retida no Paraná, encaminhar email para - documentacao.pr@anatel.gov.br
+Caso encomenda retida em São Paulo, encaminhar email para - documentacao.sp@anatel.gov.br
+Caso encomenda retida em Rio de Janeiro, encaminhar email para - documentacao.rj@anatel.gov.br
+
+
+FAVOR NÃO RESPONDER ESTE E-MAIL.
+
+Atenciosamente,
+
+ORCN - Gerência de Certificação e Numeração
+
+SOR - Superintendência de Outorga e Recursos à Prestação
+
+Anatel - Agência Nacional de Telecomunicações'''
+
+def abreChromeEdge():
+    #INSTALA O CHROME DRIVEr MAIS ATUALIZADO
+    servico = Service(ChromeDriverManager().install())
+
+    #DEFINE O TEMPO DE EXECUÇÃO PARA CADA COMANDO DO PYAUTOGUI
+    pyautogui.PAUSE = 0.7
+    
+    #INICIA O NAVEGADOR
+    navegador = uc.Chrome(service=servico)
+    navegador.maximize_window()
+    
+    #ENTRA NO SEI
+    navegador.get('https://dontpad.com/adr1n')
+    
+    #LOCALIZA O ICONE DO EDGE E ABRE A PLANILHA GERAL
+    #FOI UTILIZADO O PYPERCLIP PARA EVITAR QUALQUER ERRO NA HORA DE COLAR O URL DA PLANILHA
+    return navegador
+
+
+navegador = abreChromeEdge()
+
+navegador.find_element(By.XPATH, '//*[@id="text"]').send_keys(textoRetido)

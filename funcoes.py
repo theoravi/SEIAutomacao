@@ -1259,6 +1259,7 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
 
     #ITERA SOBRE OS processo DA LISTA DE PROCESSOS CONFORMES
     for processosAssinados in lista_procConformes[:]:
+        print('\n')
         print(f'Concluindo processo nº {processosAssinados}')
 
         # Verificar se o processo está na planilha
@@ -1268,7 +1269,12 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
             # Se o processo for encontrado, pegar o valor da coluna 'Retido'
             retido = resultado.iloc[0]['Retido']
             codRastreio = resultado.iloc[0]['NumerodoRastreio']
-            print(f"O processo {processosAssinados} está retido: {retido}, com código de rastreio {codRastreio}")
+
+            # Diz se o processo está retido ou não
+            if retido == 'Sim' or retido == 'sim' or retido == 'SIM':
+                print(f"O processo {processosAssinados} está retido com código de rastreio {codRastreio}")
+            else:
+                print(f"O processo {processosAssinados} não está retido")
             retido = retido.lower()
         else:
             print(f"Processo {processosAssinados} não encontrado na planilha.")
