@@ -1256,7 +1256,14 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
 
     # Carrega a planilha geral de processos com apenas a primeira coluna de processos (índice 0) 
     # e a terceira coluna que informa se está retido ou não (índice 2)
-    df = pd.read_excel(planilhaGeral, usecols=[0,2,3])
+    try:
+        df = pd.read_excel(planilhaGeral, usecols=[0,2,3])
+    except Exception as e:
+        print("Ocorreu um erro ao buscar o caminho da pasta geral")
+        print(e)
+        planilhaGeral = input("Digite o caminho da planilha geral manualmente: ").strip('"')
+        planilhaGeral = planilhaGeral.replace("\\", "\\\\")
+        df = pd.read_excel(planilhaGeral, usecols=[0,2,3])
 
     #ITERA SOBRE OS processo DA LISTA DE PROCESSOS CONFORMES
     for processosAssinados in lista_procConformes[:]:
@@ -1424,15 +1431,16 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
 
 
 def atribuir_processos(file_path, num_processos):
+
     # Lê a planilha do Excel
     try:
-        df = pd.read_excel(file_path)
+        df = pd.read_excel(planilhaGeral, usecols=[0,1])
     except Exception as e:
         print("Ocorreu um erro ao buscar o caminho da pasta geral")
         print(e)
-        file_path = input("Digite o caminho da planilha geral manualmente: ").strip('"')
-        file_path = file_path.replace("\\", "\\\\")
-        df = pd.read_excel(file_path)
+        planilhaGeral = input("Digite o caminho da planilha geral manualmente: ").strip('"')
+        planilhaGeral = planilhaGeral.replace("\\", "\\\\")
+        df = pd.read_excel(planilhaGeral, usecols=[0,1])
         
     # Filtra as linhas onde a segunda coluna (Estagiário responsável) é uma data
     df['Estagiario responsável'] = pd.to_datetime(df['Estagiario responsável'], format='%d/%m/%Y', errors='coerce')
