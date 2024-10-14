@@ -117,8 +117,6 @@ def abreChromeEdge():
     #LOCALIZA O ICONE DO EDGE E ABRE A PLANILHA GERAL
     #FOI UTILIZADO O PYPERCLIP PARA EVITAR QUALQUER ERRO NA HORA DE COLAR O URL DA PLANILHA
     return navegador
-
-
-navegador = abreChromeEdge()
-
-navegador.find_element(By.XPATH, '//*[@id="text"]').send_keys(textoRetido)
+from datetime import datetime
+print("Despachos para Drones aprovados "+datetime.now().strftime('%d/%m/%Y'))
+print(type(datetime.now().strftime('%d/%m/%Y')))
