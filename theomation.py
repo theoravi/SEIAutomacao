@@ -86,7 +86,7 @@ def main():
         #COLETA CAMINHO DAS PLANILHAS DE EQUIPAMENTOS CONFORMES
    
         planilhaDrones = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - Drones\\Lista de Drones Anatel_Corrigida.xlsx"
-        planilhaRadios = f"C:\\Users\\{user_name}\\ANATEL\ORCN - Rádios\\Lista Radiamador.xlsx"
+        planilhaRadios = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - Rádios\\Lista Radiamador.xlsx"
         planilhaGeral = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - DRONES SEI PLANILHA\\Distribuição Processo Drone.xlsx"
 
         # #IMPRIME CAMINHOS ENCONTRADOS
