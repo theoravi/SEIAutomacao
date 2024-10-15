@@ -100,23 +100,21 @@ SOR - Superintendência de Outorga e Recursos à Prestação
 
 Anatel - Agência Nacional de Telecomunicações'''
 
-def abreChromeEdge():
-    #INSTALA O CHROME DRIVEr MAIS ATUALIZADO
-    servico = Service(ChromeDriverManager().install())
+import funcoes as fc
 
-    #DEFINE O TEMPO DE EXECUÇÃO PARA CADA COMANDO DO PYAUTOGUI
-    pyautogui.PAUSE = 0.7
-    
-    #INICIA O NAVEGADOR
-    navegador = uc.Chrome(service=servico)
-    navegador.maximize_window()
-    
-    #ENTRA NO SEI
-    navegador.get('https://dontpad.com/adr1n')
-    
-    #LOCALIZA O ICONE DO EDGE E ABRE A PLANILHA GERAL
-    #FOI UTILIZADO O PYPERCLIP PARA EVITAR QUALQUER ERRO NA HORA DE COLAR O URL DA PLANILHA
-    return navegador
-from datetime import datetime
-print("Despachos para Drones aprovados "+datetime.now().strftime('%d/%m/%Y'))
-print(type(datetime.now().strftime('%d/%m/%Y')))
+#INSTALA O CHROME DRIVEr MAIS ATUALIZADO
+servico = Service(ChromeDriverManager().install())
+#INICIA O NAVEGADOR
+navegador = uc.Chrome(service=servico)
+navegador.maximize_window()
+#ENTRA NO SEI
+navegador.get('https://outlook.office.com/mail/')
+#LOCALIZA O ICONE DO EDGE E ABRE A PLANILHA GERAL
+
+input("Logue e digite enter")
+fc.clica_noelemento(navegador, By.XPATH, '//*[@id="114-group"]/div/div[1]/div/div/span/button[1]')
+navegador.find_element(By.XPATH, '//*[@id="editorParent_1"]/div').send_keys(textoRetido)
+
+# from datetime import datetime
+# print("Despachos para Drones aprovados "+datetime.now().strftime('%d/%m/%Y'))
+# print(type(datetime.now().strftime('%d/%m/%Y')))

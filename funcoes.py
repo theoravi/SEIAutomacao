@@ -413,7 +413,7 @@ def iniciaJanela(navegador):
 
     #BOTAO QUE ENVIA AS INFORMAÇÕES DA CAIXA DE USUARIO E SENHA
     tk.Label(frame, text="").grid(row=5, column=0)
-    login_button = tk.Button(frame, text="Entrar", font=('Arial', 10), command=preencher_campos, width=20)
+    login_button = tk.Button(frame, text="Entrar", font=('Arial', 10), command=lambda: preencher_campos(user_var, senha_var, navegador, root), width=20)
     login_button.grid(row=6, columnspan=2)
 
     #ASSOCIA A TECLA ENTER DO TECLADO PARA APERTA O BOTAO DE LOGIN
@@ -1430,7 +1430,7 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
             lista_procConformes.remove(processosAssinados) 
 
 
-def atribuir_processos(file_path, num_processos):
+def atribuir_processos(planilhaGeral, num_processos):
 
     # Lê a planilha do Excel
     try:
