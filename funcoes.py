@@ -357,10 +357,13 @@ def sendkeys_elemento(navegador, modo_procura, element_id, texto):
 def abreChromeEdge():
     #INSTALA O CHROME DRIVEr MAIS ATUALIZADO
     servico = Service(ChromeDriverManager().install())
+    # Desativa o bloqueio de pop-ups
+    options = uc.ChromeOptions()
+    options.add_argument("--disable-popup-blocking") 
     #DEFINE O TEMPO DE EXECUÇÃO PARA CADA COMANDO DO PYAUTOGUI
     pyautogui.PAUSE = 0.7
     #INICIA O NAVEGADOR
-    navegador = uc.Chrome(service=servico)
+    navegador = uc.Chrome(service=servico, options=options)
     navegador.maximize_window()
     #ENTRA NO SEI
     navegador.get('https://sei.anatel.gov.br/')
@@ -807,16 +810,22 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     elementos.send_keys(Keys.ENTER)
                     #CRIA DESPACHO
                     navegador.switch_to.frame('ifrVisualizacao')
-                    time.sleep(1)
+                    #time.sleep(2)
                     #CLICA NO INCONE DE INCLUIR DOCUMENTO
-                    navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]').click()
-                    time.sleep(1)
+                    clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]')
+                    #navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]').click()
+                    #time.sleep(2)
                     #CLICA NA OPCAO DE DESPACHO DECISORIO
-                    navegador.find_element(By.XPATH,'//*[@id="tblSeries"]/tbody/tr[16]/td/a[2]').click()
+                    clica_noelemento(navegador, By.XPATH,'//*[@id="tblSeries"]/tbody/tr[16]/td/a[2]')
+                    #navegador.find_element(By.XPATH,'//*[@id="tblSeries"]/tbody/tr[16]/td/a[2]').click()
+                    #time.sleep(2)
                     #SELECIONA TEXTO PADRAO
-                    navegador.find_element(By.XPATH,'//*[@id="divOptTextoPadrao"]/div').click()
+                    clica_noelemento(navegador, By.XPATH,'//*[@id="divOptTextoPadrao"]/div')
+                    #navegador.find_element(By.XPATH,'//*[@id="divOptTextoPadrao"]/div').click()
+                    #time.sleep(2)
                     #ENVIA QUAL DESPACHO DECISORIO DEVE SER CRIADO
                     navegador.find_element(By.XPATH,'//*[@id="txtTextoPadrao"]').send_keys('Despacho Decisório de Homologação Drones')
+                    #time.sleep(2)
                 #VERIFICA SE E UM PROCESSO DE DRONE OU IMPORTADO PARA USO PROPRIO
                 elif check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio", navegador):
                     impProp='Sim'
@@ -826,24 +835,30 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     elementos.send_keys(Keys.ENTER)
                     #CRIA DESPACHO
                     navegador.switch_to.frame('ifrVisualizacao')
-                    time.sleep(1)
+                    #time.sleep(1)
                     #CLICA NO INCONE DE INCLUIR DOCUMENTO
-                    navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]').click()
-                    time.sleep(1)
+                    clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]')
+                    #navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]').click()
+                    ##time.sleep(1)
                     #CLICA NA OPCAO DE DESPACHO DECISORIO
-                    navegador.find_element(By.XPATH,'//*[@id="tblSeries"]/tbody/tr[16]/td/a[2]').click()
+                    clica_noelemento(navegador, By.XPATH,'//*[@id="tblSeries"]/tbody/tr[16]/td/a[2]')
+                    #navegador.find_element(By.XPATH,'//*[@id="tblSeries"]/tbody/tr[16]/td/a[2]').click()
                     #SELECIONA TEXTO PADRAO
-                    navegador.find_element(By.XPATH,'//*[@id="divOptTextoPadrao"]/div').click()
+                    clica_noelemento(navegador, By.XPATH,'//*[@id="divOptTextoPadrao"]/div')
+                    #navegador.find_element(By.XPATH,'//*[@id="divOptTextoPadrao"]/div').click()
                     #ENVIA QUAL DESPACHO DECISORIO DEVE SER CRIADO
                     navegador.find_element(By.XPATH,'//*[@id="txtTextoPadrao"]').send_keys('Despacho Decisório de Homologação não licenciados')
-                time.sleep(2)
+                #time.sleep(1)
                 #CLICA NA PRIMEIRA OPCAO
-                navegador.find_element(By.XPATH,'//*[@id="divInfraAjaxtxtTextoPadrao"]/ul/li/a').click()
+                clica_noelemento(navegador, By.XPATH,'//*[@id="divInfraAjaxtxtTextoPadrao"]/ul/li/a')
+                #navegador.find_element(By.XPATH,'//*[@id="divInfraAjaxtxtTextoPadrao"]/ul/li/a').click()
                 #COLOCA O DESPACHO COMO PUBLICO
-                navegador.find_element(By.XPATH,'//*[@id="divOptPublico"]/div').click()
+                clica_noelemento(navegador, By.XPATH,'//*[@id="divOptPublico"]/div')
+                #navegador.find_element(By.XPATH,'//*[@id="divOptPublico"]/div').click()
                 #SALVA DESPACHO
-                navegador.find_element(By.ID,'btnSalvar').click()
-                time.sleep(0.7)
+                clica_noelemento(navegador, By.ID,'btnSalvar')
+                #navegador.find_element(By.ID,'btnSalvar').click()
+                time.sleep(1)
                 try:
                     navegador.switch_to.window(navegador.window_handles[-1])
                     navegador.close()
@@ -859,13 +874,16 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 navegador.switch_to.default_content()
                 navegador.switch_to.frame('ifrArvore')
                 #CLICA NO DESPACHO DECISORIO
-                navegador.find_element(By.PARTIAL_LINK_TEXT, "Despacho Decisório").click()
+                clica_noelemento(navegador, By.PARTIAL_LINK_TEXT,"Despacho Decisório")
+                #navegador.find_element(By.PARTIAL_LINK_TEXT, "Despacho Decisório").click()
                 navegador.switch_to.default_content()
                 navegador.switch_to.frame('ifrVisualizacao')
                 time.sleep(1)
                 #CLICA NO ICONE DE LEGO
-                navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[8]').click()
+                clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[8]')
+                #navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[8]').click()
                 #SELECIONA BLOCO (SELECIONA O PRIMEIRO DESPACHO PARA DRONES APROVADOS QUE LER)
+                time.sleep(1.5)
                 select_element = navegador.find_element(By.ID, 'selBloco')
                 select = Select(select_element)
                 #PROCURA O PRIMEIRO BLOCO QUE TENHA O TEXTO "Despachos para Drones aprovados"
@@ -873,8 +891,10 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     if "Despachos para Drones aprovados" in opcao.text:
                         select.select_by_visible_text(opcao.text)
                         break
+                time.sleep(0.5)
                 #CLICA NO BOTAO DE INCLUIR NO BLOCO
-                navegador.find_element(By.XPATH, '//*[@id="sbmIncluir"]').click()
+                clica_noelemento(navegador, By.XPATH,'//*[@id="sbmIncluir"]')
+                #navegador.find_element(By.XPATH, '//*[@id="sbmIncluir"]').click()
                 #VOLTA PARA PAGINA INICIAL DO PROCESSO
                 navegador.switch_to.default_content()
                 navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
