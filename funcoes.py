@@ -261,11 +261,10 @@ def verifica_conformidade(modelos, tabela_modelos, num):
 
 #FUNCAO QUE FORMATA A PLANILHA DE DRONES CONFORMES
 def corrige_planilha(planilha):
-    tabela = pd.read_excel(planilha)
+    tabela = pd.read_excel(planilha, usecols=[2,3])
     tabela.columns = tabela.iloc[1]
     tabela = tabela.iloc[2:]
     tabela = tabela.reset_index(drop=True)
-    tabela = tabela['MODELO']
     return tabela
 
 #FUNCAO QUE PREENCHE A PLANILHA GERAL
@@ -590,13 +589,16 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 #VERIFICA SE O MODELO DO DRONE E RADIO CONTROLE ESTA NA PLANILHA DE DRONES CONFORMES
                 modelos = df['Modelo']
                 modelos = modelos.reset_index(drop=True)
-                checkexcel = verifica_conformidade(modelos, drone_modelos, 0)
                 
-                for i in range(len(checkexcel)):
-                    if checkexcel[i] == True:
-                        print(f"O modelo {modelos[i]} está na lista de drones conformes.")
+                drone_modelos['MODELO_CORRIGIDO'] = drone_modelos['MODELO'].apply(lambda x: str(x).lower().replace(' ', '').replace('-', ''))
+                for mod in modelos:
+                    mod2 = mod.lower().replace(' ','').replace('-','').strip('\n')
+                    if mod2 in drone_modelos['MODELO_CORRIGIDO'].values:
+                        linha_nome = drone_modelos['MODELO_CORRIGIDO'] == mod2
+                        nome_comercial = drone_modelos.loc[linha_nome, 'NOME COMERCIAL'].values[0]
+                        print(f"O modelo '{mod}' está na lista de drones conformes. Seu nome comercial é '{nome_comercial}'")
                     else:
-                        print(f"O modelo {modelos[i]} não se encontra na lista de drones conformes")
+                        print(f"O modelo '{mod}' não se encontra na lista de drones conformes")
                 print('\n')
                 #EXIBE CÓDIGO DE RAST"REIO
                 #LINHA ESPECIFICA ESCREVE NA PLANILHA SE O PRODUTO ESTA RETIDO E, CASO ESTEJA, ESCREVE O CODIGO DE RASTREIO
@@ -708,21 +710,23 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 df = df.replace(' ', np.nan)
                 df = df.dropna(how='all')
                 modelos = df['Modelo']
-                modelos = modelos.reset_index(drop=True)
-                checkexcel = verifica_conformidade(modelos, radio_modelos, 1)                        
+                modelos = modelos.reset_index(drop=True)            
                 print("Modelos:")
                 #CRIA DATAFRAME PARA PRINTAR AS INFORMAÇÕES DO PRODUTO
                 data2 = df.values.tolist()
                 headers2 = df.columns.tolist()
                 print(tabulate(data2, headers=headers2, tablefmt='pretty'))
                 print('\n')
-
-                for i in range(len(checkexcel)):
-                    if checkexcel[i] == True:
-                        print(f"O modelo {modelos[i]} está na lista de rádios conformes.")
+                radio_modelos['MODELO_CORRIGIDO'] = radio_modelos['MODELO'].apply(lambda x: str(x).lower().replace(' ', '').replace('-', ''))
+                for mod in modelos:
+                    mod2 = mod.lower().replace(' ','').replace('-','').strip('\n')
+                    if mod2 in radio_modelos['MODELO_CORRIGIDO'].values:
+                        linha_nome = radio_modelos['MODELO_CORRIGIDO'] == mod2
+                        nome_comercial = radio_modelos.loc[linha_nome, 'NOME COMERCIAL'].values[0]
+                        print(f"O modelo '{mod}' está na lista de drones conformes. Seu nome comercial é '{nome_comercial}'")
                     else:
-                        print(f"O modelo {modelos[i]} não se encontra na lista de rádios conformes")
-                print('\n')
+                        print(f"O modelo '{mod}' não se encontra na lista de drones conformes")
+                        print('\n')
                 #EXIBE CÓDIGO DE RASTREIO
                 #ESCREVE NA TABELA EXCEL SE ESTA RETIDO, CASO ESTEJA INSERE CODIGO DE RASTREIO
                 n_serie = navegador.find_element(By.XPATH, '/html/body/table[4]/tbody/tr[2]/td[3]').text
