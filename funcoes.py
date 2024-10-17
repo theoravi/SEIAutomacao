@@ -260,11 +260,18 @@ def verifica_conformidade(modelos, tabela_modelos, num):
     return checkexcel
 
 #FUNCAO QUE FORMATA A PLANILHA DE DRONES CONFORMES
-def corrige_planilha(planilha):
-    tabela = pd.read_excel(planilha, usecols=[2,3])
-    tabela.columns = tabela.iloc[1]
-    tabela = tabela.iloc[2:]
-    tabela = tabela.reset_index(drop=True)
+def corrige_planilha(planilha, num):
+    if num == 0:
+        tabela = pd.read_excel(planilha, usecols=[2,3])
+        tabela.columns = tabela.iloc[1]
+        tabela = tabela.iloc[2:]
+        tabela = tabela.reset_index(drop=True)
+    elif num == 1:
+        tabela = pd.read_excel(planilha)
+        tabela.columns = tabela.iloc[1]
+        tabela = tabela.iloc[2:]
+        tabela = tabela.reset_index(drop=True)
+        tabela = tabela['MODELO']
     return tabela
 
 #FUNCAO QUE PREENCHE A PLANILHA GERAL
@@ -439,8 +446,8 @@ def iniciaJanela(navegador):
 
 #FUNCAO QUE ANALISA TODOS OS PROCESSOS NA CAIXA DO USUARIO
 def analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrones, planilhaRadios):
-    drone_modelos = corrige_planilha(planilhaDrones)
-    radio_modelos = corrige_planilha(planilhaRadios)
+    drone_modelos = corrige_planilha(planilhaDrones, 0)
+    radio_modelos = corrige_planilha(planilhaRadios, 1)
 
     for processos in lista_processos[:]:
         analisa(navegador, processos, nomeEstag, drone_modelos, radio_modelos)
@@ -459,8 +466,8 @@ def analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrone
 #FUNCAO QUE ANALISA UM PROCESSO ESPECIFICO
 def analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones, planilhaRadios):
     
-    drone_modelos = corrige_planilha(planilhaDrones)
-    radio_modelos = corrige_planilha(planilhaRadios)
+    drone_modelos = corrige_planilha(planilhaDrones, 0)
+    radio_modelos = corrige_planilha(planilhaRadios, 1)
 
     while True:
         #PEDE O PROCESSO A SER ANALISADO
@@ -712,23 +719,21 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 df = df.replace(' ', np.nan)
                 df = df.dropna(how='all')
                 modelos = df['Modelo']
-                modelos = modelos.reset_index(drop=True)            
+                modelos = modelos.reset_index(drop=True)
+                checkexcel = verifica_conformidade(modelos, radio_modelos, 1)                                   
                 print("Modelos:")
                 #CRIA DATAFRAME PARA PRINTAR AS INFORMAÇÕES DO PRODUTO
                 data2 = df.values.tolist()
                 headers2 = df.columns.tolist()
                 print(tabulate(data2, headers=headers2, tablefmt='pretty'))
                 print('\n')
-                radio_modelos['MODELO_CORRIGIDO'] = radio_modelos['MODELO'].apply(lambda x: str(x).lower().replace(' ', '').replace('-', ''))
-                for mod in modelos:
-                    mod2 = mod.lower().replace(' ','').replace('-','').strip('\n')
-                    if mod2 in radio_modelos['MODELO_CORRIGIDO'].values:
-                        linha_nome = radio_modelos['MODELO_CORRIGIDO'] == mod2
-                        nome_comercial = radio_modelos.loc[linha_nome, 'NOME COMERCIAL'].values[0]
-                        print(f"O modelo '{mod}' está na lista de drones conformes. Seu nome comercial é '{nome_comercial}'")
+
+                for i in range(len(checkexcel)):
+                    if checkexcel[i] == True:
+                        print(f"O modelo {modelos[i]} está na lista de rádios conformes.")
                     else:
-                        print(f"O modelo '{mod}' não se encontra na lista de drones conformes")
-                        print('\n')
+                        print(f"O modelo {modelos[i]} não se encontra na lista de rádios conformes")
+                print('\n')
                 #EXIBE CÓDIGO DE RASTREIO
                 #ESCREVE NA TABELA EXCEL SE ESTA RETIDO, CASO ESTEJA INSERE CODIGO DE RASTREIO
                 n_serie = navegador.find_element(By.XPATH, '/html/body/table[4]/tbody/tr[2]/td[3]').text
