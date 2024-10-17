@@ -101,6 +101,9 @@ SOR - Superintendência de Outorga e Recursos à Prestação
 Anatel - Agência Nacional de Telecomunicações'''
 
 import funcoes as fc
+import time
+from selenium.webdriver.common.alert import Alert
+from selenium.webdriver.common.keys import Keys
 
 #INSTALA O CHROME DRIVEr MAIS ATUALIZADO
 servico = Service(ChromeDriverManager().install())
@@ -108,12 +111,89 @@ servico = Service(ChromeDriverManager().install())
 navegador = uc.Chrome(service=servico)
 navegador.maximize_window()
 #ENTRA NO SEI
-navegador.get('https://outlook.office.com/mail/')
+navegador.get('https://sei.anatel.gov.br/')
 #LOCALIZA O ICONE DO EDGE E ABRE A PLANILHA GERAL
 
-input("Logue e digite enter")
-fc.clica_noelemento(navegador, By.XPATH, '//*[@id="114-group"]/div/div[1]/div/div/span/button[1]')
-navegador.find_element(By.XPATH, '//*[@id="editorParent_1"]/div').send_keys(textoRetido)
+while True:#INICIA JANELA
+    try:
+        fc.iniciaJanela(navegador)
+        user_name = fc.user_name
+    #CONDICAO DE ERRO PARA CASO O USUÁRIO ERRE O SEU LOGIN 
+    except Exception:
+        print('Ocorreu um erro, tente novamente.')
+    try:
+        #FECHA ALERTA DO NAVEGADOR
+        time.sleep(1)
+        alert = Alert(navegador)
+        alert.accept()
+    except:
+        #ENTRAR NA CAIXA DE PROCESSOS ATRIBUIDOS AO USUARIO
+        if fc.check_element_exists(By.XPATH,'//*[@id="divFiltro"]/div[2]/a', navegador):
+            navegador.find_element(By.XPATH,'//*[@id="divFiltro"]/div[2]/a').click()
+            break
+        #CASO NAO ENCONTRE O FILTRO DE PROCESSOS ELE INFOMA QUE NAO ENTROU NO SEI
+        else:
+            #APAGA O USUÁRIO
+            navegador.find_element(By.XPATH,'//*[@id="txtUsuario"]').clear()
+            print('Usuário ou senha incorretos. Digite novamente')
+
+def teste(navegador):
+    processo = str(input("Digite o processo: "))
+    navegador.find_element(By.ID, 'txtPesquisaRapida').send_keys(processo)
+    elementos = navegador.find_element(By.ID, 'txtPesquisaRapida')
+    elementos.send_keys(Keys.ENTER)
+    time.sleep(1)
+    #INSERE TAG REFERENTE A PROCESSOS INTERCORRENTES
+    navegador.switch_to.frame('ifrVisualizacao')
+    #CLICA NO ICONE DE TAG
+    time.sleep(0.5)
+    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
+    try:    
+        time.sleep(2)
+        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+    except:
+        navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
+        alert.accept()
+        navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
+        time.sleep(0.5)
+        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+    
+    time.sleep(0.5)
+    #CLICA NA TAG DE INTERCORRENTE
+    navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[18]/a').click()
+    #PEDE O TEXTO DA TAG
+    textoTag = input("Insira o texto da tag: ")
+    #COLOCA O TEXTO NA TAG
+    navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoTag)
+    #SALVA TAG
+    navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
+    #DEFINE SITUACAO DO PROCESSO
+
+    # #CLICA NO DROPDOWN DE TAG
+    # time.sleep(0.5)
+    # #VERIFICA SE ESTA RETIDO
+    # retido = 'não'
+    # if retido == 'não':
+    #     #CLICA NA TAG DE NAO RETIDO
+    #     navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[16]')
+    # else:
+    #     #CLICA NA TAG DE RETIDO
+    #     navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[17]')
+    #     time.sleep(0.2)
+    #     navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys('André Jacinto Rodrigues')
+    # #SALVA TAG
+    # navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
+    navegador.switch_to.default_content()
+
+teste(navegador)
+while True:
+    opcao = str(input("Deseja testar mais algum?: "))
+    if opcao == '1':
+        teste(navegador)
+    elif opcao == '2':
+        navegador.quit()
+        break
+    else: print("Opcao", opcao, "é invalida")
 
 # from datetime import datetime
 # print("Despachos para Drones aprovados "+datetime.now().strftime('%d/%m/%Y'))
