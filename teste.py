@@ -149,14 +149,19 @@ def teste(navegador):
     time.sleep(0.5)
     navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
     try:    
-        time.sleep(2)
+        time.sleep(1)
         navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
     except:
-        navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
+        fc.clica_noelemento(navegador, By.XPATH,'//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img')
+        #navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
         alert.accept()
-        navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
-        time.sleep(0.5)
-        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+        time.sleep(0.3)
+        fc.clica_noelemento(navegador, By.XPATH,'//*[@id="btnAdicionar"]')
+        input("perai ")
+        #navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
+        #time.sleep(0.5)
+        fc.clica_noelemento(navegador, By.XPATH,'//*[@id="selMarcador"]/div/a')
+        #navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
     
     time.sleep(0.5)
     #CLICA NA TAG DE INTERCORRENTE

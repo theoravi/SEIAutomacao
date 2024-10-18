@@ -360,7 +360,7 @@ def sendkeys_elemento(navegador, modo_procura, element_id, texto):
         element.send_keys(texto)
     except TimeoutException:
         print(f"Elemento {element_id} não foi carregado no tempo esperado")
-
+        return TimeoutException
 #FUNCAO QUE ABRE O CHROME E O EDGE
 def abreChromeEdge():
     #INSTALA O CHROME DRIVEr MAIS ATUALIZADO
@@ -719,21 +719,20 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 df = df.replace(' ', np.nan)
                 df = df.dropna(how='all')
                 modelos = df['Modelo']
-                modelos = modelos.reset_index(drop=True)
-                checkexcel = verifica_conformidade(modelos, radio_modelos, 1)                                   
+                modelos = modelos.reset_index(drop=True) 
+                checkexcel = verifica_conformidade(modelos, radio_modelos, 1)            
                 print("Modelos:")
                 #CRIA DATAFRAME PARA PRINTAR AS INFORMAÇÕES DO PRODUTO
                 data2 = df.values.tolist()
                 headers2 = df.columns.tolist()
                 print(tabulate(data2, headers=headers2, tablefmt='pretty'))
                 print('\n')
-
                 for i in range(len(checkexcel)):
                     if checkexcel[i] == True:
                         print(f"O modelo {modelos[i]} está na lista de rádios conformes.")
                     else:
                         print(f"O modelo {modelos[i]} não se encontra na lista de rádios conformes")
-                print('\n')
+                        print('\n')
                 #EXIBE CÓDIGO DE RASTREIO
                 #ESCREVE NA TABELA EXCEL SE ESTA RETIDO, CASO ESTEJA INSERE CODIGO DE RASTREIO
                 n_serie = navegador.find_element(By.XPATH, '/html/body/table[4]/tbody/tr[2]/td[3]').text
@@ -805,7 +804,9 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     #CLICA NO SIMBOLO DE ALTERAR DOCUMENTO
                     navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[2]').click()
                     #SELECIONA A OPCAO DE PUBLICO NO DOCUMENTO
-                    navegador.find_element(By.XPATH,'//*[@id="divOptPublico"]/div/label').click()
+                    time.sleep(0.5)
+                    clica_noelemento(navegador, By.XPATH,'//*[@id="divOptPublico"]/div/label')
+                    # navegador.find_element(By.XPATH,'//*[@id="divOptPublico"]/div/label').click()
                     #SALVA AS MUDANCAS
                     navegador.find_element(By.ID,'btnSalvar').click()
                     navegador.switch_to.default_content()
@@ -870,15 +871,9 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 clica_noelemento(navegador, By.ID,'btnSalvar', 10)
                 #navegador.find_element(By.ID,'btnSalvar').click()
                 time.sleep(1)
-                try:
-                    navegador.switch_to.window(navegador.window_handles[-1])
-                    navegador.close()
-                    time.sleep(0.7)
-                    #MUDA PARA JANELA PRINCIAPL DO PROGRAMA
-                    navegador.switch_to.window(janela_principal)
-                except:
-                    #MUDA PARA JANELA PRINCIAPL DO PROGRAMA
-                    navegador.switch_to.window(janela_principal)
+                navegador.switch_to.window(navegador.window_handles[-1])
+                navegador.close()
+                time.sleep(0.7)
                 #MUDA PARA JANELA PRINCIAPL DO PROGRAMA
                 navegador.switch_to.window(janela_principal)
                 #INCLUI DESPACHO NO BLOCO
@@ -960,14 +955,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     time.sleep(1)
                     navegador.switch_to.frame('ifrVisualizacao')
                     #CLICA NO ICONE DE ENVIO DE EMAIL
-                    try:
-                        element = WebDriverWait(navegador, 10).until(
-                            EC.presence_of_element_located((By.XPATH, '//*[@id="divArvoreAcoes"]/a[11]'))
-                        )
-                        element.click()
-                    except TimeoutException:
-                        print("Elemento não foi carregado no tempo esperado")
-                        return
+                    clica_noelemento(navegador, By.XPATH, '//*[@id="divArvoreAcoes"]/a[11]')
                     time.sleep(1)
                     #VAI PARA A JANELA MAIS RECENTE ABERTA
                     navegador.switch_to.window(navegador.window_handles[-1])
@@ -981,7 +969,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     navegador.find_element(By.XPATH, '//*[@id="s2id_autogen1"]').send_keys(emailSol)
                     time.sleep(1.2)
                     #CLICA NO EMAIL DO SOLICITANTE
-                    navegador.find_element(By.CLASS_NAME, 'select2-result-label').click()
+                    clica_noelemento(navegador, By.CLASS_NAME, 'select2-result-label')
                     #MOSTRA AS OPCOES DE EXIGENCIA
                     #EXECUTA A CONDICAO PARA CADA EXIGENCIA
                     while True:
@@ -1033,13 +1021,19 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                                     time.sleep(0.5)
                                     navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
                                     try:    
+                                        time.sleep(1)
                                         navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
                                     except:
-                                        navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
+                                        time.sleep(0.3)
+                                        clica_noelemento(navegador, By.XPATH,'//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img')
+                                        #navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
                                         alert.accept()
-                                        navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
-                                        time.sleep(0.5)
-                                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                                        time.sleep(0.3)
+                                        clica_noelemento(navegador, By.XPATH,'//*[@id="btnAdicionar"]')
+                                        #navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
+                                        #time.sleep(0.5)
+                                        clica_noelemento(navegador, By.XPATH,'//*[@id="selMarcador"]/div/a')
+                                        #navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
                                     
                                     time.sleep(0.5)
                                     #CLICA NA TAG DE INTERCORRENTE
@@ -1096,13 +1090,19 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                                     time.sleep(0.5)
                                     navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
                                     try:    
+                                        time.sleep(1)
                                         navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
                                     except:
-                                        navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
+                                        time.sleep(0.3)
+                                        clica_noelemento(navegador, By.XPATH,'//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img')
+                                        #navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
                                         alert.accept()
-                                        navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
-                                        time.sleep(0.5)
-                                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                                        time.sleep(0.3)
+                                        clica_noelemento(navegador, By.XPATH,'//*[@id="btnAdicionar"]')
+                                        #navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
+                                        #time.sleep(0.5)
+                                        clica_noelemento(navegador, By.XPATH,'//*[@id="selMarcador"]/div/a')
+                                        #navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
                                     
                                     #CLICA NO DROPDOWN COM OS TIPOS DE TAG
                                     time.sleep(0.5)
@@ -1158,13 +1158,19 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                                     time.sleep(0.5)
                                     navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
                                     try:    
+                                        time.sleep(1)
                                         navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
                                     except:
-                                        navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
+                                        time.sleep(0.3)
+                                        clica_noelemento(navegador, By.XPATH,'//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img')
+                                        #navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
                                         alert.accept()
-                                        navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
-                                        time.sleep(0.5)
-                                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                                        time.sleep(0.3)
+                                        clica_noelemento(navegador, By.XPATH,'//*[@id="btnAdicionar"]')
+                                        #navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
+                                        #time.sleep(0.5)
+                                        clica_noelemento(navegador, By.XPATH,'//*[@id="selMarcador"]/div/a')
+                                        #navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
                                     
                                     time.sleep(0.5)
                                     #INSERE TAG DE 'PENDENCIAS'
@@ -1217,7 +1223,7 @@ def endereco_email(endereco, navegador):
     navegador.find_element(By.XPATH, '//*[@id="s2id_autogen1"]').send_keys(endereco)
     time.sleep(1)
     #CLICA NO EMAIL DO SOLICITANTE
-    navegador.find_element(By.XPATH, '//*[@id="select2-drop"]/ul').click()
+    clica_noelemento(navegador, By.XPATH, '//*[@id="select2-drop"]/ul')
     time.sleep(0.2)
 
 
@@ -1412,17 +1418,23 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
                     #SALVA ANOTACAO
                     navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosSuperior"]/button').click()
                     #CLICA NO ICONE DE TAG
-                    time.sleep(0.5)
-                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
-                    try:    
-                        time.sleep(2)
-                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                    #time.sleep(0.5)
+                    clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[25]')
+                    #navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
+                    try:
+                        time.sleep(1)
+                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click() 
                     except:
-                        navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
+                        time.sleep(0.3)
+                        clica_noelemento(navegador, By.XPATH,'//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img')
+                        #navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
                         alert.accept()
-                        navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
-                        time.sleep(0.5)
-                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                        time.sleep(0.3)
+                        clica_noelemento(navegador, By.XPATH,'//*[@id="btnAdicionar"]')
+                        #navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
+                        #time.sleep(0.5)
+                        clica_noelemento(navegador, By.XPATH,'//*[@id="selMarcador"]/div/a')
+                        #navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
                     #CLICA NO DROPDOWN DE TAG
                     time.sleep(0.5)
                     #VERIFICA SE ESTA RETIDO
