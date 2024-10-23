@@ -863,7 +863,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 #SALVA DESPACHO
                 clica_noelemento(navegador, By.ID,'btnSalvar')
                 #navegador.find_element(By.ID,'btnSalvar').click()
-                time.sleep(1)
+                time.sleep(2)
                 navegador.switch_to.window(navegador.window_handles[-1])
                 navegador.close()
                 time.sleep(0.7)
