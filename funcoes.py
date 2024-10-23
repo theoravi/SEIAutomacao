@@ -260,11 +260,20 @@ def verifica_conformidade(modelos, tabela_modelos, num):
     return checkexcel
 
 #FUNCAO QUE FORMATA A PLANILHA DE DRONES CONFORMES
-def corrige_planilha(planilha):
-    tabela = pd.read_excel(planilha, usecols=[2,3])
-    tabela.columns = tabela.iloc[1]
-    tabela = tabela.iloc[2:]
-    tabela = tabela.reset_index(drop=True)
+def corrige_planilha(planilha, drones: bool):
+    if drones:
+        # Se for pra a planilha de drones:
+        tabela = pd.read_excel(planilha, usecols=[2,3])
+        tabela.columns = tabela.iloc[1]
+        tabela = tabela.iloc[2:]
+        tabela = tabela.reset_index(drop=True)
+        # Se for para a de rádios:
+    else:
+        tabela = pd.read_excel(planilha)
+        tabela.columns = tabela.iloc[1]
+        tabela = tabela.iloc[2:]
+        tabela = tabela.reset_index(drop=True)
+        tabela = tabela['MODELO']
     return tabela
 
 #FUNCAO QUE PREENCHE A PLANILHA GERAL
@@ -357,12 +366,12 @@ def abreChromeEdge():
     #INSTALA O CHROME DRIVEr MAIS ATUALIZADO
     servico = Service(ChromeDriverManager().install())
     # Desativa o bloqueio de pop-ups
-    options = uc.ChromeOptions()
-    options.add_argument("--disable-popup-blocking") 
+    # options = uc.ChromeOptions()
+    # options.add_argument("--disable-popup-blocking") 
     #DEFINE O TEMPO DE EXECUÇÃO PARA CADA COMANDO DO PYAUTOGUI
     pyautogui.PAUSE = 0.7
     #INICIA O NAVEGADOR
-    navegador = uc.Chrome(service=servico, options=options)
+    navegador = uc.Chrome(service=servico)
     navegador.maximize_window()
     #ENTRA NO SEI
     navegador.get('https://sei.anatel.gov.br/')
@@ -437,8 +446,8 @@ def iniciaJanela(navegador):
 
 #FUNCAO QUE ANALISA TODOS OS PROCESSOS NA CAIXA DO USUARIO
 def analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrones, planilhaRadios):
-    drone_modelos = corrige_planilha(planilhaDrones)
-    radio_modelos = corrige_planilha(planilhaRadios)
+    drone_modelos = corrige_planilha(drones=True, planilha=planilhaDrones)
+    radio_modelos = corrige_planilha(drones=False, planilha=planilhaRadios)
 
     for processos in lista_processos[:]:
         analisa(navegador, processos, nomeEstag, drone_modelos, radio_modelos)
@@ -456,9 +465,8 @@ def analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrone
 
 #FUNCAO QUE ANALISA UM PROCESSO ESPECIFICO
 def analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones, planilhaRadios):
-    
-    drone_modelos = corrige_planilha(planilhaDrones)
-    radio_modelos = corrige_planilha(planilhaRadios)
+    drone_modelos = corrige_planilha(drones=True, planilha=planilhaDrones)
+    radio_modelos = corrige_planilha(drones=False, planilha=planilhaRadios)
 
     while True:
         #PEDE O PROCESSO A SER ANALISADO
@@ -694,7 +702,6 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
 
                 #CONTA QUANTIDADE DE LINHAS DA TABELA SOBRE O PRODUTO
                 quantidade_linhas = len(navegador.find_elements(By.XPATH, '/html/body/table[4]/tbody/tr'))
-
                 #VERIFICA CAMPOS QUE CONTÉM AS INFORMAÇÕES SOBRE O PRODUTO
                 modelos = []
                 for i in range(1, quantidade_linhas, 1):
@@ -863,9 +870,9 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 #SALVA DESPACHO
                 clica_noelemento(navegador, By.ID,'btnSalvar')
                 #navegador.find_element(By.ID,'btnSalvar').click()
-                time.sleep(2)
-                navegador.switch_to.window(navegador.window_handles[-1])
-                navegador.close()
+                # time.sleep(2)
+                # navegador.switch_to.window(navegador.window_handles[-1])
+                # navegador.close()
                 time.sleep(0.7)
                 #MUDA PARA JANELA PRINCIAPL DO PROGRAMA
                 navegador.switch_to.window(janela_principal)

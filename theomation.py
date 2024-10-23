@@ -35,7 +35,7 @@ def main():
                 if fc.check_element_exists(By.XPATH,'//*[@id="divFiltro"]/div[2]/a', navegador):
                     navegador.find_element(By.XPATH,'//*[@id="divFiltro"]/div[2]/a').click()
                     break
-                #CASO NAO ENCONTRE O FILTRO DE PROCESSOS ELE INFOMA QUE NAO ENTROU NO SEI
+                #CASO NAO ENCONTRE O FILTRO DE PROCESSOS ELE INFORMA QUE NAO ENTROU NO SEI
                 else:
                     #APAGA O USUÁRIO
                     navegador.find_element(By.XPATH,'//*[@id="txtUsuario"]').clear()
