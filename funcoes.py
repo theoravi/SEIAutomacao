@@ -343,18 +343,16 @@ def preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastrei
 #FUNCAO QUE ESPERA UM ELEMENTO CARREGAR NA TELA E CLICA NELE
 def clica_noelemento(navegador, modo_procura, element_id, tempo=10):
     # Espera até que o elemento seja carregado (exemplo: elemento localizado por ID)
-    encontrado=False
     try:
         element = WebDriverWait(navegador, tempo).until(
             EC.element_to_be_clickable((modo_procura, element_id))
         )
         # Clica no elemento
         element.click()
-        encontrado=True
+        return True
     except TimeoutException:
         print(f"Elemento {element_id} não foi carregado no tempo esperado")
-        encontrado=False
-    return encontrado
+        return False
 
 #FUNCAO QUE ESPERA UM ELEMENTO CARREGAR NA TELA E ENVIA TEXTO NELE
 def sendkeys_elemento(navegador, modo_procura, element_id, texto):
@@ -372,8 +370,8 @@ def sendkeys_elemento(navegador, modo_procura, element_id, texto):
 def abreChromeEdge():
     #INSTALA O CHROME DRIVEr MAIS ATUALIZADO
     # Desativa o bloqueio de pop-ups
-    # options = uc.ChromeOptions()
-    # options.add_argument("--disable-popup-blocking") 
+    options = uc.ChromeOptions()
+    options.add_argument("--disable-popup-blocking") 
     #DEFINE O TEMPO DE EXECUÇÃO PARA CADA COMANDO DO PYAUTOGUI
     pyautogui.PAUSE = 0.7
     #INICIA O NAVEGADOR
@@ -382,7 +380,7 @@ def abreChromeEdge():
     # Configura o serviço do ChromeDriver
     servico = Service(chrome_driver_path)
     # Inicia o navegador Chrome
-    navegador = webdriver.Chrome(service=servico)
+    navegador = webdriver.Chrome(service=servico, options=options)
     navegador.maximize_window()
     #ENTRA NO SEI
     navegador.get('https://sei.anatel.gov.br/')
@@ -881,9 +879,9 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 #SALVA DESPACHO
                 clica_noelemento(navegador, By.ID,'btnSalvar')
                 #navegador.find_element(By.ID,'btnSalvar').click()
-                # time.sleep(2)
-                # navegador.switch_to.window(navegador.window_handles[-1])
-                # navegador.close()
+                time.sleep(2)
+                navegador.switch_to.window(navegador.window_handles[-1])
+                navegador.close()
                 time.sleep(0.7)
                 #MUDA PARA JANELA PRINCIAPL DO PROGRAMA
                 navegador.switch_to.window(janela_principal)
