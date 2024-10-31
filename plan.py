@@ -1,9 +1,9 @@
-from psutil import users
 import pyautogui
 import pyperclip
 import time
 import tkinter as tk
-import undetected_chromedriver as uc
+# import undetected_chromedriver as uc
+from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -204,21 +204,23 @@ def tira_restrito():
     navegador.switch_to.default_content()
 
 
-servico = Service(ChromeDriverManager().install())
+chrome_driver_path = r"C:\Users\theo.estagio\OneDrive - ANATEL\Área de Trabalho\githubAutomacao\SEIAutomacao\chromedriver-win64\chromedriver.exe" 
+# servico = Service(ChromeDriverManager().install())
+servico = Service(chrome_driver_path)
 pyautogui.PAUSE = 0.7
 #INICIA O NAVEGADOR
-navegador = uc.Chrome(service=servico)
+navegador = webdriver.Chrome(service=servico)
 navegador.maximize_window()
 navegador.get('https://sei.anatel.gov.br/')
 janela_principal = navegador.current_window_handle
-edge=pyautogui.locateOnScreen('imgAut/edge.png', confidence=0.7)
+edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
 pyautogui.click(edge)
 time.sleep(3)
 sitePlan = 'https://anatel365.sharepoint.com/:x:/r/sites/lista.orcn/_layouts/15/Doc.aspx?sourcedoc=%7B4130A4D6-7F00-45D4-A328-ED0866A62335%7D&file=Distribui%C3%A7%C3%A3o%20Processo%20Drone.xlsx&action=default&mobileredirect=true'
 pyperclip.copy(sitePlan)
 pyautogui.hotkey('ctrl', 'v')
 pyautogui.press('enter')
-chrome=pyautogui.locateOnScreen('imgAut/chrome.png', confidence=0.7)
+chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
 pyautogui.click(chrome)
 
 

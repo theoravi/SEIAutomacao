@@ -370,13 +370,13 @@ def sendkeys_elemento(navegador, modo_procura, element_id, texto):
 def abreChromeEdge():
     #INSTALA O CHROME DRIVEr MAIS ATUALIZADO
     # Desativa o bloqueio de pop-ups
-    options = uc.ChromeOptions()
+    options = webdriver.ChromeOptions()
     options.add_argument("--disable-popup-blocking") 
     #DEFINE O TEMPO DE EXECUÇÃO PARA CADA COMANDO DO PYAUTOGUI
     pyautogui.PAUSE = 0.7
     #INICIA O NAVEGADOR
     # Caminho do ChromeDriver local
-    chrome_driver_path = "chromedriver-win64\chromedriver.exe"  # Altere para o caminho correto do seu ChromeDriver
+    chrome_driver_path = r"chromedriver-win64\chromedriver.exe"  # Altere para o caminho correto do seu ChromeDriver
     # Configura o serviço do ChromeDriver
     servico = Service(chrome_driver_path)
     # Inicia o navegador Chrome
