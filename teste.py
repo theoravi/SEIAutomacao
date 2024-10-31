@@ -1,68 +1,94 @@
 
-import pandas as pd
-# import pyautogui
-# from selenium.webdriver.chrome.service import Service
-# from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.common.by import By
-# import undetected_chromedriver as uc
-# import time
-from tabulate import tabulate
-import numpy as np
-import funcoes as fc
-from Levenshtein import distance as lv
+# import pandas as pd
+# # import pyautogui
+# # from selenium.webdriver.chrome.service import Service
+# # from webdriver_manager.chrome import ChromeDriverManager
+# from selenium.webdriver.common.by import By
+# # import undetected_chromedriver as uc
+# # import time
+# from tabulate import tabulate
+# import numpy as np
+# import funcoes as fc
+# from Levenshtein import distance as lv
 
-# # Criação do DataFrame
-preenchido = {'Modelo': ["YAESU FTM-7250DR ", "controle: rm330"], 'Nome Comercial': ["MINI 3", "C5"], 'Número de Série (incluindo rádio controle e óculos)': ["1581F6ZFF564GFDRA45", "5HAZ54GDGDG6"]}
-df = pd.DataFrame(preenchido)
-modelos = df['Modelo'].dropna().reset_index(drop=True)
+# # def corrige(planilha, conforme: bool):
+# #     if conforme:
+# #         tabela = pd.read_excel(planilha, sheet_name='CONFORMES', engine='openpyxl')
+# #         tabela.columns = tabela.iloc[1]
+# #         tabela = tabela.iloc[2:]
+# #         tabela = tabela.reset_index(drop=True)
+# #         tabela = tabela['MODELO']
+# #     else:
+# #         tabela = pd.read_excel(planilha, sheet_name='NÃO CONFORMES', engine='openpyxl')
+# #         tabela.columns = tabela.iloc[1]
+# #         tabela = tabela.iloc[2:]
+# #         tabela = tabela.reset_index(drop=True)
+# #         tabela = tabela['MODELO']
+# #     return tabela
 
-print(df)
-print(modelos)
-print("\n")
+# # # # Criação do DataFrame
+# # preenchido = {'Modelo': ["MT3PD ", "VISTA KIT"], 'Nome Comercial': ["MINI 3", "C5"], 'Número de Série (incluindo rádio controle e óculos)': ["1581F6ZFF564GFDRA45", "5HAZ54GDGDG6"]}
+# # df = pd.DataFrame(preenchido)
+# # modelos = df['Modelo'].dropna().reset_index(drop=True)
 
-# Exibe a tabela formatada
-df = df.replace(' ', np.nan).dropna(how='all')
-data = df.values.tolist()
-headers = df.columns.tolist()
-print(tabulate(data, headers=headers, tablefmt='pretty'))
-print('\n')
+# # print(df)
+# # print(modelos)
+# # print("\n")
 
-planilhaDrones = input("Insira o caminho da planilha/lista de rádios conformes: ").replace('"' , '')
+# # # Exibe a tabela formatada
+# # df = df.replace(' ', np.nan).dropna(how='all')
+# # data = df.values.tolist()
+# # headers = df.columns.tolist()
+# # print(tabulate(data, headers=headers, tablefmt='pretty'))
+# # print('\n')
 
-# Tenta carregar a planilha de drones conformes
-try:
-    tabela = fc.corrige_planilha(planilhaDrones, drones=False)
-    tabela_modelos = tabela.astype(str)  # Garante que os modelos estão como strings
-except Exception as e:
-    print(f"Erro ao carregar a planilha: {e}")
-    exit()
+# # planilhaDrones = input("Insira o caminho da planilha/lista de rádios conformes: ").replace('"' , '')
+
+# # # Tenta carregar a planilha de drones conformes
+# # try:
+# #     dronesConformes = corrige(planilhaDrones, conforme=True)
+# #     dronesNaoConformes = corrige(planilhaDrones, conforme=False)
+# # except Exception as e:
+# #     print(f"Erro ao carregar a planilha: {e}")
+# #     exit()
     
-# Verificação de conformidade
-checkexcel = [False] * len(modelos)  # Inicializa a lista com False
-lista_parecidos = []
-# Comparação de modelos
-for modelo_solicitante in range(len(modelos)):
-    for j in range(len(tabela_modelos)):
-        try:
-            if tabela_modelos[j].lower().replace(' ','').replace('-', '') in modelos[modelo_solicitante].lower().replace(' ','').strip('\n').replace('-', ''):
-                checkexcel[modelo_solicitante] = True
-                print('O modelo', modelos[modelo_solicitante], 'está na planilha de drones conformes')
-                break
-            elif lv(modelos[modelo_solicitante].lower().replace(' ','').strip('\n').replace('-', ''), tabela_modelos[j].lower().replace(' ','').replace('-', '')) < 2:
-                lista_parecidos.append(tabela_modelos[j])
-        except KeyError as e:
-            print(f"Erro ao acessar os índices: {e}")
-            continue
-for i in range(len(checkexcel)):
-    if not checkexcel[i]:
-        print(f"O modelo {modelos[i]} não se encontra na lista de rádios conformes\n", "Lista de modelos parecidos na tabela:", lista_parecidos)
-print('\n')
+# # # Verificação de conformidade
+# # checkexcel_conf, checkexcel_naoconf = [False] * len(modelos)  # Inicializa a lista com False
+# # print(checkexcel_conf, checkexcel_naoconf)
+# # input()
+# # lista_parecidos = []
+# # # Comparação de modelos
+# # for modelo_solicitante in range(len(modelos)):
+# #     for j in range(len(dronesConformes)):
+# #         try:
+# #             if dronesConformes[j].lower().replace(' ','').replace('-', '') in modelos[modelo_solicitante].lower().replace(' ','').strip('\n').replace('-', ''):
+# #                 checkexcel_conf[modelo_solicitante] = True
+# #                 break
 
-# # Abre um arquivo Excel e carrega uma página específica como DataFrame
-# file_path = "C:\\Users\\andrej.estagio\\ANATEL\\ORCN - Rádios\\Lista Radiamador.xlsx"
+# #         except KeyError as e:
+# #             print(f"Erro ao acessar os índices: {e}")
+# #             continue
+# #     for j in range(len(dronesNaoConformes)):
+# #         try:
+# #             if dronesNaoConformes[j].lower().replace(' ','').replace('-', '') in modelos[modelo_solicitante].lower().replace(' ','').strip('\n').replace('-', ''):
+# #                 checkexcel_naoconf[modelo_solicitante] = True
+# #                 print('O modelo', modelos[modelo_solicitante], 'está na planilha de drones NÃO conformes')
+# #                 break
+# #         except KeyError as e:
+# #             print(f"Erro ao acessar os índices: {e}")
+# #             continue
+# # for i in range(len(checkexcel_conf)):
+# #     if checkexcel_conf[i] == True:
+# #         print(f"O modelo {modelos[i]} está na lista de rádios conformes.")
+# #     else:
+# #         print(f"O modelo {modelos[i]} não se encontra na lista de rádios conformes")
+# #         print('\n')
 
-# # Para carregar uma página específica
-# df = pd.read_excel(file_path, sheet_name='CONFORMES', engine='openpyxl')
+# # # Abre um arquivo Excel e carrega uma página específica como DataFrame
+# # file_path = "C:\\Users\\andrej.estagio\\ANATEL\\ORCN - Rádios\\Lista Radiamador.xlsx"
+
+# # # Para carregar uma página específica
+# # df = pd.read_excel(file_path, sheet_name='CONFORMES', engine='openpyxl')
 
 # import funcoes as fc
 # import time
@@ -93,14 +119,44 @@ print('\n')
 #             navegador.find_element(By.XPATH,'//*[@id="txtUsuario"]').clear()
 #             print('Usuário ou senha incorretos. Digite novamente')
 
-# time.sleep(5)
+# for i in range(10):
+#     time.sleep(1)
+#     print("esperando", i, "segundos")
 
-# if not fc.check_element_exists(By.XPATH, 'chirlene.colab' , navegador):
-#     navegador.find_element(By.XPATH, '//*[@id="lnkRecebidosProximaPaginaSuperior"]').click()
-#     fc.clica_noelemento(navegador, By.PARTIAL_LINK_TEXT, 'chirlene.colab')
-#     print('clicado no elemento //*[@id="lnkRecebidosProximaPaginaSuperior"]')
-# else:
-#     fc.clica_noelemento(navegador, By.PARTIAL_LINK_TEXT, 'chirlene.colab')
+# while True:
+#     if fc.check_element_exists(By.XPATH, 'chirlene.colab' , navegador):
+#         fc.clica_noelemento(navegador, By.PARTIAL_LINK_TEXT, 'chirlene.colab')
+#     else:
+#         print("Não há processos na caixa da Chirlene na página inicial")
+#         navegador.find_element(By.XPATH, '//*[@id="lnkRecebidosProximaPaginaSuperior"]').click()
+#         print("Passando para a próxima página")
+
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+import undetected_chromedriver as uc
+
+def main():
+    # Caminho do ChromeDriver local
+    chrome_driver_path = "chromedriver-win64\chromedriver.exe"  # Altere para o caminho correto do seu ChromeDriver
+
+    # Configura o serviço do ChromeDriver
+    servico = Service(chrome_driver_path)
+
+    # Inicia o navegador Chrome
+    navegador = webdriver.Chrome(service=servico)
+
+    # Acesse um site de exemplo
+    navegador.get("https://www.google.com")
+
+    # Mantenha o navegador aberto por um tempo para ver
+    input("Pressione Enter para fechar o navegador...")
+
+    # Fecha o navegador
+    navegador.quit()
+
+if __name__ == "__main__":
+    main()
 
 
 # def teste(navegador):

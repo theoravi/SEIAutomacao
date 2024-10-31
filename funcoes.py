@@ -7,7 +7,9 @@ import time
 import tkinter as tk
 import undetected_chromedriver as uc
 from datetime import datetime
+from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -296,6 +298,7 @@ def preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastrei
     time.sleep(0.3)
     pyautogui.press('esc')
     #COPIA O NUMERO DO PROCESSO NA CELULA PARA SABER SE ELE FOI ENCONTRADO CORRETAMENTE
+    pyperclip.copy('nan')
     pyautogui.hotkey('ctrl','c')
     time.sleep(0.3)
     celula_encontrada = pyperclip.paste()
@@ -338,16 +341,20 @@ def preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastrei
     pyautogui.click(chrome)
 
 #FUNCAO QUE ESPERA UM ELEMENTO CARREGAR NA TELA E CLICA NELE
-def clica_noelemento(navegador, modo_procura, element_id):
+def clica_noelemento(navegador, modo_procura, element_id, tempo=10):
     # Espera até que o elemento seja carregado (exemplo: elemento localizado por ID)
+    encontrado=False
     try:
-        element = WebDriverWait(navegador, 10).until(
+        element = WebDriverWait(navegador, tempo).until(
             EC.element_to_be_clickable((modo_procura, element_id))
         )
         # Clica no elemento
         element.click()
+        encontrado=True
     except TimeoutException:
         print(f"Elemento {element_id} não foi carregado no tempo esperado")
+        encontrado=False
+    return encontrado
 
 #FUNCAO QUE ESPERA UM ELEMENTO CARREGAR NA TELA E ENVIA TEXTO NELE
 def sendkeys_elemento(navegador, modo_procura, element_id, texto):
@@ -364,14 +371,18 @@ def sendkeys_elemento(navegador, modo_procura, element_id, texto):
 #FUNCAO QUE ABRE O CHROME E O EDGE
 def abreChromeEdge():
     #INSTALA O CHROME DRIVEr MAIS ATUALIZADO
-    servico = Service(ChromeDriverManager().install())
     # Desativa o bloqueio de pop-ups
     # options = uc.ChromeOptions()
     # options.add_argument("--disable-popup-blocking") 
     #DEFINE O TEMPO DE EXECUÇÃO PARA CADA COMANDO DO PYAUTOGUI
     pyautogui.PAUSE = 0.7
     #INICIA O NAVEGADOR
-    navegador = uc.Chrome(service=servico)
+    # Caminho do ChromeDriver local
+    chrome_driver_path = "chromedriver-win64\chromedriver.exe"  # Altere para o caminho correto do seu ChromeDriver
+    # Configura o serviço do ChromeDriver
+    servico = Service(chrome_driver_path)
+    # Inicia o navegador Chrome
+    navegador = webdriver.Chrome(service=servico)
     navegador.maximize_window()
     #ENTRA NO SEI
     navegador.get('https://sei.anatel.gov.br/')
@@ -1313,15 +1324,14 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
 
         if not resultado.empty:
             # Se o processo for encontrado, pegar o valor da coluna 'Retido'
-            retido = resultado.iloc[0]['Retido']
+            retido = resultado.iloc[0]['Retido'].lower()
             codRastreio = resultado.iloc[0]['NumerodoRastreio']
 
             # Diz se o processo está retido ou não
-            if retido == 'Sim' or retido == 'sim' or retido == 'SIM':
+            if retido == 'sim':
                 print(f"O processo {processosAssinados} está retido com código de rastreio {codRastreio}")
             else:
                 print(f"O processo {processosAssinados} não está retido")
-            retido = retido.lower()
         else:
             print(f"Processo {processosAssinados} não encontrado na planilha.")
             continue  # Pula para o próximo processo 
@@ -1536,7 +1546,13 @@ def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral):
     num_processos = int(input('Digite a quantidade de processos que deseja atribuir: '))
     lista_processos_atr, df_com_datas = atribuir_processos(planilhaGeral, num_processos)
     print('Lista de processos a serem atribuídos:', lista_processos_atr)
-    navegador.find_element(By.PARTIAL_LINK_TEXT, 'chirlene.colab').click()
+
+    # Procura a caixa da Chirlene
+    if not check_element_exists(By.PARTIAL_LINK_TEXT, 'chirlene.colab' , navegador):
+        print("Não há processos da caixa da Chirlene na página inicial")
+        print("Passando para a próxima página")
+        navegador.find_element(By.XPATH, '//*[@id="lnkRecebidosProximaPaginaSuperior"]').click()
+    clica_noelemento(navegador, By.PARTIAL_LINK_TEXT, 'chirlene.colab')
 
     processos_para_atr = []
     processos_nao_encontrados = []
