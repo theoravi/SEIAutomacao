@@ -1034,7 +1034,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                                     navegador.switch_to.frame('ifrConteudoVisualizacao')
                                     #CLICA NO ICONE DE TAG
                                     time.sleep(0.5)
-                                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[24]').click()
+                                    navegador.find_element(By.XPATH, "//img[contains(@src, 'svg/marcador_gerenciar.svg?18')]").click()
                                     navegador.switch_to.frame('ifrVisualizacao')
                                     try:    
                                         time.sleep(1)
@@ -1104,7 +1104,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                                     navegador.switch_to.frame('ifrConteudoVisualizacao')
                                     #CLICA NO ICONE DE TAG
                                     time.sleep(0.5)
-                                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[24]').click()
+                                    navegador.find_element(By.XPATH, "//img[contains(@src, 'svg/marcador_gerenciar.svg?18')]").click()
                                     navegador.switch_to.frame('ifrVisualizacao')
                                     try:    
                                         time.sleep(1)
@@ -1173,7 +1173,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                                     navegador.switch_to.frame('ifrConteudoVisualizacao')
                                     #CLICA NO ICONE DE TAG
                                     time.sleep(0.5)
-                                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[24]').click()
+                                    navegador.find_element(By.XPATH, "//img[contains(@src, 'svg/marcador_gerenciar.svg?18')]").click()
                                     navegador.switch_to.frame('ifrVisualizacao')
                                     try:    
                                         time.sleep(1)
@@ -1448,7 +1448,7 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
                     #time.sleep(0.5)
                     navegador.switch_to.default_content()
                     navegador.switch_to.frame('ifrConteudoVisualizacao')
-                    clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[24]')
+                    clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/marcador_gerenciar.svg?18')]")
                     #navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[24]').click()
                     navegador.switch_to.frame('ifrVisualizacao')
                     try:
