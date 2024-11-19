@@ -968,14 +968,15 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     time.sleep(1)
                     navegador.switch_to.frame('ifrConteudoVisualizacao')
                     #CLICA NO ICONE DE ENVIO DE EMAIL
-                    clica_noelemento(navegador, By.XPATH, '//*[@id="divArvoreAcoes"]/a[10]')
+                    clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/email_enviar.svg?18')]")
                     #clica_noelemento(navegador, By.XPATH, '//*[@id="divArvoreAcoes"]/a[10]')
                     time.sleep(1)
                     #VAI PARA A JANELA MAIS RECENTE ABERTA
                     navegador.switch_to.window(navegador.window_handles[-1])
-                    time.sleep(1)
+                    #time.sleep(1)
                     #ABRE O DROPDOWN COM AS OPCOES DE EMAIL DA ANATEL
-                    select_element = navegador.find_element(By.XPATH, '//*[@id="selDe"]')
+                    select_element = WebDriverWait(navegador, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selDe"]')))
+                    #select_element = navegador.find_element(By.XPATH, '//*[@id="selDe"]')
                     select = Select(select_element)
                     #SELECIONA O EMAIL DA ANATEL
                     select.select_by_visible_text('ANATEL/E-mail de replicação <nao-responda@anatel.gov.br>')
@@ -1388,14 +1389,15 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
                     navegador.switch_to.default_content()
                     navegador.switch_to.frame('ifrConteudoVisualizacao')
                     #CLICA NO ICONE DE EMAIL
-                    clica_noelemento(navegador, By.XPATH, '//*[@id="divArvoreAcoes"]/a[8]')
+                    clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/email_enviar.svg?18')]")
+                    #clica_noelemento(navegador, By.XPATH, '//*[@id="divArvoreAcoes"]/a[8]')
                     # navegador.find_element(By.XPATH, "//img[@title='Enviar Documento por Correio Eletrônico']").click()
                     time.sleep(0.7)
                     #MUDA PARA A JANELA MAIS RECENTE
                     navegador.switch_to.window(navegador.window_handles[-1])
-                    time.sleep(1)
+                    #time.sleep(2)
                     #SELECIONA O DROPDOWN COM AS OPCOES DE EMAIL
-                    select_element = navegador.find_element(By.XPATH, '//*[@id="selDe"]')
+                    select_element = WebDriverWait(navegador, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selDe"]')))
                     select = Select(select_element)
                     #SELECIONA A OPCAO DE EMAIL ANATEL
                     select.select_by_visible_text('ANATEL/E-mail de replicação <nao-responda@anatel.gov.br>')
