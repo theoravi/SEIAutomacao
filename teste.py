@@ -1,88 +1,89 @@
 
-# import pandas as pd
-# # import pyautogui
-# # from selenium.webdriver.chrome.service import Service
-# # from webdriver_manager.chrome import ChromeDriverManager
-# from selenium.webdriver.common.by import By
-# # import undetected_chromedriver as uc
-# # import time
-# from tabulate import tabulate
-# import numpy as np
-# import funcoes as fc
-# from Levenshtein import distance as lv
+import pandas as pd
+# import pyautogui
+# from selenium.webdriver.chrome.service import Service
+# from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
+# import undetected_chromedriver as uc
+# import time
+from tabulate import tabulate
+import numpy as np
+import funcoes as fc
+from Levenshtein import distance as lv
 
-# # def corrige(planilha, conforme: bool):
-# #     if conforme:
-# #         tabela = pd.read_excel(planilha, sheet_name='CONFORMES', engine='openpyxl')
-# #         tabela.columns = tabela.iloc[1]
-# #         tabela = tabela.iloc[2:]
-# #         tabela = tabela.reset_index(drop=True)
-# #         tabela = tabela['MODELO']
-# #     else:
-# #         tabela = pd.read_excel(planilha, sheet_name='NÃO CONFORMES', engine='openpyxl')
-# #         tabela.columns = tabela.iloc[1]
-# #         tabela = tabela.iloc[2:]
-# #         tabela = tabela.reset_index(drop=True)
-# #         tabela = tabela['MODELO']
-# #     return tabela
+def corrige(planilha, conforme: bool):
+    if conforme:
+        tabela = pd.read_excel(planilha, sheet_name='CONFORMES', engine='openpyxl')
+        tabela.columns = tabela.iloc[1]
+        tabela = tabela.iloc[2:]
+        tabela = tabela.reset_index(drop=True)
+        tabela = tabela['MODELO']
+    else:
+        tabela = pd.read_excel(planilha, sheet_name='NÃO CONFORMES', engine='openpyxl')
+        tabela.columns = tabela.iloc[1]
+        tabela = tabela.iloc[2:]
+        tabela = tabela.reset_index(drop=True)
+        tabela = tabela['MODELO']
+    return tabela
 
-# # # # Criação do DataFrame
-# # preenchido = {'Modelo': ["MT3PD ", "VISTA KIT"], 'Nome Comercial': ["MINI 3", "C5"], 'Número de Série (incluindo rádio controle e óculos)': ["1581F6ZFF564GFDRA45", "5HAZ54GDGDG6"]}
-# # df = pd.DataFrame(preenchido)
-# # modelos = df['Modelo'].dropna().reset_index(drop=True)
+# Criação do DataFrame
+preenchido = {'Modelo': ["MT3PD ", np.nan], 'Nome Comercial': ["MINI 3", "C5"], 'Número de Série (incluindo rádio controle e óculos)': ["1581F6ZFF564GFDRA45", "5HAZ54GDGDG6"]}
+df = pd.DataFrame(preenchido)
+modelos = df['Modelo'].dropna().reset_index(drop=True)
 
-# # print(df)
-# # print(modelos)
-# # print("\n")
+print(df)
+print(modelos)
+print("\n")
 
-# # # Exibe a tabela formatada
-# # df = df.replace(' ', np.nan).dropna(how='all')
-# # data = df.values.tolist()
-# # headers = df.columns.tolist()
-# # print(tabulate(data, headers=headers, tablefmt='pretty'))
-# # print('\n')
+# Exibe a tabela formatada
+df = df.replace(' ', np.nan).dropna(how='all')
+data = df.values.tolist()
+headers = df.columns.tolist()
+print(tabulate(data, headers=headers, tablefmt='pretty'))
+print('\n')
 
-# # planilhaDrones = input("Insira o caminho da planilha/lista de rádios conformes: ").replace('"' , '')
+planilhaDrones = input("Insira o caminho da planilha/lista de rádios conformes: ").replace('"' , '')
 
-# # # Tenta carregar a planilha de drones conformes
-# # try:
-# #     dronesConformes = corrige(planilhaDrones, conforme=True)
-# #     dronesNaoConformes = corrige(planilhaDrones, conforme=False)
-# # except Exception as e:
-# #     print(f"Erro ao carregar a planilha: {e}")
-# #     exit()
+# Tenta carregar a planilha de drones conformes
+try:
+    dronesConformes = corrige(planilhaDrones, conforme=True)
+    dronesNaoConformes = corrige(planilhaDrones, conforme=False)
+except Exception as e:
+    print(f"Erro ao carregar a planilha: {e}")
+    exit()
     
-# # # Verificação de conformidade
-# # checkexcel_conf, checkexcel_naoconf = [False] * len(modelos)  # Inicializa a lista com False
-# # print(checkexcel_conf, checkexcel_naoconf)
-# # input()
-# # lista_parecidos = []
-# # # Comparação de modelos
-# # for modelo_solicitante in range(len(modelos)):
-# #     for j in range(len(dronesConformes)):
-# #         try:
-# #             if dronesConformes[j].lower().replace(' ','').replace('-', '') in modelos[modelo_solicitante].lower().replace(' ','').strip('\n').replace('-', ''):
-# #                 checkexcel_conf[modelo_solicitante] = True
-# #                 break
+# Verificação de conformidade
+checkexcel_conf = [False] * len(modelos)  # Inicializa a lista com False
+checkexcel_naoconf = [False] * len(modelos)  # Inicializa a lista com False
+print(checkexcel_conf, checkexcel_naoconf)
+input()
+lista_parecidos = []
+# Comparação de modelos
+for modelo_solicitante in range(len(modelos)):
+    for j in range(len(dronesConformes)):
+        try:
+            if dronesConformes[j].lower().replace(' ','').replace('-', '') in modelos[modelo_solicitante].lower().replace(' ','').strip('\n').replace('-', ''):
+                checkexcel_conf[modelo_solicitante] = True
+                break
 
-# #         except KeyError as e:
-# #             print(f"Erro ao acessar os índices: {e}")
-# #             continue
-# #     for j in range(len(dronesNaoConformes)):
-# #         try:
-# #             if dronesNaoConformes[j].lower().replace(' ','').replace('-', '') in modelos[modelo_solicitante].lower().replace(' ','').strip('\n').replace('-', ''):
-# #                 checkexcel_naoconf[modelo_solicitante] = True
-# #                 print('O modelo', modelos[modelo_solicitante], 'está na planilha de drones NÃO conformes')
-# #                 break
-# #         except KeyError as e:
-# #             print(f"Erro ao acessar os índices: {e}")
-# #             continue
-# # for i in range(len(checkexcel_conf)):
-# #     if checkexcel_conf[i] == True:
-# #         print(f"O modelo {modelos[i]} está na lista de rádios conformes.")
-# #     else:
-# #         print(f"O modelo {modelos[i]} não se encontra na lista de rádios conformes")
-# #         print('\n')
+        except KeyError as e:
+            print(f"Erro ao acessar os índices: {e}")
+            continue
+    for j in range(len(dronesNaoConformes)):
+        try:
+            if dronesNaoConformes[j].lower().replace(' ','').replace('-', '') in modelos[modelo_solicitante].lower().replace(' ','').strip('\n').replace('-', ''):
+                checkexcel_naoconf[modelo_solicitante] = True
+                print('O modelo', modelos[modelo_solicitante], 'está na planilha de drones NÃO conformes')
+                break
+        except KeyError as e:
+            print(f"Erro ao acessar os índices: {e}")
+            continue
+for i in range(len(checkexcel_conf)):
+    if checkexcel_conf[i] == True:
+        print(f"O modelo {modelos[i]} está na lista de rádios conformes.")
+    else:
+        print(f"O modelo {modelos[i]} não se encontra na lista de rádios conformes")
+        print('\n')
 
 # # # Abre um arquivo Excel e carrega uma página específica como DataFrame
 # # file_path = "C:\\Users\\andrej.estagio\\ANATEL\\ORCN - Rádios\\Lista Radiamador.xlsx"
@@ -131,32 +132,32 @@
 #         navegador.find_element(By.XPATH, '//*[@id="lnkRecebidosProximaPaginaSuperior"]').click()
 #         print("Passando para a próxima página")
 
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
-import undetected_chromedriver as uc
+# from selenium import webdriver
+# from selenium.webdriver.chrome.service import Service
+# from webdriver_manager.chrome import ChromeDriverManager
+# import undetected_chromedriver as uc
 
-def main():
-    # Caminho do ChromeDriver local
-    chrome_driver_path = "chromedriver-win64\chromedriver.exe"  # Altere para o caminho correto do seu ChromeDriver
+# def main():
+#     # Caminho do ChromeDriver local
+#     chrome_driver_path = "chromedriver-win64\chromedriver.exe"  # Altere para o caminho correto do seu ChromeDriver
 
-    # Configura o serviço do ChromeDriver
-    servico = Service(chrome_driver_path)
+#     # Configura o serviço do ChromeDriver
+#     servico = Service(chrome_driver_path)
 
-    # Inicia o navegador Chrome
-    navegador = webdriver.Chrome(service=servico)
+#     # Inicia o navegador Chrome
+#     navegador = webdriver.Chrome(service=servico)
 
-    # Acesse um site de exemplo
-    navegador.get("https://www.google.com")
+#     # Acesse um site de exemplo
+#     navegador.get("https://www.google.com")
 
-    # Mantenha o navegador aberto por um tempo para ver
-    input("Pressione Enter para fechar o navegador...")
+#     # Mantenha o navegador aberto por um tempo para ver
+#     input("Pressione Enter para fechar o navegador...")
 
-    # Fecha o navegador
-    navegador.quit()
+#     # Fecha o navegador
+#     navegador.quit()
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
 
 
 # def teste(navegador):

@@ -74,8 +74,8 @@ def main():
         except:
             while True:
                 nomeEstag = str(input("Como é seu primeiro acesso, digite seu nome completo: "))
-                opcao = int(input("Caso esteja tudo certo, digite [1]. Caso contrario, digite [2]: "))
-                if opcao == 1:
+                opcao = str(input("Caso esteja tudo certo, digite [1]. Caso contrario, digite [2]: "))
+                if opcao == '1':
                     usuarios[user_name] = nomeEstag
                     break
             with open('usuarios/usuarios.json', 'w') as arquivo:
@@ -104,29 +104,29 @@ def main():
                   "Digite [5] para reiniciar o programa\n",
                   "Digite [6] para encerrar o programa\n",
                   )
-            opcoes = int(input("Opção: "))
-            if opcoes == 1:
+            opcoes = str(input("Opção: "))
+            if opcoes == '1':
                 #EXECUTA FUNCAO PARA ANALISAR PROCESSO
                 fc.analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrones, planilhaRadios)
                 print("Análise finalizada.")
-            elif opcoes == 2:
+            elif opcoes == '2':
                 #EXECUTA FUNCAO PARA CONCLUIR PROCESSO
                 fc.concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral)
                 print("Todos os processos foram concluídos.")
-            elif opcoes == 3:
+            elif opcoes == '3':
                 try:
                     #EXECUTA FUNCAO PARA ATRIBUIR PROCESSOS
                     fc.atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral)
                 except Exception as e:
                     print(f"Ocorreu um erro! {e}")
-            elif opcoes == 4:
+            elif opcoes == '4':
                 #EXECUTA FUNCAO PARA ANALISAR  UM ÚNICO PROCESSO
                 fc.analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones, planilhaRadios)
-            elif opcoes == 5:
+            elif opcoes == '5':
                 print("Reiniciando programa")
                 reset = True
                 break
-            elif opcoes == 6:
+            elif opcoes == '6':
                 #ENCERRA O PROGRAMA
                 print("Encerrando programa")
                 reset = False
