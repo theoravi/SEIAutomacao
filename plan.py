@@ -131,12 +131,11 @@ def manda_email(n_processo, codigo_rastreio):
     elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
     elementos.send_keys(n_processo)
     elementos.send_keys(Keys.ENTER)
-    time.sleep(1.3)
-    navegador.switch_to.frame('ifrVisualizacao')
-    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[11]').click()
+    time.sleep(1.5)
+    navegador.switch_to.frame('ifrConteudoVisualizacao')
+    clica_noelemento(By.XPATH, "//img[contains(@src, 'svg/email_enviar.svg?18')]")
     navegador.switch_to.window(navegador.window_handles[-1])
-    time.sleep(1)
-    select_element = navegador.find_element(By.ID, 'selDe')
+    select_element = WebDriverWait(navegador, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selDe"]')))
     select = Select(select_element)
     select.select_by_visible_text('ANATEL/E-mail de replicação <nao-responda@anatel.gov.br>')
     endereco_email('documentacao.sp@anatel.gov.br')
@@ -193,10 +192,11 @@ def tira_restrito():
         doc.click()
         time.sleep(1)
         navegador.switch_to.default_content()
-        navegador.switch_to.frame('ifrVisualizacao')
+        navegador.switch_to.frame('ifrConteudoVisualizacao')
         #CLICA NO SIMBOLO DE ALTERAR DOCUMENTO
         clica_noelemento(By.XPATH, '//*[@id="divArvoreAcoes"]/a[2]/img')
         time.sleep(0.7)
+        navegador.switch_to.frame('ifrVisualizacao')
         #SELECIONA A OPCAO DE PUBLICO NO DOCUMENTO
         clica_noelemento(By.XPATH,'//*[@id="divOptPublico"]/div/label')
         #SALVA AS MUDANCAS
@@ -318,11 +318,12 @@ while True:
         if check_element_exists(By.PARTIAL_LINK_TEXT, 'Recibo Eletrônico'):
             if check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]'):
                 navegador.find_element(By.XPATH, '//*[@id="spanPASTA1"]').click()
-                time.sleep(1)
+            time.sleep(1)
             clica_noelemento(By.PARTIAL_LINK_TEXT, 'Recibo Eletrônico')
             navegador.switch_to.default_content()
+            navegador.switch_to.frame('ifrConteudoVisualizacao')
             navegador.switch_to.frame('ifrVisualizacao')
-            navegador.switch_to.frame('ifrArvoreHtml')
+            time.sleep(1)
             nomeSol = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[1]/td[2]').text
             nomeInt = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[6]/td').text.strip()
             data = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[2]/td[2]').text
@@ -333,9 +334,9 @@ while True:
             if check_element_exists(By.PARTIAL_LINK_TEXT, 'Declaração de Conformidade - Drone'):
                 clica_noelemento(By.PARTIAL_LINK_TEXT, 'Declaração de Conformidade - Drone')
                 navegador.switch_to.default_content()
+                navegador.switch_to.frame('ifrConteudoVisualizacao')
                 navegador.switch_to.frame('ifrVisualizacao')
                 time.sleep(0.7)
-                navegador.switch_to.frame('ifrArvoreHtml')
                 codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[4]/tbody/tr/td[2]').text
                 codigo_rastreio = codigo_rastreio.replace('-','').replace('.','')
                 n_serie = navegador.find_element(By.XPATH,'/html/body/table[3]/tbody/tr[2]/td[3]').text
@@ -349,15 +350,18 @@ while True:
                 tira_restrito()
                 preenche_plan(nomeSol, nomeInt, data, retido, codigo_rastreio, n_serie, n_serie2)
             elif check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio"):
-                navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio").click()
+                clica_noelemento(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio")
                 navegador.switch_to.default_content()
+                navegador.switch_to.frame('ifrConteudoVisualizacao')
                 navegador.switch_to.frame('ifrVisualizacao')
-                navegador.switch_to.frame('ifrArvoreHtml')
                 time.sleep(0.7)
                 codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[5]/tbody/tr/td[2]').text
                 codigo_rastreio = codigo_rastreio.replace('-','').replace('.','')
                 n_serie = navegador.find_element(By.XPATH,'/html/body/table[4]/tbody/tr[2]/td[3]').text
-                n_serie2 = navegador.find_element(By.XPATH,'/html/body/table[4]/tbody/tr[3]/td[3]').text
+                try:
+                    n_serie2 = navegador.find_element(By.XPATH,'/html/body/table[4]/tbody/tr[3]/td[3]').text
+                except:
+                    n_serie2 = ''
                 if not codigo_rastreio.strip():
                     retido='Não'
                 else:
@@ -372,7 +376,6 @@ while True:
         else:
             print("Processo não contém recibo.")
             print("Pulando processo...")
-            edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
             edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
             pyautogui.click(edge)
             pyautogui.press('down')
