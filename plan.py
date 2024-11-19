@@ -35,6 +35,7 @@ def check_element_exists(by, value):
 
 def preenche_plan(nomeSol, nomeInt, data, retido, codigo_rastreio, n_serie, n_serie2):
     edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+    edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
     pyautogui.click(edge)
     time.sleep(0.4)
     pyautogui.PAUSE = 0.2
@@ -84,6 +85,7 @@ def preenche_plan(nomeSol, nomeInt, data, retido, codigo_rastreio, n_serie, n_se
 
 
 def preenche_plan2(nomeSol, nomeInt, data):
+    edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
     edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
     pyautogui.click(edge)
     time.sleep(0.4)
@@ -149,7 +151,7 @@ def manda_email(n_processo, codigo_rastreio):
     alert = Alert(navegador)
     alert.accept()
     time.sleep(2)
-    # chrome=pyautogui.locateOnScreen('imgAut/chrome.png', confidence=0.7)
+    # chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
     # pyautogui.click(chrome)
     navegador.switch_to.window(janela_principal)
 
@@ -289,6 +291,7 @@ while True:
 verifica=input('Aperte enter após filtrar a planilha geral.')
 
 edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
 pyautogui.click(edge)
 pyautogui.click(x=204, y=365)
 
@@ -302,6 +305,7 @@ while True:
         pyautogui.hotkey('ctrl', 'c')
         time.sleep(0.2)
         n_processo = pyperclip.paste()
+        chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
         chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
         pyautogui.click(chrome)
         navegador.switch_to.default_content()
@@ -368,6 +372,7 @@ while True:
         else:
             print("Processo não contém recibo.")
             print("Pulando processo...")
+            edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
             edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
             pyautogui.click(edge)
             pyautogui.press('down')

@@ -77,7 +77,7 @@ def processa_tr(tr):
             #ARMAZENA O TEXTO MODIFICADO NA VARIÁVEL 'PROCESSO_TEXTO'
             processo_texto = texto
         #PROCURA POR ÍCONES DE ANOTAÇÃO NA LINHA ATUAL (TR)
-        anotacoes = tr.find_elements(By.XPATH, './/img[@src="svg/anotacao1.svg?11"]')
+        anotacoes = tr.find_elements(By.XPATH, './/img[@src="svg/anotacao1.svg?18"]')
         #VERIFICA SE ENCONTROU ALGUM ÍCONE DE ANOTAÇÃO
         if anotacoes:
             #SE ENCONTROU, MARCA A VARIÁVEL 'POSSUI_ANOTACAO' COMO VERDADEIRA
@@ -534,8 +534,8 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 navegador.find_element(By.PARTIAL_LINK_TEXT, 'Recibo Eletrônico').click()
                 navegador.switch_to.default_content()
                 #ENTRA NOS FRAMES QUE POSSUE O NOME DO SOLICITANTE
+                navegador.switch_to.frame('ifrConteudoVisualizacao')
                 navegador.switch_to.frame('ifrVisualizacao')
-                navegador.switch_to.frame('ifrArvoreHtml')
                 #ARMAZENA NOME DO SOLICITANTE NA VARIAVEL
                 nomeSol = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[1]/td[2]').text
                 #RETORNA AO FRAME DEFAULT
@@ -548,8 +548,8 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 time.sleep(1)
                 #RETORNA AO FRAME DEFAULT E ENTRA NOS FRAMES QUE CONTÉM A VISUALIZACAO DA DECLARACAO
                 navegador.switch_to.default_content()
+                navegador.switch_to.frame('ifrConteudoVisualizacao')
                 navegador.switch_to.frame('ifrVisualizacao')
-                navegador.switch_to.frame('ifrArvoreHtml')
                 #EXIBE INFORMACOES DO PROCESSO
                 print("--------------------------------------------------------------------------")
                 print('--------------------------------------------------------------------------')
@@ -649,8 +649,8 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 navegador.find_element(By.PARTIAL_LINK_TEXT, 'Recibo Eletrônico').click()
                 navegador.switch_to.default_content()
                 time.sleep(0.5)
+                navegador.switch_to.frame('ifrConteudoVisualizacao')
                 navegador.switch_to.frame('ifrVisualizacao')
-                navegador.switch_to.frame('ifrArvoreHtml')
                 nomeSol = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[1]/td[2]').text
                 navegador.switch_to.default_content()
                 #CLICA NA DECLARACAO DE CONFORMIDADE
@@ -659,8 +659,8 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio").click()
                 time.sleep(0.5)
                 navegador.switch_to.default_content()
+                navegador.switch_to.frame('ifrConteudoVisualizacao')
                 navegador.switch_to.frame('ifrVisualizacao')
-                navegador.switch_to.frame('ifrArvoreHtml')
 
                 #EXIBE INFORMACOES DO PROCESSO
                 print("--------------------------------------------------------------------------")
@@ -807,7 +807,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     doc.click()
                     time.sleep(0.7)
                     navegador.switch_to.default_content()
-                    navegador.switch_to.frame('ifrVisualizacao')
+                    navegador.switch_to.frame('ifrConteudoVisualizacao')
                     #CLICA NO SIMBOLO DE ALTERAR DOCUMENTO
                     clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[2]')
                     # navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[2]').click()
@@ -830,14 +830,15 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
                     elementos.send_keys(Keys.ENTER)
                     #CRIA DESPACHO
-                    navegador.switch_to.frame('ifrVisualizacao')
+                    navegador.switch_to.frame('ifrConteudoVisualizacao')
                     #time.sleep(2)
                     #CLICA NO INCONE DE INCLUIR DOCUMENTO
                     clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]')
                     #navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]').click()
                     #time.sleep(2)
                     #CLICA NA OPCAO DE DESPACHO DECISORIO
-                    clica_noelemento(navegador, By.XPATH,'//*[@id="tblSeries"]/tbody/tr[16]/td/a[2]')
+                    navegador.switch_to.frame('ifrVisualizacao')
+                    clica_noelemento(navegador, By.PARTIAL_LINK_TEXT,'Despacho Decisório')
                     #navegador.find_element(By.XPATH,'//*[@id="tblSeries"]/tbody/tr[16]/td/a[2]').click()
                     #time.sleep(2)
                     #SELECIONA TEXTO PADRAO
@@ -855,14 +856,15 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
                     elementos.send_keys(Keys.ENTER)
                     #CRIA DESPACHO
-                    navegador.switch_to.frame('ifrVisualizacao')
+                    navegador.switch_to.frame('ifrConteudoVisualizacao')
                     #time.sleep(1)
                     #CLICA NO INCONE DE INCLUIR DOCUMENTO
                     clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]')
                     #navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]').click()
                     ##time.sleep(1)
                     #CLICA NA OPCAO DE DESPACHO DECISORIO
-                    clica_noelemento(navegador, By.XPATH,'//*[@id="tblSeries"]/tbody/tr[16]/td/a[2]')
+                    navegador.switch_to.frame('ifrVisualizacao')
+                    clica_noelemento(navegador, By.PARTIAL_LINK_TEXT,'Despacho Decisório')
                     #navegador.find_element(By.XPATH,'//*[@id="tblSeries"]/tbody/tr[16]/td/a[2]').click()
                     #SELECIONA TEXTO PADRAO
                     clica_noelemento(navegador, By.XPATH,'//*[@id="divOptTextoPadrao"]/div')
@@ -892,13 +894,14 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 clica_noelemento(navegador, By.PARTIAL_LINK_TEXT,"Despacho Decisório")
                 #navegador.find_element(By.PARTIAL_LINK_TEXT, "Despacho Decisório").click()
                 navegador.switch_to.default_content()
-                navegador.switch_to.frame('ifrVisualizacao')
+                navegador.switch_to.frame('ifrConteudoVisualizacao')
                 time.sleep(1)
                 #CLICA NO ICONE DE LEGO
                 clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[8]')
                 #navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[8]').click()
                 #SELECIONA BLOCO (SELECIONA O PRIMEIRO DESPACHO PARA DRONES APROVADOS QUE LER)
                 time.sleep(1.5)
+                navegador.switch_to.frame('ifrVisualizacao')
                 select_element = navegador.find_element(By.ID, 'selBloco')
                 select = Select(select_element)
                 #PROCURA O PRIMEIRO BLOCO QUE TENHA O TEXTO "Despachos para Drones aprovados"
@@ -915,13 +918,14 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
                 elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
                 elementos.send_keys(Keys.ENTER)
-                navegador.switch_to.frame('ifrVisualizacao')
+                navegador.switch_to.frame('ifrConteudoVisualizacao')
                 time.sleep(1)
                 #ADICIONA NOTA PARA AGUARDAR ASSINATURA
                 #CLICA NO ICONE DE ANOTACAO
-                clica_noelemento(navegador, By.XPATH, '//*[@id="divArvoreAcoes"]/a[17]')
+                clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[16]')
                 time.sleep(0.1)
                 #INSERE O TEXTO DA ANOTACAO
+                navegador.switch_to.frame('ifrVisualizacao')
                 navegador.find_element(By.ID, 'txaDescricao').send_keys('Aguardando assinatura.')
                 #SALVA O TEXTO
                 navegador.find_element(By.NAME, 'sbmRegistrarAnotacao').click()
@@ -952,8 +956,8 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
                     time.sleep(1)
                     navegador.switch_to.default_content()
+                    navegador.switch_to.frame('ifrConteudoVisualizacao')
                     navegador.switch_to.frame('ifrVisualizacao')
-                    navegador.switch_to.frame('ifrArvoreHtml')
                     #ARMAZENA O EMAIL DO SOLICITANTE
                     emailSol = navegador.find_element(By.XPATH, '/html/body/div[3]/a[1]').text
                     navegador.switch_to.default_content()
@@ -962,9 +966,10 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
                     elementos.send_keys(Keys.ENTER)
                     time.sleep(1)
-                    navegador.switch_to.frame('ifrVisualizacao')
+                    navegador.switch_to.frame('ifrConteudoVisualizacao')
                     #CLICA NO ICONE DE ENVIO DE EMAIL
-                    clica_noelemento(navegador, By.XPATH, '//*[@id="divArvoreAcoes"]/a[11]')
+                    clica_noelemento(navegador, By.XPATH, '//*[@id="divArvoreAcoes"]/a[10]')
+                    #clica_noelemento(navegador, By.XPATH, '//*[@id="divArvoreAcoes"]/a[10]')
                     time.sleep(1)
                     #VAI PARA A JANELA MAIS RECENTE ABERTA
                     navegador.switch_to.window(navegador.window_handles[-1])
@@ -1025,10 +1030,11 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                                     elementos.send_keys(Keys.ENTER)    
                                     time.sleep(1)
                                     #INSERE TAG REFERENTE A PROCESSOS INTERCORRENTES
-                                    navegador.switch_to.frame('ifrVisualizacao')
+                                    navegador.switch_to.frame('ifrConteudoVisualizacao')
                                     #CLICA NO ICONE DE TAG
                                     time.sleep(0.5)
-                                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
+                                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[24]').click()
+                                    navegador.switch_to.frame('ifrVisualizacao')
                                     try:    
                                         time.sleep(1)
                                         navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
@@ -1094,10 +1100,11 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                                     elementos.send_keys(Keys.ENTER)    
                                     time.sleep(1)
                                     #INSERE TAG REFERENTE A PROCESSOS INTERCORRENTES 
-                                    navegador.switch_to.frame('ifrVisualizacao')
+                                    navegador.switch_to.frame('ifrConteudoVisualizacao')
                                     #CLICA NO ICONE DE TAG
                                     time.sleep(0.5)
-                                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
+                                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[24]').click()
+                                    navegador.switch_to.frame('ifrVisualizacao')
                                     try:    
                                         time.sleep(1)
                                         navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
@@ -1162,10 +1169,11 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                                     elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
                                     elementos.send_keys(Keys.ENTER)    
                                     time.sleep(1)
-                                    navegador.switch_to.frame('ifrVisualizacao')
+                                    navegador.switch_to.frame('ifrConteudoVisualizacao')
                                     #CLICA NO ICONE DE TAG
                                     time.sleep(0.5)
-                                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
+                                    navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[24]').click()
+                                    navegador.switch_to.frame('ifrVisualizacao')
                                     try:    
                                         time.sleep(1)
                                         navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
@@ -1204,9 +1212,11 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                             elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
                             elementos.send_keys(Keys.ENTER)
                             time.sleep(1)
-                            navegador.switch_to.frame('ifrVisualizacao')
+                            navegador.switch_to.frame('ifrConteudoVisualizacao')
                             #CLICA NO ICONE DE CONCLUIR PROCESSO
-                            navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[20]').click()
+                            clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[19]')
+                            navegador.switch_to.frame('ifrVisualizacao')
+                            clica_noelemento(navegador, By.XPATH, '//*[@id="sbmSalvar"]')
                             print("Próximo processo...")
                             break
                         #CONDICAO PARA OPCAO INEXISTENTE
@@ -1356,8 +1366,8 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
                 time.sleep(0.3)
 
             navegador.switch_to.default_content()
+            navegador.switch_to.frame('ifrConteudoVisualizacao')
             navegador.switch_to.frame('ifrVisualizacao')
-            navegador.switch_to.frame('ifrArvoreHtml')
 
             #ARMAZENA EMAIL DO SOLICITANTE
             emailSol = navegador.find_element(By.XPATH, '/html/body/div[3]/a[1]').text
@@ -1371,14 +1381,14 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
                 navegador.find_element(By.PARTIAL_LINK_TEXT, "Despacho Decisório").click()
                 # navegador.find_element(By.PARTIAL_LINK_TEXT, "Despacho Decisório").click()
                 navegador.switch_to.default_content()
+                navegador.switch_to.frame('ifrConteudoVisualizacao')
                 navegador.switch_to.frame('ifrVisualizacao')
-                navegador.switch_to.frame('ifrArvoreHtml')
                 #VERIFICA SE EXISTE ASSINATURA DO GERENTE
                 if check_element_exists(By.XPATH, "/html/body/div[1]/table[1]", navegador):
                     navegador.switch_to.default_content()
-                    navegador.switch_to.frame('ifrVisualizacao')
+                    navegador.switch_to.frame('ifrConteudoVisualizacao')
                     #CLICA NO ICONE DE EMAIL
-                    clica_noelemento(navegador, By.XPATH,"//img[@title='Enviar Documento por Correio Eletrônico']")
+                    clica_noelemento(navegador, By.XPATH, '//*[@id="divArvoreAcoes"]/a[8]')
                     # navegador.find_element(By.XPATH, "//img[@title='Enviar Documento por Correio Eletrônico']").click()
                     time.sleep(0.7)
                     #MUDA PARA A JANELA MAIS RECENTE
@@ -1421,20 +1431,24 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
                     elementos.send_keys(Keys.ENTER)
                     time.sleep(1)
                     #CLICA NO ICONE DE ANOTACAO
-                    navegador.switch_to.frame('ifrVisualizacao')
+                    navegador.switch_to.frame('ifrConteudoVisualizacao')
                     #time.sleep(1)
-                    clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[17]')
+                    clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[16]')
                     #navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[17]').click()
                     #LIMPA O TEXTO DA ANOTACAO
                     time.sleep(0.3)
+                    navegador.switch_to.frame('ifrVisualizacao')
                     navegador.find_element(By.XPATH, '//*[@id="txaDescricao"]').clear()
                     #SALVA ANOTACAO
                     clica_noelemento(navegador, By.XPATH,'//*[@id="divInfraBarraComandosSuperior"]/button')
                     # navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosSuperior"]/button').click()
                     #CLICA NO ICONE DE TAG
                     #time.sleep(0.5)
-                    clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[25]')
-                    #navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[25]').click()
+                    navegador.switch_to.default_content()
+                    navegador.switch_to.frame('ifrConteudoVisualizacao')
+                    clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[24]')
+                    #navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[24]').click()
+                    navegador.switch_to.frame('ifrVisualizacao')
                     try:
                         time.sleep(1)
                         navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click() 
@@ -1472,8 +1486,10 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
                     elementos.send_keys(Keys.ENTER)
                     time.sleep(1)
                     #CONCLUI PROCESSO
+                    navegador.switch_to.frame('ifrConteudoVisualizacao')
+                    clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[19]')
                     navegador.switch_to.frame('ifrVisualizacao')
-                    clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[20]')
+                    clica_noelemento(navegador, By.XPATH, '//*[@id="sbmSalvar"]')
                     # navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[20]').click()
                     time.sleep(0.3)
                     navegador.switch_to.default_content()
