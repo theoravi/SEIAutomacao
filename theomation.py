@@ -46,16 +46,15 @@ def main():
         #PEGA TODAS AS LINHAS (TR) DO CORPO DA TABELA, EXCETO A PRIMEIRA
         trs = tbody.find_elements(By.TAG_NAME, 'tr')[1:]
 
-        #CRIA UM EXECUTOR DE THREADS
-        executor = ThreadPoolExecutor()
-        #APLICA A FUNÇÃO 'PROCESSA_TR' A CADA LINHA (TR) DA TABELA USANDO MULTITHREADING
-        resultados = list(executor.map(fc.processa_tr, trs))
-        #AGUARDA TODAS AS THREADS TERMINAREM
-        executor.shutdown(wait=True)
+        lista_processos = []
+        lista_procConformes = []
 
-        #CRIA DUAS LISTAS PARA ARMAZENAR OS PROCESSOS QUE SERÃO ANALISADOS E CONCLUÍDOS
-        lista_processos = [r[0] for r in resultados if not r[1]]
-        lista_procConformes = [r[0] for r in resultados if r[1] and r[2]]
+        for tr in trs:
+            processo_texto, possui_anotacao, aguardando_assinatura = fc.processa_tr(tr)
+            if aguardando_assinatura:
+                lista_procConformes.append(processo_texto)  
+            elif not possui_anotacao:
+                lista_processos.append(processo_texto) 
 
         #INVERTE A ORDEM DOS PROCESSOS NAS LISTAS
         lista_processos.reverse()
