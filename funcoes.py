@@ -343,16 +343,11 @@ def preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastrei
 #FUNCAO QUE ESPERA UM ELEMENTO CARREGAR NA TELA E CLICA NELE
 def clica_noelemento(navegador, modo_procura, element_id, tempo=10):
     # Espera até que o elemento seja carregado (exemplo: elemento localizado por ID)
-    try:
-        element = WebDriverWait(navegador, tempo).until(
-            EC.element_to_be_clickable((modo_procura, element_id))
-        )
-        # Clica no elemento
-        element.click()
-        return True
-    except TimeoutException:
-        print(f"Elemento {element_id} não foi carregado no tempo esperado")
-        return False
+    element = WebDriverWait(navegador, tempo).until(
+        EC.element_to_be_clickable((modo_procura, element_id))
+    )
+    # Clica no elemento
+    element.click()
 
 #FUNCAO QUE ESPERA UM ELEMENTO CARREGAR NA TELA E ENVIA TEXTO NELE
 def sendkeys_elemento(navegador, modo_procura, element_id, texto):
