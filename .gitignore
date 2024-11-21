@@ -1,6 +1,0 @@
-# Ignorar pastas desnecessárias
-/build/
-/dist/
-/__pycache__/
-/.idea/
-theomation.exe
