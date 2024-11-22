@@ -1,8 +1,7 @@
 #Para baixar as bibliotecas, execute o arquivo bibs_install.bat
 
 #Para gerar o executável, execute o comando abaixo:
-#python -m PyInstaller --icon="T_logo-1-.ico" --onefile theomation.py --clean
-
+#python -m PyInstaller --icon="icons\T_logo-1-.ico" --onefile main\theomation.py --clean
 
 #IMPORTS NECESSÁRIOS PARA O FUNCIONAMENTO DO CÓDIGO
 import unidecode
@@ -12,6 +11,9 @@ from selenium.webdriver.common.by import By
 import time
 import funcoes as fc
 import json
+import subprocess
+
+DEV_MODE = False
 
 def main():
     reset = True
@@ -136,4 +138,10 @@ def main():
         navegador.quit()
 
 if __name__ == "__main__":
+    if not DEV_MODE:
+        # Chamar o script de atualização antes de executar a automação
+        subprocess.run(["python", "updater.py"])
+        # Continuar com a lógica principal da automação
+        print("Iniciando a automação...")
+        # Coloque aqui o código principal da sua automação
     main()
