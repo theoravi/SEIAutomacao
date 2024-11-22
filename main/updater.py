@@ -1,10 +1,20 @@
 import os
 import requests
 import zipfile
+import shutil
+import stat
 
 # Diretório atual de execução
 LOCAL_REPO_PATH = os.getcwd()
 CURRENT_VERSION_FILE = os.path.join(LOCAL_REPO_PATH, "VERSAO.txt")
+
+def handle_remove_readonly(func, path, exc_info):
+    """Força a remoção de arquivos somente leitura."""
+    if func in (os.unlink, os.rmdir):
+        os.chmod(path, stat.S_IWRITE)
+        func(path)
+    else:
+        raise
 
 def get_latest_release():
     """Obtém a última versão publicada no GitHub."""
@@ -24,9 +34,13 @@ def get_current_version():
             return f.read().strip()
     return None
 
-def download_and_extract_zip(url, target_path):
-    """Baixa o ZIP da última release e substitui os arquivos no diretório local."""
-    zip_path = os.path.join(target_path, "update.zip")
+def download_and_replace_main(url):
+    """Baixa o ZIP da última release e substitui toda a pasta main."""
+    zip_path = os.path.join(LOCAL_REPO_PATH, "update.zip")
+    temp_extraction_path = os.path.join(LOCAL_REPO_PATH, "temp_update")
+
+    # Criar diretório temporário para extração
+    os.makedirs(temp_extraction_path, exist_ok=True)
 
     # Baixar o arquivo ZIP
     print("Baixando a última versão...")
@@ -36,11 +50,41 @@ def download_and_extract_zip(url, target_path):
             f.write(response.content)
         print("Download concluído. Extraindo arquivos...")
 
-        # Extrair o ZIP
+        # Extrair o ZIP no diretório temporário
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
-            zip_ref.extractall(target_path)
+            zip_ref.extractall(temp_extraction_path)
         os.remove(zip_path)  # Remover o arquivo ZIP após extração
         print("Arquivos extraídos com sucesso!")
+
+        # Encontrar a pasta que foi extraída (que contém a pasta 'main')
+        extracted_folder = next((folder for folder in os.listdir(temp_extraction_path)
+                                 if os.path.isdir(os.path.join(temp_extraction_path, folder))), None)
+        
+        if not extracted_folder:
+            print("Erro: pasta principal não encontrada na extração.")
+            return
+
+        # Caminho da pasta 'main' dentro do diretório extraído
+        new_main_path = os.path.join(temp_extraction_path, extracted_folder, "main")
+
+        # Verificar se a pasta 'main' existe na extração
+        if os.path.exists(new_main_path):
+            # Caminho da pasta 'main' original
+            original_main_path = os.path.join(LOCAL_REPO_PATH, "main")
+            
+            # Remover a pasta 'main' antiga se ela existir
+            if os.path.exists(original_main_path):
+                print(f"Removendo pasta antiga: {original_main_path}")
+                shutil.rmtree(original_main_path, onerror=handle_remove_readonly)  # Forçar remoção se necessário
+
+            # Mover a nova pasta 'main' extraída para o diretório correto
+            shutil.move(new_main_path, original_main_path)  # Move a nova pasta 'main' para o destino correto
+            print("Pasta 'main' atualizada com sucesso!")
+        else:
+            print("Erro: pasta 'main' não encontrada na extração.")
+        
+        # Remover o diretório temporário
+        shutil.rmtree(temp_extraction_path, onerror=handle_remove_readonly)
     else:
         print("Erro ao baixar a última versão:", response.status_code)
 
@@ -61,7 +105,7 @@ def main():
     # Verificar se há uma nova versão
     if latest_version != current_version:
         print("Nova versão encontrada! Atualizando...")
-        download_and_extract_zip(zip_url, LOCAL_REPO_PATH)
+        download_and_replace_main(zip_url)
 
         # Atualizar o arquivo VERSAO.txt
         with open(CURRENT_VERSION_FILE, "w") as f:
