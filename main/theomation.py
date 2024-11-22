@@ -140,7 +140,7 @@ def main():
 if __name__ == "__main__":
     if not DEV_MODE:
         # Chamar o script de atualização antes de executar a automação
-        subprocess.run(["python", "updater.py"])
+        subprocess.run(["python", "main/updater.py"])
         # Continuar com a lógica principal da automação
         print("Iniciando a automação...")
         # Coloque aqui o código principal da sua automação
