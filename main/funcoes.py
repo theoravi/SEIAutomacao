@@ -47,7 +47,7 @@ def escrever_informacoes(processos, nomeEstag):
     data_hora = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     
     #NOME DO ARQUIVO BASEADO NO USUÁRIO QUE ESTÁ ANALISANDO
-    nome_arquivo = f"logs\{nomeEstag}.txt"
+    nome_arquivo = f"../logs/{nomeEstag}.txt"
     
     #VERIFICA SE O ARQUIVO EXISTE
     if not os.path.exists(nome_arquivo):
@@ -282,7 +282,7 @@ def corrige_planilha(planilha, drones: bool):
 def preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastreio, nome_interessado):
     #ENCONTRA O ICONE DO EDGE E ABRE O NAVEGADOR DA PLANILHA
     pyautogui.PAUSE = 0.7
-    edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+    edge=pyautogui.locateOnScreen('../main/imagensAut/edge.png', confidence=0.7)
     #COPIA NUMERO DO PROCESSO
     pyperclip.copy(processo)
     #CLICA NO NAVEGADOR
@@ -337,7 +337,7 @@ def preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastrei
     pyperclip.copy(situacao)
     pyautogui.hotkey('ctrl', 'v')
     #VOLTA PARA A JANELA DO CHROME
-    chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
+    chrome=pyautogui.locateOnScreen('../main/imagensAut/chrome.png', confidence=0.7)
     pyautogui.click(chrome)
 
 #FUNCAO QUE ESPERA UM ELEMENTO CARREGAR NA TELA E CLICA NELE
@@ -371,9 +371,10 @@ def abreChromeEdge():
     pyautogui.PAUSE = 0.7
     #INICIA O NAVEGADOR
     # Caminho do ChromeDriver local
-    chrome_driver_path = r"chromedriver-win64\chromedriver.exe"  # Altere para o caminho correto do seu ChromeDriver
+    #chrome_driver_path = r"chromedriver-win64\chromedriver.exe"  # Altere para o caminho correto do seu ChromeDriver
     # Configura o serviço do ChromeDriver
-    servico = Service(chrome_driver_path)
+    #servico = Service(chrome_driver_path)
+    servico = Service(ChromeDriverManager().install())
     # Inicia o navegador Chrome
     navegador = webdriver.Chrome(service=servico, options=options)
     navegador.maximize_window()
@@ -382,7 +383,7 @@ def abreChromeEdge():
     #LOCALIZA O ICONE DO EDGE E ABRE A PLANILHA GERAL
     #FOI UTILIZADO O PYPERCLIP PARA EVITAR QUALQUER ERRO NA HORA DE COLAR O URL DA PLANILHA
     time.sleep(1)
-    edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+    edge=pyautogui.locateOnScreen('../main/imagensAut/edge.png', confidence=0.7)
     pyautogui.click(edge)
     time.sleep(3)
     sitePlan = 'https://anatel365.sharepoint.com/:x:/r/sites/lista.orcn/_layouts/15/Doc.aspx?sourcedoc=%7B4130A4D6-7F00-45D4-A328-ED0866A62335%7D&file=Distribui%C3%A7%C3%A3o%20Processo%20Drone.xlsx&action=default&mobileredirect=true'
@@ -390,7 +391,7 @@ def abreChromeEdge():
     pyautogui.hotkey('ctrl', 'l')
     pyautogui.hotkey('ctrl', 'v')
     pyautogui.press('enter')
-    chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
+    chrome=pyautogui.locateOnScreen('../main/imagensAut/chrome.png', confidence=0.7)
     pyautogui.click(chrome)
     return navegador
 
@@ -614,7 +615,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     else:
                         print(f"O modelo '{mod}' não se encontra na lista de drones conformes")
                 print('\n')
-                #EXIBE CÓDIGO DE RAST"REIO
+                #EXIBE CÓDIGO DE RASTREIO 
                 #LINHA ESPECIFICA ESCREVE NA PLANILHA SE O PRODUTO ESTA RETIDO E, CASO ESTEJA, ESCREVE O CODIGO DE RASTREIO
                 n_serie = navegador.find_element(By.XPATH, '/html/body/table[3]/tbody/tr[2]/td[3]').text
                 codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[4]/tbody/tr/td[2]').text
@@ -810,6 +811,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     # navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[2]').click()
                     #SELECIONA A OPCAO DE PUBLICO NO DOCUMENTO
                     time.sleep(0.5)
+                    navegador.switch_to.frame('ifrVisualizacao')
                     clica_noelemento(navegador, By.XPATH,'//*[@id="divOptPublico"]/div/label')
                     # navegador.find_element(By.XPATH,'//*[@id="divOptPublico"]/div/label').click()
                     #SALVA AS MUDANCAS
@@ -894,7 +896,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 navegador.switch_to.frame('ifrConteudoVisualizacao')
                 time.sleep(1)
                 #CLICA NO ICONE DE LEGO
-                clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[8]')
+                clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/bloco_incluir_protocolo.svg?18')]")
                 #navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[8]').click()
                 #SELECIONA BLOCO (SELECIONA O PRIMEIRO DESPACHO PARA DRONES APROVADOS QUE LER)
                 time.sleep(1.5)
@@ -919,7 +921,8 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 time.sleep(1)
                 #ADICIONA NOTA PARA AGUARDAR ASSINATURA
                 #CLICA NO ICONE DE ANOTACAO
-                clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[16]')
+                clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/anotacao_cadastro.svg?18')]")
+                #clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[16]')
                 time.sleep(0.1)
                 #INSERE O TEXTO DA ANOTACAO
                 navegador.switch_to.frame('ifrVisualizacao')
@@ -1212,7 +1215,8 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                             time.sleep(1)
                             navegador.switch_to.frame('ifrConteudoVisualizacao')
                             #CLICA NO ICONE DE CONCLUIR PROCESSO
-                            clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[19]')
+                            clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/processo_concluir.svg?18')]")
+                            #clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[19]')
                             navegador.switch_to.frame('ifrVisualizacao')
                             clica_noelemento(navegador, By.XPATH, '//*[@id="sbmSalvar"]')
                             print("Próximo processo...")
@@ -1432,7 +1436,7 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
                     #CLICA NO ICONE DE ANOTACAO
                     navegador.switch_to.frame('ifrConteudoVisualizacao')
                     #time.sleep(1)
-                    clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[16]')
+                    clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/anotacao_cadastro.svg?18')]")
                     #navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[17]').click()
                     #LIMPA O TEXTO DA ANOTACAO
                     time.sleep(0.3)
@@ -1486,7 +1490,8 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
                     time.sleep(1)
                     #CONCLUI PROCESSO
                     navegador.switch_to.frame('ifrConteudoVisualizacao')
-                    clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[19]')
+                    clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/processo_concluir.svg?18')]")
+                    #clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[19]')
                     navegador.switch_to.frame('ifrVisualizacao')
                     clica_noelemento(navegador, By.XPATH, '//*[@id="sbmSalvar"]')
                     # navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[20]').click()
@@ -1609,7 +1614,7 @@ def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral):
     navegador.find_element(By.ID, 'btnSalvar').click()
     navegador.find_element(By.XPATH, '//*[@id="divFiltro"]/div[2]/a').click()
     pyautogui.PAUSE = 0.7
-    edge = pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+    edge = pyautogui.locateOnScreen('../main/imagensAut/edge.png', confidence=0.7)
     # CLICA NO NAVEGADOR
     pyautogui.click(edge)
     time.sleep(0.5)
