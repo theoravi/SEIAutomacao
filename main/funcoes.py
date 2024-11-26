@@ -785,7 +785,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 arvoredocs = navegador.find_elements(By.CLASS_NAME, 'infraArvoreNo')
 
                 #VERIFICA SE O DOCUMENTO ESTÁ RESTRITO, SE ESTIVER ELE IRÁ DEIXAR COMO PUBLICO UTILIZANDO O SIMBOLO DE RESTRITO COMO REFERENCIA
-                elementos_com_src = navegador.find_elements(By.CSS_SELECTOR, "[src='svg/processo_restrito.svg?11']")
+                elementos_com_src = navegador.find_elements(By.CSS_SELECTOR, "[src='svg/processo_restrito.svg?18']")
                 #CRIA UMA LISTA PARA OS DOCUMENTOS QUE DEVERÃO SER DEIXADOS COMO PUBLICO
                 elementos_para_clicar = []
                 #ITERA SOBRE OS DOCUMENTOS 

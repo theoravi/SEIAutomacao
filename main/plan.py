@@ -34,7 +34,7 @@ def check_element_exists(by, value):
 
 
 def preenche_plan(nomeSol, nomeInt, data, retido, codigo_rastreio, n_serie, n_serie2):
-    edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+    edge=pyautogui.locateOnScreen('main/imagensAut/edge.png', confidence=0.7)
     pyautogui.click(edge)
     time.sleep(0.4)
     pyautogui.PAUSE = 0.2
@@ -84,7 +84,7 @@ def preenche_plan(nomeSol, nomeInt, data, retido, codigo_rastreio, n_serie, n_se
 
 
 def preenche_plan2(nomeSol, nomeInt, data):
-    edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+    edge=pyautogui.locateOnScreen('main/imagensAut/edge.png', confidence=0.7)
     pyautogui.click(edge)
     time.sleep(0.4)
     pyautogui.PAUSE = 0.2
@@ -171,7 +171,7 @@ def tira_restrito():
     arvoredocs = navegador.find_elements(By.CLASS_NAME, 'infraArvoreNo')
 
     #VERIFICA SE O DOCUMENTO ESTÁ RESTRITO, SE ESTIVER ELE IRÁ DEIXAR COMO PUBLICO UTILIZANDO O SIMBOLO DE RESTRITO COMO REFERENCIA
-    elementos_com_src = navegador.find_elements(By.CSS_SELECTOR, "[src='svg/processo_restrito.svg?11']")
+    elementos_com_src = navegador.find_elements(By.CSS_SELECTOR, "[src='svg/processo_restrito.svg?18']")
     #CRIA UMA LISTA PARA OS DOCUMENTOS QUE DEVERÃO SER DEIXADOS COMO PUBLICO
     elementos_para_clicar = []
     #ITERA SOBRE OS DOCUMENTOS 
@@ -203,17 +203,16 @@ def tira_restrito():
         navegador.switch_to.frame('ifrArvore')
     navegador.switch_to.default_content()
 
-
-chrome_driver_path = "chromedriver-win64\chromedriver.exe" 
-# servico = Service(ChromeDriverManager().install())
-servico = Service(chrome_driver_path)
+#chrome_driver_path = "chromedriver-win64\chromedriver.exe" 
+#servico = Service(chrome_driver_path)
+servico = Service(ChromeDriverManager().install())
 pyautogui.PAUSE = 0.7
 #INICIA O NAVEGADOR
 navegador = webdriver.Chrome(service=servico)
 navegador.maximize_window()
 navegador.get('https://sei.anatel.gov.br/')
 janela_principal = navegador.current_window_handle
-edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+edge=pyautogui.locateOnScreen('main/imagensAut/edge.png', confidence=0.7)
 pyautogui.click(edge)
 time.sleep(3)
 sitePlan = 'https://anatel365.sharepoint.com/:x:/r/sites/lista.orcn/_layouts/15/Doc.aspx?sourcedoc=%7B4130A4D6-7F00-45D4-A328-ED0866A62335%7D&file=Distribui%C3%A7%C3%A3o%20Processo%20Drone.xlsx&action=default&mobileredirect=true'
@@ -221,7 +220,7 @@ pyperclip.copy(sitePlan)
 pyautogui.hotkey('ctrl', 'l')
 pyautogui.hotkey('ctrl', 'v')
 pyautogui.press('enter')
-chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
+chrome=pyautogui.locateOnScreen('main/imagensAut/chrome.png', confidence=0.7)
 pyautogui.click(chrome)
 
 
@@ -289,7 +288,7 @@ while True:
 
 verifica=input('Aperte enter após filtrar a planilha geral.')
 
-edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+edge=pyautogui.locateOnScreen('main/imagensAut/edge.png', confidence=0.7)
 pyautogui.click(edge)
 pyautogui.click(x=204, y=365)
 
@@ -303,7 +302,7 @@ while True:
         pyautogui.hotkey('ctrl', 'c')
         time.sleep(0.2)
         n_processo = pyperclip.paste()
-        chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
+        chrome=pyautogui.locateOnScreen('main/imagensAut/chrome.png', confidence=0.7)
         pyautogui.click(chrome)
         navegador.switch_to.default_content()
         navegador.find_element(By.ID,'txtPesquisaRapida').click()
@@ -341,7 +340,7 @@ while True:
                 if not codigo_rastreio.strip():
                     retido='Não'
                 else:
-                    manda_email(n_processo, codigo_rastreio)
+                    # manda_email(n_processo, codigo_rastreio)
                     retido='Sim'
                     time.sleep(0.2)
                 tira_restrito()
@@ -362,7 +361,7 @@ while True:
                 if not codigo_rastreio.strip():
                     retido='Não'
                 else:
-                    manda_email(n_processo, codigo_rastreio)
+                    # manda_email(n_processo, codigo_rastreio)
                     retido='Sim'
                     time.sleep(0.2)
                 tira_restrito()
@@ -373,8 +372,8 @@ while True:
         else:
             print("Processo não contém recibo.")
             print("Pulando processo...")
-            edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
-            edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+            edge=pyautogui.locateOnScreen('main/imagensAut/edge.png', confidence=0.7)
+            edge=pyautogui.locateOnScreen('main/imagensAut/edge.png', confidence=0.7)
             pyautogui.click(edge)
             pyautogui.press('down')
     except Exception as e:
