@@ -1,9 +1,11 @@
 import os
 import requests
 import zipfile
+import shutil
 
 # Diretório atual de execução
 LOCAL_REPO_PATH = os.getcwd()
+MAIN_PATH = os.path.join(LOCAL_REPO_PATH, "main")
 CURRENT_VERSION_FILE = os.path.join(LOCAL_REPO_PATH, "VERSAO.txt")
 
 def get_latest_release():
@@ -24,9 +26,13 @@ def get_current_version():
             return f.read().strip()
     return None
 
-def download_and_extract_zip(url, target_path):
-    """Baixa o ZIP da última release e substitui os arquivos no diretório local."""
-    zip_path = os.path.join(target_path, "update.zip")
+def download_and_replace_main(url, main_path):
+    """Baixa o ZIP da última release e substitui toda a pasta main."""
+    zip_path = os.path.join(LOCAL_REPO_PATH, "update.zip")
+    temp_extraction_path = os.path.join(LOCAL_REPO_PATH, "temp_update")
+
+    # Criar diretório temporário para extração
+    os.makedirs(temp_extraction_path, exist_ok=True)
 
     # Baixar o arquivo ZIP
     print("Baixando a última versão...")
@@ -36,11 +42,20 @@ def download_and_extract_zip(url, target_path):
             f.write(response.content)
         print("Download concluído. Extraindo arquivos...")
 
-        # Extrair o ZIP
+        # Extrair o ZIP no diretório temporário
         with zipfile.ZipFile(zip_path, "r") as zip_ref:
-            zip_ref.extractall(target_path)
+            zip_ref.extractall(temp_extraction_path)
         os.remove(zip_path)  # Remover o arquivo ZIP após extração
         print("Arquivos extraídos com sucesso!")
+
+        # Substituir a pasta main inteira
+        if os.path.exists(main_path):
+            shutil.rmtree(main_path)  # Remove a pasta antiga
+        shutil.move(os.path.join(temp_extraction_path, "main"), main_path)  # Move a nova pasta
+        print("Pasta 'main' atualizada com sucesso!")
+
+        # Remover o diretório temporário
+        shutil.rmtree(temp_extraction_path)
     else:
         print("Erro ao baixar a última versão:", response.status_code)
 
@@ -61,7 +76,7 @@ def main():
     # Verificar se há uma nova versão
     if latest_version != current_version:
         print("Nova versão encontrada! Atualizando...")
-        download_and_extract_zip(zip_url, LOCAL_REPO_PATH)
+        download_and_replace_main(zip_url, MAIN_PATH)
 
         # Atualizar o arquivo VERSAO.txt
         with open(CURRENT_VERSION_FILE, "w") as f:
