@@ -340,7 +340,7 @@ while True:
                 if not codigo_rastreio.strip():
                     retido='Não'
                 else:
-                    # manda_email(n_processo, codigo_rastreio)
+                    manda_email(n_processo, codigo_rastreio)
                     retido='Sim'
                     time.sleep(0.2)
                 tira_restrito()
@@ -361,7 +361,7 @@ while True:
                 if not codigo_rastreio.strip():
                     retido='Não'
                 else:
-                    # manda_email(n_processo, codigo_rastreio)
+                    manda_email(n_processo, codigo_rastreio)
                     retido='Sim'
                     time.sleep(0.2)
                 tira_restrito()
