@@ -6,6 +6,7 @@ import stat
 
 # Diretório atual de execução
 LOCAL_REPO_PATH = os.getcwd()
+MAIN_PATH = os.path.join(LOCAL_REPO_PATH, "main")
 CURRENT_VERSION_FILE = os.path.join(LOCAL_REPO_PATH, "VERSAO.txt")
 
 def handle_remove_readonly(func, path, exc_info):
@@ -56,7 +57,7 @@ def download_and_replace_main(url):
         os.remove(zip_path)  # Remover o arquivo ZIP após extração
         print("Arquivos extraídos com sucesso!")
 
-        # Encontrar a pasta que foi extraída (que contém a pasta 'main')
+        # Encontrar a pasta que foi extraída
         extracted_folder = next((folder for folder in os.listdir(temp_extraction_path)
                                  if os.path.isdir(os.path.join(temp_extraction_path, folder))), None)
         
@@ -64,25 +65,24 @@ def download_and_replace_main(url):
             print("Erro: pasta principal não encontrada na extração.")
             return
 
-        # Caminho da pasta 'main' dentro do diretório extraído
+        # Caminho da nova pasta 'main' extraída
         new_main_path = os.path.join(temp_extraction_path, extracted_folder, "main")
 
-        # Verificar se a pasta 'main' existe na extração
-        if os.path.exists(new_main_path):
-            # Caminho da pasta 'main' original
-            original_main_path = os.path.join(LOCAL_REPO_PATH, "main")
-            
-            # Remover a pasta 'main' antiga se ela existir
-            if os.path.exists(original_main_path):
-                print(f"Removendo pasta antiga: {original_main_path}")
-                shutil.rmtree(original_main_path, onerror=handle_remove_readonly)  # Forçar remoção se necessário
-
-            # Mover a nova pasta 'main' extraída para o diretório correto
-            shutil.move(new_main_path, original_main_path)  # Move a nova pasta 'main' para o destino correto
-            print("Pasta 'main' atualizada com sucesso!")
-        else:
-            print("Erro: pasta 'main' não encontrada na extração.")
+        # Caminho da pasta 'main' original
+        original_main_path = os.path.join(LOCAL_REPO_PATH, "main")
         
+        # Renomear a pasta 'main' antiga, se existir
+        if os.path.exists(original_main_path):
+            backup_path = os.path.join(LOCAL_REPO_PATH, "main_backup")
+            print(f"Renomeando pasta antiga para: {backup_path}")
+            if os.path.exists(backup_path):
+                shutil.rmtree(backup_path, onerror=handle_remove_readonly)  # Remover backups antigos, se necessário
+            shutil.move(original_main_path, backup_path)
+        
+        # Mover a nova pasta 'main' para o local correto
+        shutil.move(new_main_path, original_main_path)
+        print("Pasta 'main' atualizada com sucesso!")
+
         # Remover o diretório temporário
         shutil.rmtree(temp_extraction_path, onerror=handle_remove_readonly)
     else:

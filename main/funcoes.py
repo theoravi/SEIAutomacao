@@ -47,7 +47,7 @@ def escrever_informacoes(processos, nomeEstag):
     data_hora = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     
     #NOME DO ARQUIVO BASEADO NO USUÁRIO QUE ESTÁ ANALISANDO
-    nome_arquivo = f"logs\{nomeEstag}.txt"
+    nome_arquivo = f"logs/{nomeEstag}.txt"
     
     #VERIFICA SE O ARQUIVO EXISTE
     if not os.path.exists(nome_arquivo):
@@ -152,7 +152,7 @@ def insira_anexo(processos, navegador):
     Anatel - Agência Nacional de Telecomunicações''')
 
 #FUNCAO PARA ERROS NA DECLARACAO DE CONFORMIDADE PEDINDO PARA ABRIR NOVO PROCESSO SEI
-def erro_declaracao(processos, impProp, navegador):
+def erro_declaracao(processos, impProp, navegador, jaHomologado=False):
     #ENVIA TEXTO DE INPUT PARA A VARIAVEL
     def get_text():
         nonlocal exig2
@@ -204,34 +204,66 @@ def erro_declaracao(processos, impProp, navegador):
     else:
         link = 'https://docs.google.com/document/d/1YsrMwMxyVysCJ9VhtGOOU1S1FlbmkRFaYSjojLxXVsQ/edit'
     
+    #TESTA QUAL TIPO DE EXIGENCIA É
+    if jaHomologado:
+        texto_padrao = f'''Prezado(a) Senhor(a),
+
+        O requerimento realizado nesta Declaração de Conformidade possui um produto que já possui o selo de homologação da Anatel, sendo esse produto:
+
+        {exig2}
+
+        Como o produto deve ser homologado apenas uma vez, solicitamos que realize um novo processo SEI contendo apenas os produtos não homologados previamente.
+
+        Favor seguir as seguintes orientações:
+        1. Realizar um novo processo SEI, cumprindo com a(s) exigência(s) apontada(s) anteriormente. Seguindo o manual: {link}
+
+        2. Para criar um novo processo SEI, solicitamos acessar o sistema Sei da Anatel: https://sei.anatel.gov.br/sei/controlador_externo.php?acao=usuario_externo_logar&id_orgao_acesso_externo=0
+
+        Dessa maneira, devido a presença de exigência(s), informamos que o atual processo SEI nº {processos} será arquivado.
+
+        FAVOR NÃO RESPONDER ESTE E-MAIL.
+
+
+
+        Atenciosamente,
+
+        ORCN - Gerência de Certificação e Numeração
+
+        SOR - Superintendência de Outorga e Recursos à Prestação
+
+        Anatel - Agência Nacional de Telecomunicações'''
+
+    else:
+        texto_padrao = f'''Prezado(a) Senhor(a),
+
+        Em atenção à demanda registrada no processo em referência, apresentamos as seguintes pendências observadas no documento de Declaração de Conformidade:
+
+        {exig2}
+
+        Favor seguir as seguintes orientações:
+        
+        1. Realizar um novo processo SEI, cumprindo com a(s) exigência(s) apontada(s) anteriormente. Seguindo o manual: {link}
+
+        2. Para criar um novo processo SEI, solicitamos acessar o sistema Sei da Anatel: https://sei.anatel.gov.br/sei/controlador_externo.php?acao=usuario_externo_logar&id_orgao_acesso_externo=0
+
+        Dessa maneira, devido a presença de exigência(s), informamos que o atual processo SEI nº {processos} será arquivado.
+
+        FAVOR NÃO RESPONDER ESTE E-MAIL.
+
+
+
+        Atenciosamente,
+
+        ORCN - Gerência de Certificação e Numeração
+
+        SOR - Superintendência de Outorga e Recursos à Prestação
+
+        Anatel - Agência Nacional de Telecomunicações'''
+        
     #INSERE ASSUNTO DO PROCESO
     navegador.find_element(By.ID, 'txtAssunto').send_keys(f"Processo SEI nº {processos} - Indeferido")
     #INSERE EMAIL COM CORPO DO EMAIL
-    navegador.find_element(By.ID, 'txaMensagem').send_keys(f'''Prezado(a) Senhor(a),
-
-    Em atenção à demanda registrada no processo em referência, apresentamos as seguintes pendências observadas no documento de Declaração de Conformidade:
-
-    {exig2}
-
-    Favor seguir as seguintes orientações:
-    
-    1. Realizar um novo processo SEI, cumprindo com a(s) exigência(s) apontada(s) anteriormente. Seguindo o manual: {link}
-
-    2. Para criar um novo processo SEI, solicitamos acessar o sistema Sei da Anatel: https://sei.anatel.gov.br/sei/controlador_externo.php?acao=usuario_externo_logar&id_orgao_acesso_externo=0
-
-    Dessa maneira, devido a presença de exigência(s), informamos que o atual processo SEI nº {processos} será arquivado.
-
-    FAVOR NÃO RESPONDER ESTE E-MAIL.
-
-
-
-    Atenciosamente,
-
-    ORCN - Gerência de Certificação e Numeração
-
-    SOR - Superintendência de Outorga e Recursos à Prestação
-
-    Anatel - Agência Nacional de Telecomunicações''')
+    navegador.find_element(By.ID, 'txaMensagem').send_keys(texto_padrao)
 
 #FUNCAO QUE PERMITE O USUARIO INSERIR CORPO DO EMAIL
 def outro_erro(navegador):
@@ -258,7 +290,7 @@ def verifica_conformidade(modelos, tabela_modelos, num):
                         break
             except KeyError as e:
                 print(f"Erro ao acessar os índices: {e}")
-                continue
+                continue 
     return checkexcel
 
 #FUNCAO QUE FORMATA A PLANILHA DE DRONES CONFORMES
@@ -282,7 +314,7 @@ def corrige_planilha(planilha, drones: bool):
 def preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastreio, nome_interessado):
     #ENCONTRA O ICONE DO EDGE E ABRE O NAVEGADOR DA PLANILHA
     pyautogui.PAUSE = 0.7
-    edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+    edge=pyautogui.locateOnScreen('main/imagensAut/edge.png', confidence=0.7)
     #COPIA NUMERO DO PROCESSO
     pyperclip.copy(processo)
     #CLICA NO NAVEGADOR
@@ -337,7 +369,7 @@ def preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastrei
     pyperclip.copy(situacao)
     pyautogui.hotkey('ctrl', 'v')
     #VOLTA PARA A JANELA DO CHROME
-    chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
+    chrome=pyautogui.locateOnScreen('main/imagensAut/chrome.png', confidence=0.7)
     pyautogui.click(chrome)
 
 #FUNCAO QUE ESPERA UM ELEMENTO CARREGAR NA TELA E CLICA NELE
@@ -371,9 +403,9 @@ def abreChromeEdge():
     pyautogui.PAUSE = 0.7
     #INICIA O NAVEGADOR
     # Caminho do ChromeDriver local
-    chrome_driver_path = r"chromedriver-win64\chromedriver.exe"  # Altere para o caminho correto do seu ChromeDriver
+    # chrome_driver_path = r"main\chromedriver-win64\chromedriver.exe"  # Altere para o caminho correto do seu ChromeDriver
     # Configura o serviço do ChromeDriver
-    servico = Service(chrome_driver_path)
+    servico = Service(ChromeDriverManager().install())
     # Inicia o navegador Chrome
     navegador = webdriver.Chrome(service=servico, options=options)
     navegador.maximize_window()
@@ -382,7 +414,7 @@ def abreChromeEdge():
     #LOCALIZA O ICONE DO EDGE E ABRE A PLANILHA GERAL
     #FOI UTILIZADO O PYPERCLIP PARA EVITAR QUALQUER ERRO NA HORA DE COLAR O URL DA PLANILHA
     time.sleep(1)
-    edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+    edge=pyautogui.locateOnScreen('main/imagensAut/edge.png', confidence=0.7)
     pyautogui.click(edge)
     time.sleep(3)
     sitePlan = 'https://anatel365.sharepoint.com/:x:/r/sites/lista.orcn/_layouts/15/Doc.aspx?sourcedoc=%7B4130A4D6-7F00-45D4-A328-ED0866A62335%7D&file=Distribui%C3%A7%C3%A3o%20Processo%20Drone.xlsx&action=default&mobileredirect=true'
@@ -390,7 +422,7 @@ def abreChromeEdge():
     pyautogui.hotkey('ctrl', 'l')
     pyautogui.hotkey('ctrl', 'v')
     pyautogui.press('enter')
-    chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
+    chrome=pyautogui.locateOnScreen('main/imagensAut/chrome.png', confidence=0.7)
     pyautogui.click(chrome)
     return navegador
 
@@ -614,7 +646,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     else:
                         print(f"O modelo '{mod}' não se encontra na lista de drones conformes")
                 print('\n')
-                #EXIBE CÓDIGO DE RAST"REIO
+                #EXIBE CÓDIGO DE RASTREIO 
                 #LINHA ESPECIFICA ESCREVE NA PLANILHA SE O PRODUTO ESTA RETIDO E, CASO ESTEJA, ESCREVE O CODIGO DE RASTREIO
                 n_serie = navegador.find_element(By.XPATH, '/html/body/table[3]/tbody/tr[2]/td[3]').text
                 codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[4]/tbody/tr/td[2]').text
@@ -784,7 +816,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 arvoredocs = navegador.find_elements(By.CLASS_NAME, 'infraArvoreNo')
 
                 #VERIFICA SE O DOCUMENTO ESTÁ RESTRITO, SE ESTIVER ELE IRÁ DEIXAR COMO PUBLICO UTILIZANDO O SIMBOLO DE RESTRITO COMO REFERENCIA
-                elementos_com_src = navegador.find_elements(By.CSS_SELECTOR, "[src='svg/processo_restrito.svg?11']")
+                elementos_com_src = navegador.find_elements(By.CSS_SELECTOR, "[src='svg/processo_restrito.svg?18']")
                 #CRIA UMA LISTA PARA OS DOCUMENTOS QUE DEVERÃO SER DEIXADOS COMO PUBLICO
                 elementos_para_clicar = []
                 #ITERA SOBRE OS DOCUMENTOS 
@@ -810,6 +842,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     # navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[2]').click()
                     #SELECIONA A OPCAO DE PUBLICO NO DOCUMENTO
                     time.sleep(0.5)
+                    navegador.switch_to.frame('ifrVisualizacao')
                     clica_noelemento(navegador, By.XPATH,'//*[@id="divOptPublico"]/div/label')
                     # navegador.find_element(By.XPATH,'//*[@id="divOptPublico"]/div/label').click()
                     #SALVA AS MUDANCAS
@@ -894,7 +927,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 navegador.switch_to.frame('ifrConteudoVisualizacao')
                 time.sleep(1)
                 #CLICA NO ICONE DE LEGO
-                clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[8]')
+                clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/bloco_incluir_protocolo.svg?18')]")
                 #navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[8]').click()
                 #SELECIONA BLOCO (SELECIONA O PRIMEIRO DESPACHO PARA DRONES APROVADOS QUE LER)
                 time.sleep(1.5)
@@ -919,7 +952,8 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 time.sleep(1)
                 #ADICIONA NOTA PARA AGUARDAR ASSINATURA
                 #CLICA NO ICONE DE ANOTACAO
-                clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[16]')
+                clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/anotacao_cadastro.svg?18')]")
+                #clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[16]')
                 time.sleep(0.1)
                 #INSERE O TEXTO DA ANOTACAO
                 navegador.switch_to.frame('ifrVisualizacao')
@@ -989,7 +1023,8 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                             print("Selecione o tipo de exigência abaixo:\n",
                                 "[1] Falta algum anexo no processo.\n",
                                 "[2] Erro na declaração de conformidade ou alguma exigência que é necessário abrir novo processo.\n",
-                                "[3] Outros.")
+                                "[3] Produto já homologado.\n",
+                                "[4] Outros.")
                             time.sleep(0.5)
                             exig = int(input("Opção: "))
                         except ValueError:
@@ -1068,7 +1103,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                                     return
                             elif exig == 2:
                                 #PUXA FUNCAO ERRO_DECLARACAO CONTENDO O CORPO DE EMAIL PEDINDO PARA ABRIR NOVO PROCESSO SEI
-                                erro_declaracao(processo, impProp, navegador)
+                                erro_declaracao(processo, impProp, navegador, jaHomologado=False)
                                 #PEDE PARA USUARIO CONFERIR O EMAIL
                                 while True:
                                     try:
@@ -1137,6 +1172,77 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                                     navegador.switch_to.window(janela_principal)
                                     return
                             elif exig == 3:
+                                #PUXA FUNCAO ERRO_DECLARACAO CONTENDO O CORPO DE EMAIL PEDINDO PARA ABRIR NOVO PROCESSO SEI
+                                erro_declaracao(processo, impProp, navegador, jaHomologado=True)
+                                #PEDE PARA USUARIO CONFERIR O EMAIL
+                                while True:
+                                    try:
+                                        confere = int(input('Caso esteja tudo certo digite [1], caso tenha algum erro digite [2]: '))
+                                        if confere == 1:
+                                            break
+                                        elif confere == 2:
+                                            break
+                                        else:
+                                            print("Opção inválida, tente novamente!")
+                                    except ValueError:
+                                        print("Opção inválida, tente novamente!")
+                                if confere == 1:
+                                    #ENVIA O EMAIL COM EXIGENCIA
+                                    navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
+                                    time.sleep(0.5)
+                                    #FECHA ALERTA DO NAVEGADOR
+                                    alert = Alert(navegador)
+                                    alert.accept()
+                                    time.sleep(0.5)
+                                    #RETORNA O FOCO PARA A JANELA PRINCIPAL
+                                    navegador.switch_to.window(janela_principal)
+                                    navegador.switch_to.default_content()
+                                    #VOLTA PARA PAGINA INICIAL DO PROCESSO
+                                    navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
+                                    elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+                                    elementos.send_keys(Keys.ENTER)    
+                                    time.sleep(1)
+                                    #INSERE TAG REFERENTE A PROCESSOS INTERCORRENTES 
+                                    navegador.switch_to.frame('ifrConteudoVisualizacao')
+                                    #CLICA NO ICONE DE TAG
+                                    time.sleep(0.5)
+                                    navegador.find_element(By.XPATH, "//img[contains(@src, 'svg/marcador_gerenciar.svg?18')]").click()
+                                    navegador.switch_to.frame('ifrVisualizacao')
+                                    try:    
+                                        time.sleep(1)
+                                        navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                                    except:
+                                        time.sleep(0.3)
+                                        clica_noelemento(navegador, By.XPATH,'//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img')
+                                        #navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
+                                        alert.accept()
+                                        time.sleep(0.3)
+                                        clica_noelemento(navegador, By.XPATH,'//*[@id="btnAdicionar"]')
+                                        #navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
+                                        #time.sleep(0.5)
+                                        clica_noelemento(navegador, By.XPATH,'//*[@id="selMarcador"]/div/a')
+                                        #navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                                    
+                                    #CLICA NO DROPDOWN COM OS TIPOS DE TAG
+                                    time.sleep(0.5)
+                                    #CLICA NA TAG DE PENDENCIA
+                                    navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[19]/a').click()
+                                    #PEDE O TEXTO DA TAG
+                                    textoTag = input("Insira o texto da tag: ")
+                                    textoFinaltag = nomeEstag+"\n"+textoTag
+                                    navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoFinaltag)
+                                    #SALVA A TAG
+                                    navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
+                                    #DEFINE SITUACAO DO PROCESSO
+                                    situacao = 'Exigência'
+                                else:
+                                    #CANCELA O ENVIO CASO TENHA ALGUM ERRO
+                                    print("Faça as alterações necessárias mais tarde.")
+                                    navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
+                                    navegador.switch_to.window(janela_principal)
+                                    return    
+                            
+                            elif exig == 4:
                                 #PUXA FUNCAO OUTRO_ERRO EM QUE USUARIO INSERE O EMAIL COMO QUISER
                                 outro_erro(navegador)
                                 #PEDE PARA USUARIO ESCREVER EMAIL E DIGITAR 1 PARA CONTINUAR
@@ -1212,7 +1318,8 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                             time.sleep(1)
                             navegador.switch_to.frame('ifrConteudoVisualizacao')
                             #CLICA NO ICONE DE CONCLUIR PROCESSO
-                            clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[19]')
+                            clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/processo_concluir.svg?18')]")
+                            #clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[19]')
                             navegador.switch_to.frame('ifrVisualizacao')
                             clica_noelemento(navegador, By.XPATH, '//*[@id="sbmSalvar"]')
                             print("Próximo processo...")
@@ -1432,7 +1539,7 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
                     #CLICA NO ICONE DE ANOTACAO
                     navegador.switch_to.frame('ifrConteudoVisualizacao')
                     #time.sleep(1)
-                    clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[16]')
+                    clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/anotacao_cadastro.svg?18')]")
                     #navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[17]').click()
                     #LIMPA O TEXTO DA ANOTACAO
                     time.sleep(0.3)
@@ -1486,7 +1593,8 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
                     time.sleep(1)
                     #CONCLUI PROCESSO
                     navegador.switch_to.frame('ifrConteudoVisualizacao')
-                    clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[19]')
+                    clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/processo_concluir.svg?18')]")
+                    #clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[19]')
                     navegador.switch_to.frame('ifrVisualizacao')
                     clica_noelemento(navegador, By.XPATH, '//*[@id="sbmSalvar"]')
                     # navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[20]').click()
@@ -1609,7 +1717,7 @@ def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral):
     navegador.find_element(By.ID, 'btnSalvar').click()
     navegador.find_element(By.XPATH, '//*[@id="divFiltro"]/div[2]/a').click()
     pyautogui.PAUSE = 0.7
-    edge = pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+    edge = pyautogui.locateOnScreen('main/imagensAut/edge.png', confidence=0.7)
     # CLICA NO NAVEGADOR
     pyautogui.click(edge)
     time.sleep(0.5)

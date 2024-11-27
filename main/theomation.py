@@ -1,7 +1,7 @@
 #Para baixar as bibliotecas, execute o arquivo bibs_install.bat
 
 #Para gerar o executável, execute o comando abaixo:
-#python -m PyInstaller --icon="icons\T_logo-1-.ico" --onefile theomation.py --clean
+#python -m PyInstaller --icon="icons\T_logo-1-.ico" --onefile main\theomation.py --clean
 
 #IMPORTS NECESSÁRIOS PARA O FUNCIONAMENTO DO CÓDIGO
 import unidecode
@@ -13,7 +13,7 @@ import funcoes as fc
 import json
 import subprocess
 
-DEV_MODE = False
+DEV_MODE = True
 
 def main():
     reset = True
@@ -66,7 +66,7 @@ def main():
         print("Quantidade de processos para concluir", len(lista_procConformes))
 
         #ABRE DICIONARIO
-        with open('usuarios/usuarios.json', 'r') as arquivo:
+        with open('main/usuarios/usuarios.json', 'r') as arquivo:
             usuarios = json.load(arquivo)
 
         try: 
@@ -79,7 +79,7 @@ def main():
                 if opcao == '1':
                     usuarios[user_name] = nomeEstag
                     break
-            with open('usuarios/usuarios.json', 'w') as arquivo:
+            with open('main/usuarios/usuarios.json', 'w') as arquivo:
                 json.dump(usuarios, arquivo)
         finally:
             nomeEstag_sem_acento = unidecode.unidecode(nomeEstag)
@@ -140,7 +140,7 @@ def main():
 if __name__ == "__main__":
     if not DEV_MODE:
         # Chamar o script de atualização antes de executar a automação
-        subprocess.run(["python", "updater.py"])
+        subprocess.run(["python", "main/updater.py"])
         # Continuar com a lógica principal da automação
         print("Iniciando a automação...")
         # Coloque aqui o código principal da sua automação
