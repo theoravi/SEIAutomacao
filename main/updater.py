@@ -6,8 +6,8 @@ import stat
 
 # Diretório atual de execução
 LOCAL_REPO_PATH = os.getcwd()
-MAIN_PATH = os.path.join(LOCAL_REPO_PATH, "main")
-CURRENT_VERSION_FILE = os.path.join(LOCAL_REPO_PATH, "VERSAO.txt")
+MAIN_PATH = os.path.join(LOCAL_REPO_PATH, "../main")
+CURRENT_VERSION_FILE = os.path.join(LOCAL_REPO_PATH, "../VERSAO.txt")
 
 def handle_remove_readonly(func, path, exc_info):
     """Força a remoção de arquivos somente leitura."""
@@ -37,8 +37,8 @@ def get_current_version():
 
 def download_and_replace_main(url):
     """Baixa o ZIP da última release e substitui toda a pasta main."""
-    zip_path = os.path.join(LOCAL_REPO_PATH, "update.zip")
-    temp_extraction_path = os.path.join(LOCAL_REPO_PATH, "temp_update")
+    zip_path = os.path.join(LOCAL_REPO_PATH, "../update.zip")
+    temp_extraction_path = os.path.join(LOCAL_REPO_PATH, "../temp_update")
 
     # Criar diretório temporário para extração
     os.makedirs(temp_extraction_path, exist_ok=True)
@@ -66,20 +66,22 @@ def download_and_replace_main(url):
             return
 
         # Caminho da nova pasta 'main' extraída
-        new_main_path = os.path.join(temp_extraction_path, extracted_folder, "main")
+        new_main_path = os.path.join(temp_extraction_path, extracted_folder, "../main")
 
         # Caminho da pasta 'main' original
-        original_main_path = os.path.join(LOCAL_REPO_PATH, "main")
+        original_main_path = os.path.join(LOCAL_REPO_PATH, "../main")
         
         # Renomear a pasta 'main' antiga, se existir
         if os.path.exists(original_main_path):
-            backup_path = os.path.join(LOCAL_REPO_PATH, "main_backup")
+            backup_path = os.path.join(LOCAL_REPO_PATH, "../main_backup")
             print(f"Renomeando pasta antiga para: {backup_path}")
             if os.path.exists(backup_path):
                 shutil.rmtree(backup_path, onerror=handle_remove_readonly)  # Remover backups antigos, se necessário
+            input("Movendo a main original para a pasta backup")
             shutil.move(original_main_path, backup_path)
         
         # Mover a nova pasta 'main' para o local correto
+        input("Movendo a nova pasta main para o diretorio correto")
         shutil.move(new_main_path, original_main_path)
         print("Pasta 'main' atualizada com sucesso!")
 

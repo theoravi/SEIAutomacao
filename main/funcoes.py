@@ -47,7 +47,7 @@ def escrever_informacoes(processos, nomeEstag):
     data_hora = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
     
     #NOME DO ARQUIVO BASEADO NO USUÁRIO QUE ESTÁ ANALISANDO
-    nome_arquivo = f"logs/{nomeEstag}.txt"
+    nome_arquivo = f"../logs/{nomeEstag}.txt"
     
     #VERIFICA SE O ARQUIVO EXISTE
     if not os.path.exists(nome_arquivo):
@@ -314,7 +314,7 @@ def corrige_planilha(planilha, drones: bool):
 def preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastreio, nome_interessado):
     #ENCONTRA O ICONE DO EDGE E ABRE O NAVEGADOR DA PLANILHA
     pyautogui.PAUSE = 0.7
-    edge=pyautogui.locateOnScreen('main/imagensAut/edge.png', confidence=0.7)
+    edge=pyautogui.locateOnScreen('../main/imagensAut/edge.png', confidence=0.7)
     #COPIA NUMERO DO PROCESSO
     pyperclip.copy(processo)
     #CLICA NO NAVEGADOR
@@ -369,7 +369,7 @@ def preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastrei
     pyperclip.copy(situacao)
     pyautogui.hotkey('ctrl', 'v')
     #VOLTA PARA A JANELA DO CHROME
-    chrome=pyautogui.locateOnScreen('main/imagensAut/chrome.png', confidence=0.7)
+    chrome=pyautogui.locateOnScreen('../main/imagensAut/chrome.png', confidence=0.7)
     pyautogui.click(chrome)
 
 #FUNCAO QUE ESPERA UM ELEMENTO CARREGAR NA TELA E CLICA NELE
@@ -414,7 +414,7 @@ def abreChromeEdge():
     #LOCALIZA O ICONE DO EDGE E ABRE A PLANILHA GERAL
     #FOI UTILIZADO O PYPERCLIP PARA EVITAR QUALQUER ERRO NA HORA DE COLAR O URL DA PLANILHA
     time.sleep(1)
-    edge=pyautogui.locateOnScreen('main/imagensAut/edge.png', confidence=0.7)
+    edge=pyautogui.locateOnScreen('../main/imagensAut/edge.png', confidence=0.7)
     pyautogui.click(edge)
     time.sleep(3)
     sitePlan = 'https://anatel365.sharepoint.com/:x:/r/sites/lista.orcn/_layouts/15/Doc.aspx?sourcedoc=%7B4130A4D6-7F00-45D4-A328-ED0866A62335%7D&file=Distribui%C3%A7%C3%A3o%20Processo%20Drone.xlsx&action=default&mobileredirect=true'
@@ -422,7 +422,7 @@ def abreChromeEdge():
     pyautogui.hotkey('ctrl', 'l')
     pyautogui.hotkey('ctrl', 'v')
     pyautogui.press('enter')
-    chrome=pyautogui.locateOnScreen('main/imagensAut/chrome.png', confidence=0.7)
+    chrome=pyautogui.locateOnScreen('../main/imagensAut/chrome.png', confidence=0.7)
     pyautogui.click(chrome)
     return navegador
 
@@ -1717,7 +1717,7 @@ def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral):
     navegador.find_element(By.ID, 'btnSalvar').click()
     navegador.find_element(By.XPATH, '//*[@id="divFiltro"]/div[2]/a').click()
     pyautogui.PAUSE = 0.7
-    edge = pyautogui.locateOnScreen('main/imagensAut/edge.png', confidence=0.7)
+    edge = pyautogui.locateOnScreen('../main/imagensAut/edge.png', confidence=0.7)
     # CLICA NO NAVEGADOR
     pyautogui.click(edge)
     time.sleep(0.5)
