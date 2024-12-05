@@ -1030,7 +1030,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                         except ValueError:
                             print("Opção inválida. Digite um número inteiro entre 1 e 3.")
                             continue
-                        if exig in range(1, 4):
+                        if exig in range(1, 5):
                             if exig == 1:
                                 #PUXA FUNCAO INSIRA_ANEXO CONTENDO O CORPO DE EMAIL PEDINDO ANEXOS
                                 insira_anexo(processo, navegador)
