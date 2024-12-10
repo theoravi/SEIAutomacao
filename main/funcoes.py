@@ -208,62 +208,116 @@ def erro_declaracao(processos, impProp, navegador, jaHomologado=False):
     if jaHomologado:
         texto_padrao = f'''Prezado(a) Senhor(a),
 
-        O requerimento realizado nesta Declaração de Conformidade possui um produto que já possui o selo de homologação da Anatel, sendo esse produto:
+    O requerimento realizado nesta Declaração de Conformidade possui um produto que já possui o selo de homologação da Anatel, sendo esse produto:
 
-        {exig2}
+    {exig2}
 
-        Como o produto deve ser homologado apenas uma vez, solicitamos que realize um novo processo SEI contendo apenas os produtos não homologados previamente.
+    Como o produto deve ser homologado apenas uma vez, solicitamos que realize um novo processo SEI contendo apenas os produtos não homologados previamente.
 
-        Favor seguir as seguintes orientações:
-        1. Realizar um novo processo SEI, cumprindo com a(s) exigência(s) apontada(s) anteriormente. Seguindo o manual: {link}
+    Favor seguir as seguintes orientações:
+    1. Realizar um novo processo SEI, cumprindo com a(s) exigência(s) apontada(s) anteriormente. Seguindo o manual: {link}
 
-        2. Para criar um novo processo SEI, solicitamos acessar o sistema Sei da Anatel: https://sei.anatel.gov.br/sei/controlador_externo.php?acao=usuario_externo_logar&id_orgao_acesso_externo=0
+    2. Para criar um novo processo SEI, solicitamos acessar o sistema Sei da Anatel: https://sei.anatel.gov.br/sei/controlador_externo.php?acao=usuario_externo_logar&id_orgao_acesso_externo=0
 
-        Dessa maneira, devido a presença de exigência(s), informamos que o atual processo SEI nº {processos} será arquivado.
+    Dessa maneira, devido a presença de exigência(s), informamos que o atual processo SEI nº {processos} será arquivado.
 
-        FAVOR NÃO RESPONDER ESTE E-MAIL.
+    FAVOR NÃO RESPONDER ESTE E-MAIL.
 
 
 
-        Atenciosamente,
+    Atenciosamente,
 
-        ORCN - Gerência de Certificação e Numeração
+    ORCN - Gerência de Certificação e Numeração
 
-        SOR - Superintendência de Outorga e Recursos à Prestação
+    SOR - Superintendência de Outorga e Recursos à Prestação
 
-        Anatel - Agência Nacional de Telecomunicações'''
+    Anatel - Agência Nacional de Telecomunicações'''
 
     else:
         texto_padrao = f'''Prezado(a) Senhor(a),
 
-        Em atenção à demanda registrada no processo em referência, apresentamos as seguintes pendências observadas no documento de Declaração de Conformidade:
+    Em atenção à demanda registrada no processo em referência, apresentamos as seguintes pendências observadas no documento de Declaração de Conformidade:
 
-        {exig2}
+    {exig2}
 
-        Favor seguir as seguintes orientações:
-        
-        1. Realizar um novo processo SEI, cumprindo com a(s) exigência(s) apontada(s) anteriormente. Seguindo o manual: {link}
+    Favor seguir as seguintes orientações:
+    
+    1. Realizar um novo processo SEI, cumprindo com a(s) exigência(s) apontada(s) anteriormente. Seguindo o manual: {link}
 
-        2. Para criar um novo processo SEI, solicitamos acessar o sistema Sei da Anatel: https://sei.anatel.gov.br/sei/controlador_externo.php?acao=usuario_externo_logar&id_orgao_acesso_externo=0
+    2. Para criar um novo processo SEI, solicitamos acessar o sistema Sei da Anatel: https://sei.anatel.gov.br/sei/controlador_externo.php?acao=usuario_externo_logar&id_orgao_acesso_externo=0
 
-        Dessa maneira, devido a presença de exigência(s), informamos que o atual processo SEI nº {processos} será arquivado.
+    Dessa maneira, devido a presença de exigência(s), informamos que o atual processo SEI nº {processos} será arquivado.
 
-        FAVOR NÃO RESPONDER ESTE E-MAIL.
+    FAVOR NÃO RESPONDER ESTE E-MAIL.
 
 
 
-        Atenciosamente,
+    Atenciosamente,
 
-        ORCN - Gerência de Certificação e Numeração
+    ORCN - Gerência de Certificação e Numeração
 
-        SOR - Superintendência de Outorga e Recursos à Prestação
+    SOR - Superintendência de Outorga e Recursos à Prestação
 
-        Anatel - Agência Nacional de Telecomunicações'''
+    Anatel - Agência Nacional de Telecomunicações'''
         
     #INSERE ASSUNTO DO PROCESO
     navegador.find_element(By.ID, 'txtAssunto').send_keys(f"Processo SEI nº {processos} - Indeferido")
     #INSERE EMAIL COM CORPO DO EMAIL
     navegador.find_element(By.ID, 'txaMensagem').send_keys(texto_padrao)
+
+def processo_errado(processo, navegador):
+    #ENVIA TEXTO DE INPUT PARA A VARIAVEL
+    def get_text():
+        nonlocal exig2
+        exig2 = text_area.get("1.0", tk.END).strip()
+        root.destroy()
+
+    #INICIALIZA A VARIAVEL LOCAL QUE RECEBERA O TEXTO DE INPUT
+    exig2 = ""
+
+    #CRIA A JANELA DA INTERFACE PARA CAIXA DE INPUT
+    root = tk.Tk()
+    root.title("Inserir Texto de Exigência")
+
+    #INSTRUCAO DO QUE O USUARIO DEVE FAZER
+    label_instruction = tk.Label(root, text="Insira apenas a exigência:")
+    label_instruction.pack(padx=10, pady=5)
+
+    #CRIA AREA DE TEXTO COM ROLAGEM
+    text_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, width=80, height=20)
+    text_area.pack(padx=10, pady=10)
+
+    #CRIA BOTAO DE RECEBER O TEXTO
+    btn_get_text = tk.Button(root, text="Obter Texto", command=get_text)
+    btn_get_text.pack(pady=5)
+
+    #INICIA O LOOP PRINCIPAL QUE MANTEM A JANELA ATIVA
+    root.mainloop()
+
+    texto_padrao = f'''Prezado(a) Senhor(a),
+
+Em atenção à demanda registrada no processo em referência, apresentamos as seguintes pendências observadas durante a análise da solicitação:
+
+1. O processo criado foi feito com a tipologia incorreta. Ao invés do tipo "Certificação de Produto: Esclarecimentos sobre Homologação de Produtos para Telecomunicações", o referente processo deveria ter sido aberto como "Certificação de Produto: Homologação de Drone";
+2. Foi aberto requerimento no documento incorreto. O documento certo seria de "Declaração de Conformidade - Drone";
+2.1. Não podem ser adicionadas informações pessoais nesse documento, como CPF, RG ou CNH.
+3. Para demais dúvidas quanto a como prosseguir com o requerimento, consulte o manual do usuário.
+
+Dessa maneira, informamos que o atual processo SEI nº {processo} será arquivado. 
+
+FAVOR NÃO RESPONDER ESTE E-MAIL. 
+
+ 
+
+Atenciosamente,
+
+ORCN - Gerência de Certificação e Numeração
+
+SOR - Superintendência de Outorga e Recursos à Prestação
+
+Anatel - Agência Nacional de Telecomunicações
+'''
+
 
 #FUNCAO QUE PERMITE O USUARIO INSERIR CORPO DO EMAIL
 def outro_erro(navegador):
@@ -556,6 +610,21 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 time.sleep(1)
                 navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
                 time.sleep(0.3)
+
+            else:
+                while True:
+                    try:
+                        confirmacao = str(input('Caso este seja um processo criado com o tipo errado, digite [1] para enviar exigência, senão, digite [2] para pular o processo: '))
+                        if confirmacao == '1':
+                            processo_errado()
+                            break
+                        elif confirmacao == '2':
+                            break
+                        else:
+                            print("Opção inválida, tente novamente!")
+                    except ValueError:
+                        print("Opção inválida, tente novamente!")
+
 
             #ENCONTRAR DECLARAÇÃO DE CONFORMIDADE NO PROCESSO DRONE
             if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Drone", navegador):
