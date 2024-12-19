@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['main\\theomation.py'],
+    ['theomation.py'],
     pathex=[],
     binaries=[],
     datas=[],
