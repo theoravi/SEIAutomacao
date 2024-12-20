@@ -207,8 +207,8 @@ def tira_restrito():
 
 
 chrome_driver_path = r"chromedriver-win64\chromedriver.exe" 
-# servico = Service(ChromeDriverManager().install())
-servico = Service(chrome_driver_path)
+servico = Service(ChromeDriverManager().install())
+# servico = Service(chrome_driver_path)
 pyautogui.PAUSE = 0.7
 #INICIA O NAVEGADOR
 navegador = webdriver.Chrome(service=servico)
