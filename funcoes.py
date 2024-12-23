@@ -1347,7 +1347,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                                 
                                 time.sleep(0.5)
                                 #CLICA NA TAG DE INTERCORRENTE
-                                navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[18]/a').click()
+                                navegador.find_element(By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Intercorrente').click()
                                 #PEDE O TEXTO DA TAG
                                 textoTag = input("Insira o texto da tag: ")
                                 textoFinaltag = nomeEstag+"\n"+textoTag
@@ -1418,7 +1418,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                                 #CLICA NO DROPDOWN COM OS TIPOS DE TAG
                                 time.sleep(0.5)
                                 #CLICA NA TAG DE PENDENCIA
-                                navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[19]/a').click()
+                                navegador.find_element(By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Pendência').click()
                                 #PEDE O TEXTO DA TAG
                                 textoTag = input("Insira o texto da tag: ")
                                 textoFinaltag = nomeEstag+"\n"+textoTag
@@ -1488,7 +1488,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                                 #CLICA NO DROPDOWN COM OS TIPOS DE TAG
                                 time.sleep(0.5)
                                 #CLICA NA TAG DE PENDENCIA
-                                navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[19]/a').click()
+                                navegador.find_element(By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Pendência').click()
                                 #PEDE O TEXTO DA TAG
                                 textoTag = input("Insira o texto da tag: ")
                                 textoFinaltag = nomeEstag+"\n"+textoTag
@@ -1557,7 +1557,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                                 
                                 time.sleep(0.5)
                                 #INSERE TAG DE 'PENDENCIAS'
-                                navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[19]/a').click()
+                                navegador.find_element(By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Pendência').click()
                                 #PEDE TEXTO DA TAG
                                 textoTag = input("Insira o texto da tag: ")
                                 #INSERE O TEXTO DA TAG
