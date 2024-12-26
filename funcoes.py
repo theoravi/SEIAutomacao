@@ -603,6 +603,22 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
         if check_element_exists(By.PARTIAL_LINK_TEXT, 'Despacho Decisório', navegador):
             print(f"O processo {processo} já foi despachado!")
             return
+    
+        elif check_element_exists(By.PARTIAL_LINK_TEXT, 'Despacho Decisório', navegador) and check_element_exists(By.XPATH, "//img[contains(@src, 'svg/marcador_verde.svg?18')]", navegador):
+            tipo_processo = 'Reaberto'
+            print('Este processo foi reaberto!')
+            while True:
+                try:
+                    confirmacao = str(input('Caso este seja um pedido de cancelamento, digite [1] para gerar o despacho. Caso contrário digite [2]'))
+                    if confirmacao == '1':
+                        processo_errado()
+                        break
+                    elif confirmacao == '2':
+                        break
+                    else:
+                        print("Opção inválida, tente novamente!")
+                except ValueError:
+                    print("Opção inválida, tente novamente!")
         
         #CONFERE SE EXISTE A DECLARACAO DE CONFORMIDADE OU UMA PASTA
         if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade", navegador):

@@ -44,3 +44,12 @@ N do processo 53500.099798/2024-40 | Estagiario responsavel André Jacinto Rodrig
 N do processo 53500.088805/2024-88 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 19/12/2024 09:50:40
 N do processo 53500.084183/2024-19 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 19/12/2024 09:53:28
 N do processo 53500.099798/2024-40 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 19/12/2024 09:54:06
+N do processo 53500.088805/2024-88 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 20/12/2024 10:29:38
+N do processo 53500.101603/2024-39 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 20/12/2024 10:29:49
+N do processo 53500.101564/2024-70 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 20/12/2024 10:32:52
+N do processo 53500.088805/2024-88 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 23/12/2024 13:19:47
+N do processo 53500.101564/2024-70 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 23/12/2024 13:19:55
+N do processo 53500.101613/2024-74 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 23/12/2024 13:24:59
+N do processo 53500.088805/2024-88 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 26/12/2024 10:53:42
+N do processo 53500.102187/2024-96 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 26/12/2024 10:53:49
+N do processo 53500.102150/2024-68 | Estagiario responsavel André Jacinto Rodrigues | Data e hora da analise 26/12/2024 10:59:54
