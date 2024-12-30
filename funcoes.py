@@ -277,10 +277,10 @@ def processo_errado(processo, navegador):
 
     #CRIA A JANELA DA INTERFACE PARA CAIXA DE INPUT
     root = tk.Tk()
-    root.title("Inserir Texto de Exigência")
+    root.title("Inserir o tipo de processo que o usuário abriu")
 
     #INSTRUCAO DO QUE O USUARIO DEVE FAZER
-    label_instruction = tk.Label(root, text="Insira apenas a exigência:")
+    label_instruction = tk.Label(root, text="Copie e cole aqui o tipo de processo no SEI")
     label_instruction.pack(padx=10, pady=5)
 
     #CRIA AREA DE TEXTO COM ROLAGEM
@@ -296,27 +296,123 @@ def processo_errado(processo, navegador):
 
     texto_padrao = f'''Prezado(a) Senhor(a),
 
-Em atenção à demanda registrada no processo em referência, apresentamos as seguintes pendências observadas durante a análise da solicitação:
+    Em atenção à demanda registrada no processo em referência, apresentamos as seguintes pendências observadas durante a análise da solicitação:
 
-1. O processo criado foi feito com a tipologia incorreta. Ao invés do tipo "Certificação de Produto: Esclarecimentos sobre Homologação de Produtos para Telecomunicações", o referente processo deveria ter sido aberto como "Certificação de Produto: Homologação de Drone";
-2. Foi aberto requerimento no documento incorreto. O documento certo seria de "Declaração de Conformidade - Drone";
-2.1. Não podem ser adicionadas informações pessoais nesse documento, como CPF, RG ou CNH.
-3. Para demais dúvidas quanto a como prosseguir com o requerimento, consulte o manual do usuário.
+    1. O processo criado foi feito com a tipologia incorreta. Ao invés do tipo "{exig2}", o referente processo deveria ter sido aberto como "Certificação de Produto: Homologação de Drone";
+    2. Foi aberto requerimento no documento incorreto. O documento certo seria de "Declaração de Conformidade - Drone";
+    2.1. Não podem ser adicionadas informações pessoais nesse documento, como CPF, RG ou CNH.
+    3. Para demais dúvidas quanto a como prosseguir com o requerimento, consulte o manual do usuário.
 
-Dessa maneira, informamos que o atual processo SEI nº {processo} será arquivado. 
+    Dessa maneira, informamos que o atual processo SEI nº {processo} será arquivado. 
 
-FAVOR NÃO RESPONDER ESTE E-MAIL. 
+    FAVOR NÃO RESPONDER ESTE E-MAIL. 
 
- 
+     
 
-Atenciosamente,
+    Atenciosamente,
 
-ORCN - Gerência de Certificação e Numeração
+    ORCN - Gerência de Certificação e Numeração
 
-SOR - Superintendência de Outorga e Recursos à Prestação
+    SOR - Superintendência de Outorga e Recursos à Prestação
 
-Anatel - Agência Nacional de Telecomunicações
-'''
+    Anatel - Agência Nacional de Telecomunicações
+    '''
+    #INSERE ASSUNTO DO PROCESO
+    navegador.find_element(By.ID, 'txtAssunto').send_keys(f"Processo SEI nº {processo} - Indeferido")
+    #INSERE EMAIL COM CORPO DO EMAIL
+    navegador.find_element(By.ID, 'txaMensagem').send_keys(texto_padrao)
+
+def processo_reaberto(navegador, processo, nomeEstag):
+    #VAI PARA A PÁGINA INICIAL DO PROCESSO
+    retorna_pagina_inicial(navegador, processo)
+
+    #CLICA NO INCONE DE INCLUIR DOCUMENTO
+    navegador.switch_to.frame('ifrConteudoVisualizacao')
+    clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]')
+
+    #CLICA NA OPCAO DE DESPACHO DECISORIO
+    navegador.switch_to.frame('ifrVisualizacao')
+    clica_noelemento(navegador, By.PARTIAL_LINK_TEXT,'Despacho Decisório')
+
+    #SELECIONA TEXTO PADRAO
+    clica_noelemento(navegador, By.XPATH,'//*[@id="divOptTextoPadrao"]/div')
+
+    #ENVIA QUAL DESPACHO DECISORIO DEVE SER CRIADO
+    navegador.find_element(By.XPATH,'//*[@id="txtTextoPadrao"]').send_keys('Despacho Decisório - Cancelamento de Homologação')
+
+    #CLICA NA PRIMEIRA OPCAO
+    clica_noelemento(navegador, By.XPATH,'//*[@id="divInfraAjaxtxtTextoPadrao"]/ul/li/a')
+
+    #COLOCA O DESPACHO COMO PUBLICO
+    clica_noelemento(navegador, By.XPATH,'//*[@id="divOptPublico"]/div')
+
+    #SALVA DESPACHO
+    clica_noelemento(navegador, By.ID,'btnSalvar')
+
+    while True:
+        try:
+            confirmacao = str(input('Edite o documento da forma que preferir, salve e feche a janela.\nPara concluir digite [1], caso haja algum problema e queira parar o código, digite [2]: '))
+            if confirmacao == '1':
+                break
+            elif confirmacao == '2':
+                return
+            else:
+                print("Opção inválida, tente novamente!")
+        except ValueError:
+            print("Opção inválida, tente novamente!")
+
+    navegador.switch_to.default_content()
+    navegador.switch_to.frame('ifrArvore')
+    lista_despachos = navegador.find_elements(By.PARTIAL_LINK_TEXT, 'Despacho Decisório')
+    for i in lista_despachos:
+        navegador.switch_to.default_content()
+        navegador.switch_to.frame('ifrArvore')
+        i.click()
+        navegador.switch_to.default_content()
+        navegador.switch_to.frame('ifrConteudoVisualizacao')
+        navegador.switch_to.frame('ifrVisualizacao')
+        time.sleep(1)
+        if check_element_exists(By.XPATH, "//*[contains(text(), 'Revogar o')]", navegador):
+            navegador.switch_to.default_content()
+            navegador.switch_to.frame('ifrConteudoVisualizacao')
+            print('Despacho Decisório de Cancelamento encontrado.\n')
+
+            time.sleep(1)
+            #CLICA NO ICONE DE LEGO
+            clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/bloco_incluir_protocolo.svg?18')]")
+            
+            #SELECIONA BLOCO (SELECIONA O PRIMEIRO DESPACHO PARA DRONES APROVADOS QUE LER)
+            time.sleep(1.5)
+            navegador.switch_to.frame('ifrVisualizacao')
+            select_element = navegador.find_element(By.ID, 'selBloco')
+            select = Select(select_element)
+            #PROCURA O PRIMEIRO BLOCO QUE TENHA O TEXTO "Despachos para Drones aprovados"
+            for opcao in select.options:
+                if "Despachos para Drones aprovados" in opcao.text:
+                    select.select_by_visible_text(opcao.text)
+                    break
+            time.sleep(0.5)
+            #CLICA NO BOTAO DE INCLUIR NO BLOCO
+            clica_noelemento(navegador, By.XPATH,'//*[@id="sbmIncluir"]')
+            #navegador.find_element(By.XPATH, '//*[@id="sbmIncluir"]').click()
+
+    #VOLTA PARA PAGINA INICIAL DO PROCESSO
+    retorna_pagina_inicial(navegador, processo)
+    time.sleep(1)
+    #ADICIONA NOTA PARA AGUARDAR ASSINATURA
+    #CLICA NO ICONE DE ANOTACAO
+    navegador.switch_to.default_content()
+    navegador.switch_to.frame('ifrConteudoVisualizacao')
+    clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/anotacao_cadastro.svg?18')]")
+    #clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[16]')
+    time.sleep(0.1)
+    #INSERE O TEXTO DA ANOTACAO
+    navegador.switch_to.frame('ifrVisualizacao')
+    navegador.find_element(By.ID, 'txaDescricao').send_keys('Pedido de Cancelamento')
+    #SALVA O TEXTO
+    navegador.find_element(By.NAME, 'sbmRegistrarAnotacao').click()
+    #DA COMO APROVADO E ANOTA NO TXT DE PROCESSOS CONFORMES
+    preenche_planilhageral(processo, nomeEstag, situacao="Cancelado")
 
 
 #FUNCAO QUE PERMITE O USUARIO INSERIR CORPO DO EMAIL
@@ -365,7 +461,7 @@ def corrige_planilha(planilha, drones: bool):
     return tabela
 
 #FUNCAO QUE PREENCHE A PLANILHA GERAL
-def preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastreio, nome_interessado):
+def preenche_planilhageral(processo, nomeEstag, retido='', situacao='', codigo_rastreio='', nome_interessado=''):
     #ENCONTRA O ICONE DO EDGE E ABRE O NAVEGADOR DA PLANILHA
     pyautogui.PAUSE = 0.7
     edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
@@ -402,28 +498,39 @@ def preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastrei
                 return
             else:
                 print("Opção inválida")
-    #NAVEGA ENTRE AS CELULAS E INSERE OS DADOS SOBRE O PROCESSO
-    pyautogui.press('right')
-    pyautogui.PAUSE = 0.3
-    pyperclip.copy(nomeEstag)
-    pyautogui.hotkey('ctrl', 'v')
-    pyautogui.press('right')
-    pyperclip.copy(retido)
-    pyautogui.hotkey('ctrl', 'v')
-    pyautogui.press('right')
-    #VERIFICA SE ESTÁ RETIDO, SE NAO ESTIVER NAO ESCREVE CODIGO DE RASTREIO
-    if retido == 'Sim':
-        pyperclip.copy(codigo_rastreio)
+    if situacao == 'Cancelado':
+        pyautogui.PAUSE = 0.3
+        for i in range(6):
+            pyautogui.press('right')
+
+        pyperclip.copy(situacao)
+        pyautogui.hotkey('ctrl', 'v')
+
+    else:
+        #NAVEGA ENTRE AS CELULAS E INSERE OS DADOS SOBRE O PROCESSO
+        pyautogui.press('right')
+        pyautogui.PAUSE = 0.3
+        pyperclip.copy(nomeEstag)
         pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('right')
-    else:
+        pyperclip.copy(retido)
+        pyautogui.hotkey('ctrl', 'v')
         pyautogui.press('right')
-    pyautogui.press('right')
-    pyperclip.copy(nome_interessado)
-    pyautogui.hotkey('ctrl', 'v')
-    pyautogui.press('right')
-    pyperclip.copy(situacao)
-    pyautogui.hotkey('ctrl', 'v')
+
+        #VERIFICA SE ESTÁ RETIDO, SE NAO ESTIVER NAO ESCREVE CODIGO DE RASTREIO
+        if retido == 'Sim':
+            pyperclip.copy(codigo_rastreio)
+            pyautogui.hotkey('ctrl', 'v')
+            pyautogui.press('right')
+        else:
+            pyautogui.press('right')
+        pyautogui.press('right')
+        pyperclip.copy(nome_interessado)
+        pyautogui.hotkey('ctrl', 'v')
+        pyautogui.press('right')
+        pyperclip.copy(situacao)
+        pyautogui.hotkey('ctrl', 'v')
+
     #VOLTA PARA A JANELA DO CHROME
     chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
     pyautogui.click(chrome)
@@ -436,6 +543,74 @@ def clica_noelemento(navegador, modo_procura, element_id, tempo=10):
     )
     # Clica no elemento
     element.click()
+
+def retorna_pagina_inicial(navegador, processo):
+    navegador.switch_to.default_content()
+    navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
+    elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+    elementos.send_keys(Keys.ENTER)
+
+def armazena_nomesolicitante(navegador):
+    navegador.switch_to.default_content()
+    navegador.switch_to.frame('ifrArvore')
+    navegador.find_element(By.PARTIAL_LINK_TEXT, 'Recibo Eletrônico').click()
+    navegador.switch_to.default_content()
+    #ENTRA NOS FRAMES QUE POSSUE O NOME DO SOLICITANTE
+    navegador.switch_to.frame('ifrConteudoVisualizacao')
+    navegador.switch_to.frame('ifrVisualizacao')
+    #ARMAZENA NOME DO SOLICITANTE NA VARIAVEL
+    nomeSol = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[1]/td[2]').text
+    return nomeSol
+
+def abre_email(navegador, processo, processo_errado=False):
+    navegador.switch_to.default_content()
+    navegador.switch_to.frame('ifrArvore')
+    
+    if processo_errado:
+        try:
+            #CLICA NO REQUERIMENTO DE INFORMACOES SOBRE HOMOLOGACAO
+            clica_noelemento(navegador, By.PARTIAL_LINK_TEXT, "Requerimento de", 1)
+            processo_sem_email = False
+        except:
+            processo_sem_email = True
+    else:
+        #CLICA NA DECLARACAO DE CONFORMIDADE
+        clica_noelemento(navegador, By.PARTIAL_LINK_TEXT, "Declaração de Conformidade")
+    time.sleep(1)
+    navegador.switch_to.default_content()
+    navegador.switch_to.frame('ifrConteudoVisualizacao')
+    navegador.switch_to.frame('ifrVisualizacao')
+
+    #ARMAZENA O EMAIL DO SOLICITANTE
+    if processo_errado and processo_sem_email:
+        emailSol = str(input("Não foi possível encontrar um documento que contenha o email do usuário.\n Digite o email do solicitante: "))
+    else:
+        emailSol = navegador.find_element(By.XPATH, '/html/body/div[3]/a[1]').text
+
+    #RETORNA PARA A PAGINA INICIAL DO PROCESSO
+    retorna_pagina_inicial(navegador, processo)
+    time.sleep(1)
+    navegador.switch_to.frame('ifrConteudoVisualizacao')
+    #CLICA NO ICONE DE ENVIO DE EMAIL
+    clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/email_enviar.svg?18')]")
+    #clica_noelemento(navegador, By.XPATH, '//*[@id="divArvoreAcoes"]/a[10]')
+    time.sleep(1)
+    #VAI PARA A JANELA MAIS RECENTE ABERTA
+    navegador.switch_to.window(navegador.window_handles[-1])
+    #time.sleep(1)
+    #ABRE O DROPDOWN COM AS OPCOES DE EMAIL DA ANATEL
+    select_element = WebDriverWait(navegador, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selDe"]')))
+    #select_element = navegador.find_element(By.XPATH, '//*[@id="selDe"]')
+    select = Select(select_element)
+    #SELECIONA O EMAIL DA ANATEL
+    select.select_by_visible_text('ANATEL/E-mail de replicação <nao-responda@anatel.gov.br>')
+    #ESCREVE O EMAIL DO SOLICITANTE
+    navegador.find_element(By.XPATH, '//*[@id="s2id_autogen1"]').send_keys(emailSol)
+    time.sleep(1.2)
+    #CLICA NO EMAIL DO SOLICITANTE
+    clica_noelemento(navegador, By.CLASS_NAME, 'select2-result-label')
+    #MOSTRA AS OPCOES DE EXIGENCIA
+    #EXECUTA A CONDICAO PARA CADA EXIGENCIA
 
 #FUNCAO QUE ESPERA UM ELEMENTO CARREGAR NA TELA E ENVIA TEXTO NELE
 def sendkeys_elemento(navegador, modo_procura, element_id, texto):
@@ -600,21 +775,21 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
         #A PAGINA DOS PROCESSOS SAO DIVIDIDOS EM FRAMES
         navegador.switch_to.frame('ifrArvore')
         #VERIFICA SE O PROCESSO JA FOI DESPACHADO, CASO TENHA SIDO ELE PULA O PROCESSO
-        if check_element_exists(By.PARTIAL_LINK_TEXT, 'Despacho Decisório', navegador):
+        if check_element_exists(By.PARTIAL_LINK_TEXT, 'Despacho Decisório', navegador) and not (check_element_exists(By.XPATH, "//img[contains(@src, 'svg/marcador_verde.svg?18')]", navegador) or check_element_exists(By.XPATH, "//img[contains(@src, 'svg/marcador_preto.svg?18')]", navegador)):
             print(f"O processo {processo} já foi despachado!")
             return
-    
-        elif check_element_exists(By.PARTIAL_LINK_TEXT, 'Despacho Decisório', navegador) and check_element_exists(By.XPATH, "//img[contains(@src, 'svg/marcador_verde.svg?18')]", navegador):
+        
+        elif check_element_exists(By.PARTIAL_LINK_TEXT, 'Despacho Decisório', navegador) and (check_element_exists(By.XPATH, "//img[contains(@src, 'svg/marcador_verde.svg?18')]", navegador) or check_element_exists(By.XPATH, "//img[contains(@src, 'svg/marcador_preto.svg?18')]", navegador)):
             tipo_processo = 'Reaberto'
             print('Este processo foi reaberto!')
             while True:
                 try:
-                    confirmacao = str(input('Caso este seja um pedido de cancelamento, digite [1] para gerar o despacho. Caso contrário digite [2]'))
+                    confirmacao = str(input('Caso este seja um PEDIDO DE CANCELAMENTO, digite [1] para gerar o despacho. Caso contrário digite [2]: '))
                     if confirmacao == '1':
-                        processo_errado()
-                        break
+                        processo_reaberto(navegador, processo, nomeEstag)
+                        return
                     elif confirmacao == '2':
-                        break
+                        return
                     else:
                         print("Opção inválida, tente novamente!")
                 except ValueError:
@@ -638,26 +813,34 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
         else:
             while True:
                 try:
-                    confirmacao = str(input('Caso este seja um processo criado com o tipo errado, digite [1] para enviar exigência, senão, digite [2] para pular o processo: '))
+                    print("Não foi possível encontrar a Declaração de Conformidade.")
+                    confirmacao = str(input('Caso este seja um processo CRIADO COM O TIPO ERRADO, digite [1] para enviar exigência, senão, digite [2] para pular o processo: '))
                     if confirmacao == '1':
-                        processo_errado()
-                        break
+                        abre_email(navegador, processo, processo_errado=True)
+                        envia_email(navegador, janela_principal, processo, nomeEstag, impProp, 5)
+                        retorna_pagina_inicial(navegador, processo)
+                        nomeSol = armazena_nomesolicitante(navegador)
+                        preenche_planilhageral(processo, nomeEstag, 'Não', 'Exigência', '', nomeSol)
+                        return
                     elif confirmacao == '2':
-                        break
+                        return
                     else:
                         print("Opção inválida, tente novamente!")
                 except ValueError:
                     print("Opção inválida, tente novamente!")
-
         #ESCREVER AS INFORMAÇÕES DO PROCESSO NO CONSOLE
         #ACESSA O RECIBO PARA PEGAR NOME DO SOLICITANTE
-        navegador.find_element(By.PARTIAL_LINK_TEXT, 'Recibo Eletrônico').click()
-        navegador.switch_to.default_content()
-        #ENTRA NOS FRAMES QUE POSSUE O NOME DO SOLICITANTE
-        navegador.switch_to.frame('ifrConteudoVisualizacao')
-        navegador.switch_to.frame('ifrVisualizacao')
-        #ARMAZENA NOME DO SOLICITANTE NA VARIAVEL
-        nomeSol = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[1]/td[2]').text
+        # navegador.switch_to.frame('ifrArvore')
+        # navegador.find_element(By.PARTIAL_LINK_TEXT, 'Recibo Eletrônico').click()
+        # navegador.switch_to.default_content()
+        # #ENTRA NOS FRAMES QUE POSSUE O NOME DO SOLICITANTE
+        # navegador.switch_to.frame('ifrConteudoVisualizacao')
+        # navegador.switch_to.frame('ifrVisualizacao')
+        # #ARMAZENA NOME DO SOLICITANTE NA VARIAVEL
+        # nomeSol = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[1]/td[2]').text
+        
+        nomeSol = armazena_nomesolicitante(navegador)
+        
         #RETORNA AO FRAME DEFAULT
         navegador.switch_to.default_content()
         #COLETAR DADOS DA DECLARAÇÃO DE CONFORMIDADE
@@ -1259,43 +1442,44 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     print("Opção inválida, tente novamente!")
             #CONDICAO DE EXIGENCIA
             if exigencia == '1':
-                navegador.switch_to.default_content()
-                navegador.switch_to.frame('ifrArvore')
-                #CLICA NA DECLARACAO DE CONFORMIDADE
-                navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
-                time.sleep(1)
-                navegador.switch_to.default_content()
-                navegador.switch_to.frame('ifrConteudoVisualizacao')
-                navegador.switch_to.frame('ifrVisualizacao')
-                #ARMAZENA O EMAIL DO SOLICITANTE
-                emailSol = navegador.find_element(By.XPATH, '/html/body/div[3]/a[1]').text
-                navegador.switch_to.default_content()
-                #RETORNA PARA A PAGINA INICIAL DO PROCESSO
-                navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
-                elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                elementos.send_keys(Keys.ENTER)
-                time.sleep(1)
-                navegador.switch_to.frame('ifrConteudoVisualizacao')
-                #CLICA NO ICONE DE ENVIO DE EMAIL
-                clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/email_enviar.svg?18')]")
-                #clica_noelemento(navegador, By.XPATH, '//*[@id="divArvoreAcoes"]/a[10]')
-                time.sleep(1)
-                #VAI PARA A JANELA MAIS RECENTE ABERTA
-                navegador.switch_to.window(navegador.window_handles[-1])
-                #time.sleep(1)
-                #ABRE O DROPDOWN COM AS OPCOES DE EMAIL DA ANATEL
-                select_element = WebDriverWait(navegador, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selDe"]')))
-                #select_element = navegador.find_element(By.XPATH, '//*[@id="selDe"]')
-                select = Select(select_element)
-                #SELECIONA O EMAIL DA ANATEL
-                select.select_by_visible_text('ANATEL/E-mail de replicação <nao-responda@anatel.gov.br>')
-                #ESCREVE O EMAIL DO SOLICITANTE
-                navegador.find_element(By.XPATH, '//*[@id="s2id_autogen1"]').send_keys(emailSol)
-                time.sleep(1.2)
-                #CLICA NO EMAIL DO SOLICITANTE
-                clica_noelemento(navegador, By.CLASS_NAME, 'select2-result-label')
-                #MOSTRA AS OPCOES DE EXIGENCIA
-                #EXECUTA A CONDICAO PARA CADA EXIGENCIA
+                abre_email(navegador, processo)
+                # navegador.switch_to.default_content()
+                # navegador.switch_to.frame('ifrArvore')
+                # #CLICA NA DECLARACAO DE CONFORMIDADE
+                # navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
+                # time.sleep(1)
+                # navegador.switch_to.default_content()
+                # navegador.switch_to.frame('ifrConteudoVisualizacao')
+                # navegador.switch_to.frame('ifrVisualizacao')
+                # #ARMAZENA O EMAIL DO SOLICITANTE
+                # emailSol = navegador.find_element(By.XPATH, '/html/body/div[3]/a[1]').text
+                # navegador.switch_to.default_content()
+                # #RETORNA PARA A PAGINA INICIAL DO PROCESSO
+                # navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
+                # elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+                # elementos.send_keys(Keys.ENTER)
+                # time.sleep(1)
+                # navegador.switch_to.frame('ifrConteudoVisualizacao')
+                # #CLICA NO ICONE DE ENVIO DE EMAIL
+                # clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/email_enviar.svg?18')]")
+                # #clica_noelemento(navegador, By.XPATH, '//*[@id="divArvoreAcoes"]/a[10]')
+                # time.sleep(1)
+                # #VAI PARA A JANELA MAIS RECENTE ABERTA
+                # navegador.switch_to.window(navegador.window_handles[-1])
+                # #time.sleep(1)
+                # #ABRE O DROPDOWN COM AS OPCOES DE EMAIL DA ANATEL
+                # select_element = WebDriverWait(navegador, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selDe"]')))
+                # #select_element = navegador.find_element(By.XPATH, '//*[@id="selDe"]')
+                # select = Select(select_element)
+                # #SELECIONA O EMAIL DA ANATEL
+                # select.select_by_visible_text('ANATEL/E-mail de replicação <nao-responda@anatel.gov.br>')
+                # #ESCREVE O EMAIL DO SOLICITANTE
+                # navegador.find_element(By.XPATH, '//*[@id="s2id_autogen1"]').send_keys(emailSol)
+                # time.sleep(1.2)
+                # #CLICA NO EMAIL DO SOLICITANTE
+                # clica_noelemento(navegador, By.CLASS_NAME, 'select2-result-label')
+                # #MOSTRA AS OPCOES DE EXIGENCIA
+                # #EXECUTA A CONDICAO PARA CADA EXIGENCIA
                 while True:
                     try:
                         print("Selecione o tipo de exigência abaixo:\n",
@@ -1310,284 +1494,293 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                         continue
                     if exig in range(1, 5):
                         if exig == 1:
-                            #PUXA FUNCAO INSIRA_ANEXO CONTENDO O CORPO DE EMAIL PEDINDO ANEXOS
-                            insira_anexo(processo, navegador)
-                            #PEDE PARA USUARIO CONFERIR SE ESTÁ TUDO CERTO COM O EMAIL
-                            while True:
-                                try:
-                                    confere = int(input('Caso esteja tudo certo digite [1], caso tenha algum erro digite [2]: '))
-                                    if confere == 1:
-                                        break
-                                    elif confere == 2:
-                                        break
-                                    else:
-                                        print("Opção inválida, tente novamente!")
-                                except ValueError:
-                                    print("Opção inválida, tente novamente!")
-                            if confere == 1:
-                                #ENVIA EMAIL COM A EXIGENCIA
-                                navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
-                                time.sleep(0.5)
-                                #FECHA ALERTA DO NAVEGADOR
-                                alert = Alert(navegador)
-                                alert.accept()
-                                time.sleep(0.5)
-                                #VOLTA O FOCO DO SELENIUM PARA A PAGINA PRINCIPAL NOVAMENTE
-                                navegador.switch_to.window(janela_principal)
-                                navegador.switch_to.default_content()
-                                #VOLTA PARA A PAGINA INICIAL DO PROCESSO
-                                navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
-                                elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                                elementos.send_keys(Keys.ENTER)    
-                                time.sleep(1)
-                                #INSERE TAG REFERENTE A PROCESSOS INTERCORRENTES
-                                navegador.switch_to.frame('ifrConteudoVisualizacao')
-                                #CLICA NO ICONE DE TAG
-                                time.sleep(0.5)
-                                navegador.find_element(By.XPATH, "//img[contains(@src, 'svg/marcador_gerenciar.svg?18')]").click()
-                                navegador.switch_to.frame('ifrVisualizacao')
-                                try:    
-                                    time.sleep(1)
-                                    navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-                                except:
-                                    time.sleep(0.3)
-                                    clica_noelemento(navegador, By.XPATH,'//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img')
-                                    #navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
-                                    alert.accept()
-                                    time.sleep(0.3)
-                                    clica_noelemento(navegador, By.XPATH,'//*[@id="btnAdicionar"]')
-                                    #navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
-                                    #time.sleep(0.5)
-                                    clica_noelemento(navegador, By.XPATH,'//*[@id="selMarcador"]/div/a')
-                                    #navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                            #DEFINE SITUACAO DO PROCESSO
+                            situacao = 'Intercorrente'
+                            envia_email(navegador, janela_principal, processo, nomeEstag, impProp, exig)
+                            # #PUXA FUNCAO INSIRA_ANEXO CONTENDO O CORPO DE EMAIL PEDINDO ANEXOS
+                            # insira_anexo(processo, navegador)
+                            # #PEDE PARA USUARIO CONFERIR SE ESTÁ TUDO CERTO COM O EMAIL
+                            # while True:
+                            #     try:
+                            #         confere = int(input('Caso esteja tudo certo digite [1], caso tenha algum erro digite [2]: '))
+                            #         if confere == 1:
+                            #             break
+                            #         elif confere == 2:
+                            #             break
+                            #         else:
+                            #             print("Opção inválida, tente novamente!")
+                            #     except ValueError:
+                            #         print("Opção inválida, tente novamente!")
+                            # if confere == 1:
+                            #     #ENVIA EMAIL COM A EXIGENCIA
+                            #     navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
+                            #     time.sleep(0.5)
+                            #     #FECHA ALERTA DO NAVEGADOR
+                            #     alert = Alert(navegador)
+                            #     alert.accept()
+                            #     time.sleep(0.5)
+                            #     #VOLTA O FOCO DO SELENIUM PARA A PAGINA PRINCIPAL NOVAMENTE
+                            #     navegador.switch_to.window(janela_principal)
+                            #     navegador.switch_to.default_content()
+                            #     #VOLTA PARA A PAGINA INICIAL DO PROCESSO
+                            #     navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
+                            #     elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+                            #     elementos.send_keys(Keys.ENTER)    
+                            #     time.sleep(1)
+                            #     #INSERE TAG REFERENTE A PROCESSOS INTERCORRENTES
+                            #     navegador.switch_to.frame('ifrConteudoVisualizacao')
+                            #     #CLICA NO ICONE DE TAG
+                            #     time.sleep(0.5)
+                            #     navegador.find_element(By.XPATH, "//img[contains(@src, 'svg/marcador_gerenciar.svg?18')]").click()
+                            #     navegador.switch_to.frame('ifrVisualizacao')
+                            #     try:    
+                            #         time.sleep(1)
+                            #         navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                            #     except:
+                            #         time.sleep(0.3)
+                            #         clica_noelemento(navegador, By.XPATH,'//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img')
+                            #         #navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
+                            #         alert.accept()
+                            #         time.sleep(0.3)
+                            #         clica_noelemento(navegador, By.XPATH,'//*[@id="btnAdicionar"]')
+                            #         #navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
+                            #         #time.sleep(0.5)
+                            #         clica_noelemento(navegador, By.XPATH,'//*[@id="selMarcador"]/div/a')
+                            #         #navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
                                 
-                                time.sleep(0.5)
-                                #CLICA NA TAG DE INTERCORRENTE
-                                navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[18]/a').click()
-                                #PEDE O TEXTO DA TAG
-                                textoTag = input("Insira o texto da tag: ")
-                                textoFinaltag = nomeEstag+"\n"+textoTag
-                                #COLOCA O TEXTO NA TAG
-                                navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoFinaltag)
-                                #SALVA TAG
-                                navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
-                                #DEFINE SITUACAO DO PROCESSO
-                                situacao = 'Intercorrente'
-                            else:
-                                #CANCELA ENVIO DO EMAIL SE HOUVER ALGUM ERRO
-                                print("Faça as alterações necessárias mais tarde.")
-                                navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
-                                navegador.switch_to.window(janela_principal)
-                                return
+                            #     time.sleep(0.5)
+                            #     #CLICA NA TAG DE INTERCORRENTE
+                            #     navegador.find_element(By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Intercorrente').click()
+                            #     #PEDE O TEXTO DA TAG
+                            #     textoTag = input("Insira o texto da tag: ")
+                            #     textoFinaltag = nomeEstag+"\n"+textoTag
+                            #     #COLOCA O TEXTO NA TAG
+                            #     navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoFinaltag)
+                            #     #SALVA TAG
+                            #     navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
+                            #     #DEFINE SITUACAO DO PROCESSO
+                            #     situacao = 'Intercorrente'
+                            # else:
+                            #     #CANCELA ENVIO DO EMAIL SE HOUVER ALGUM ERRO
+                            #     print("Faça as alterações necessárias mais tarde.")
+                            #     navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
+                            #     navegador.switch_to.window(janela_principal)
+                            #     return
                         elif exig == 2:
-                            #PUXA FUNCAO ERRO_DECLARACAO CONTENDO O CORPO DE EMAIL PEDINDO PARA ABRIR NOVO PROCESSO SEI
-                            erro_declaracao(processo, impProp, navegador, jaHomologado=False)
-                            #PEDE PARA USUARIO CONFERIR O EMAIL
-                            while True:
-                                try:
-                                    confere = int(input('Caso esteja tudo certo digite [1], caso tenha algum erro digite [2]: '))
-                                    if confere == 1:
-                                        break
-                                    elif confere == 2:
-                                        break
-                                    else:
-                                        print("Opção inválida, tente novamente!")
-                                except ValueError:
-                                    print("Opção inválida, tente novamente!")
-                            if confere == 1:
-                                #ENVIA O EMAIL COM EXIGENCIA
-                                navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
-                                time.sleep(0.5)
-                                #FECHA ALERTA DO NAVEGADOR
-                                alert = Alert(navegador)
-                                alert.accept()
-                                time.sleep(0.5)
-                                #RETORNA O FOCO PARA A JANELA PRINCIPAL
-                                navegador.switch_to.window(janela_principal)
-                                navegador.switch_to.default_content()
-                                #VOLTA PARA PAGINA INICIAL DO PROCESSO
-                                navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
-                                elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                                elementos.send_keys(Keys.ENTER)    
-                                time.sleep(1)
-                                #INSERE TAG REFERENTE A PROCESSOS INTERCORRENTES 
-                                navegador.switch_to.frame('ifrConteudoVisualizacao')
-                                #CLICA NO ICONE DE TAG
-                                time.sleep(0.5)
-                                navegador.find_element(By.XPATH, "//img[contains(@src, 'svg/marcador_gerenciar.svg?18')]").click()
-                                navegador.switch_to.frame('ifrVisualizacao')
-                                try:    
-                                    time.sleep(1)
-                                    navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-                                except:
-                                    time.sleep(0.3)
-                                    clica_noelemento(navegador, By.XPATH,'//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img')
-                                    #navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
-                                    alert.accept()
-                                    time.sleep(0.3)
-                                    clica_noelemento(navegador, By.XPATH,'//*[@id="btnAdicionar"]')
-                                    #navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
-                                    #time.sleep(0.5)
-                                    clica_noelemento(navegador, By.XPATH,'//*[@id="selMarcador"]/div/a')
-                                    #navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                            situacao = 'Exigência'
+                            envia_email(navegador, janela_principal, processo, nomeEstag, impProp, exig)
+                            # #PUXA FUNCAO ERRO_DECLARACAO CONTENDO O CORPO DE EMAIL PEDINDO PARA ABRIR NOVO PROCESSO SEI
+                            # erro_declaracao(processo, impProp, navegador, jaHomologado=False)
+                            # #PEDE PARA USUARIO CONFERIR O EMAIL
+                            # while True:
+                            #     try:
+                            #         confere = int(input('Caso esteja tudo certo digite [1], caso tenha algum erro digite [2]: '))
+                            #         if confere == 1:
+                            #             break
+                            #         elif confere == 2:
+                            #             break
+                            #         else:
+                            #             print("Opção inválida, tente novamente!")
+                            #     except ValueError:
+                            #         print("Opção inválida, tente novamente!")
+                            # if confere == 1:
+                            #     #ENVIA O EMAIL COM EXIGENCIA
+                            #     navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
+                            #     time.sleep(0.5)
+                            #     #FECHA ALERTA DO NAVEGADOR
+                            #     alert = Alert(navegador)
+                            #     alert.accept()
+                            #     time.sleep(0.5)
+                            #     #RETORNA O FOCO PARA A JANELA PRINCIPAL
+                            #     navegador.switch_to.window(janela_principal)
+                            #     navegador.switch_to.default_content()
+                            #     #VOLTA PARA PAGINA INICIAL DO PROCESSO
+                            #     navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
+                            #     elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+                            #     elementos.send_keys(Keys.ENTER)    
+                            #     time.sleep(1)
+                            #     #INSERE TAG REFERENTE A PROCESSOS INTERCORRENTES 
+                            #     navegador.switch_to.frame('ifrConteudoVisualizacao')
+                            #     #CLICA NO ICONE DE TAG
+                            #     time.sleep(0.5)
+                            #     navegador.find_element(By.XPATH, "//img[contains(@src, 'svg/marcador_gerenciar.svg?18')]").click()
+                            #     navegador.switch_to.frame('ifrVisualizacao')
+                            #     try:    
+                            #         time.sleep(1)
+                            #         navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                            #     except:
+                            #         time.sleep(0.3)
+                            #         clica_noelemento(navegador, By.XPATH,'//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img')
+                            #         #navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
+                            #         alert.accept()
+                            #         time.sleep(0.3)
+                            #         clica_noelemento(navegador, By.XPATH,'//*[@id="btnAdicionar"]')
+                            #         #navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
+                            #         #time.sleep(0.5)
+                            #         clica_noelemento(navegador, By.XPATH,'//*[@id="selMarcador"]/div/a')
+                            #         #navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
                                 
-                                #CLICA NO DROPDOWN COM OS TIPOS DE TAG
-                                time.sleep(0.5)
-                                #CLICA NA TAG DE PENDENCIA
-                                navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[19]/a').click()
-                                #PEDE O TEXTO DA TAG
-                                textoTag = input("Insira o texto da tag: ")
-                                textoFinaltag = nomeEstag+"\n"+textoTag
-                                navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoFinaltag)
-                                #SALVA A TAG
-                                navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
-                                #DEFINE SITUACAO DO PROCESSO
-                                situacao = 'Exigência'
-                            else:
-                                #CANCELA O ENVIO CASO TENHA ALGUM ERRO
-                                print("Faça as alterações necessárias mais tarde.")
-                                navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
-                                navegador.switch_to.window(janela_principal)
-                                return
+                            #     #CLICA NO DROPDOWN COM OS TIPOS DE TAG
+                            #     time.sleep(0.5)
+                            #     #CLICA NA TAG DE PENDENCIA
+                            #     navegador.find_element(By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Pendência').click()
+                            #     #PEDE O TEXTO DA TAG
+                            #     textoTag = input("Insira o texto da tag: ")
+                            #     textoFinaltag = nomeEstag+"\n"+textoTag
+                            #     navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoFinaltag)
+                            #     #SALVA A TAG
+                            #     navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
+                            #     #DEFINE SITUACAO DO PROCESSO
+                            #     situacao = 'Exigência'
+                            # else:
+                            #     #CANCELA O ENVIO CASO TENHA ALGUM ERRO
+                            #     print("Faça as alterações necessárias mais tarde.")
+                            #     navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
+                            #     navegador.switch_to.window(janela_principal)
+                            #     return
                         elif exig == 3:
-                            #PUXA FUNCAO ERRO_DECLARACAO CONTENDO O CORPO DE EMAIL PEDINDO PARA ABRIR NOVO PROCESSO SEI
-                            erro_declaracao(processo, impProp, navegador, jaHomologado=True)
-                            #PEDE PARA USUARIO CONFERIR O EMAIL
-                            while True:
-                                try:
-                                    confere = int(input('Caso esteja tudo certo digite [1], caso tenha algum erro digite [2]: '))
-                                    if confere == 1:
-                                        break
-                                    elif confere == 2:
-                                        break
-                                    else:
-                                        print("Opção inválida, tente novamente!")
-                                except ValueError:
-                                    print("Opção inválida, tente novamente!")
-                            if confere == 1:
-                                #ENVIA O EMAIL COM EXIGENCIA
-                                navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
-                                time.sleep(0.5)
-                                #FECHA ALERTA DO NAVEGADOR
-                                alert = Alert(navegador)
-                                alert.accept()
-                                time.sleep(0.5)
-                                #RETORNA O FOCO PARA A JANELA PRINCIPAL
-                                navegador.switch_to.window(janela_principal)
-                                navegador.switch_to.default_content()
-                                #VOLTA PARA PAGINA INICIAL DO PROCESSO
-                                navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
-                                elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                                elementos.send_keys(Keys.ENTER)    
-                                time.sleep(1)
-                                #INSERE TAG REFERENTE A PROCESSOS INTERCORRENTES 
-                                navegador.switch_to.frame('ifrConteudoVisualizacao')
-                                #CLICA NO ICONE DE TAG
-                                time.sleep(0.5)
-                                navegador.find_element(By.XPATH, "//img[contains(@src, 'svg/marcador_gerenciar.svg?18')]").click()
-                                navegador.switch_to.frame('ifrVisualizacao')
-                                try:    
-                                    time.sleep(1)
-                                    navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-                                except:
-                                    time.sleep(0.3)
-                                    clica_noelemento(navegador, By.XPATH,'//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img')
-                                    #navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
-                                    alert.accept()
-                                    time.sleep(0.3)
-                                    clica_noelemento(navegador, By.XPATH,'//*[@id="btnAdicionar"]')
-                                    #navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
-                                    #time.sleep(0.5)
-                                    clica_noelemento(navegador, By.XPATH,'//*[@id="selMarcador"]/div/a')
-                                    #navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                            situacao = 'Exigência'
+                            envia_email(navegador, janela_principal, processo, nomeEstag, impProp, exig)
+                            # #PUXA FUNCAO ERRO_DECLARACAO CONTENDO O CORPO DE EMAIL PEDINDO PARA ABRIR NOVO PROCESSO SEI
+                            # erro_declaracao(processo, impProp, navegador, jaHomologado=True)
+                            # #PEDE PARA USUARIO CONFERIR O EMAIL
+                            # while True:
+                            #     try:
+                            #         confere = int(input('Caso esteja tudo certo digite [1], caso tenha algum erro digite [2]: '))
+                            #         if confere == 1:
+                            #             break
+                            #         elif confere == 2:
+                            #             break
+                            #         else:
+                            #             print("Opção inválida, tente novamente!")
+                            #     except ValueError:
+                            #         print("Opção inválida, tente novamente!")
+                            # if confere == 1:
+                            #     #ENVIA O EMAIL COM EXIGENCIA
+                            #     navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
+                            #     time.sleep(0.5)
+                            #     #FECHA ALERTA DO NAVEGADOR
+                            #     alert = Alert(navegador)
+                            #     alert.accept()
+                            #     time.sleep(0.5)
+                            #     #RETORNA O FOCO PARA A JANELA PRINCIPAL
+                            #     navegador.switch_to.window(janela_principal)
+                            #     navegador.switch_to.default_content()
+                            #     #VOLTA PARA PAGINA INICIAL DO PROCESSO
+                            #     navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
+                            #     elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+                            #     elementos.send_keys(Keys.ENTER)    
+                            #     time.sleep(1)
+                            #     #INSERE TAG REFERENTE A PROCESSOS INTERCORRENTES 
+                            #     navegador.switch_to.frame('ifrConteudoVisualizacao')
+                            #     #CLICA NO ICONE DE TAG
+                            #     time.sleep(0.5)
+                            #     navegador.find_element(By.XPATH, "//img[contains(@src, 'svg/marcador_gerenciar.svg?18')]").click()
+                            #     navegador.switch_to.frame('ifrVisualizacao')
+                            #     try:    
+                            #         time.sleep(1)
+                            #         navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                            #     except:
+                            #         time.sleep(0.3)
+                            #         clica_noelemento(navegador, By.XPATH,'//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img')
+                            #         #navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
+                            #         alert.accept()
+                            #         time.sleep(0.3)
+                            #         clica_noelemento(navegador, By.XPATH,'//*[@id="btnAdicionar"]')
+                            #         #navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
+                            #         #time.sleep(0.5)
+                            #         clica_noelemento(navegador, By.XPATH,'//*[@id="selMarcador"]/div/a')
+                            #         #navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
                                 
-                                #CLICA NO DROPDOWN COM OS TIPOS DE TAG
-                                time.sleep(0.5)
-                                #CLICA NA TAG DE PENDENCIA
-                                navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[19]/a').click()
-                                #PEDE O TEXTO DA TAG
-                                textoTag = input("Insira o texto da tag: ")
-                                textoFinaltag = nomeEstag+"\n"+textoTag
-                                navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoFinaltag)
-                                #SALVA A TAG
-                                navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
-                                #DEFINE SITUACAO DO PROCESSO
-                                situacao = 'Exigência'
-                            else:
-                                #CANCELA O ENVIO CASO TENHA ALGUM ERRO
-                                print("Faça as alterações necessárias mais tarde.")
-                                navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
-                                navegador.switch_to.window(janela_principal)
-                                return    
+                            #     #CLICA NO DROPDOWN COM OS TIPOS DE TAG
+                            #     time.sleep(0.5)
+                            #     #CLICA NA TAG DE PENDENCIA
+                            #     navegador.find_element(By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Pendência').click()
+                            #     #PEDE O TEXTO DA TAG
+                            #     textoTag = input("Insira o texto da tag: ")
+                            #     textoFinaltag = nomeEstag+"\n"+textoTag
+                            #     navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoFinaltag)
+                            #     #SALVA A TAG
+                            #     navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
+                            #     #DEFINE SITUACAO DO PROCESSO
+                            #     situacao = 'Exigência'
+                            # else:
+                            #     #CANCELA O ENVIO CASO TENHA ALGUM ERRO
+                            #     print("Faça as alterações necessárias mais tarde.")
+                            #     navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
+                            #     navegador.switch_to.window(janela_principal)
+                            #     return    
                         
                         elif exig == 4:
-                            #PUXA FUNCAO OUTRO_ERRO EM QUE USUARIO INSERE O EMAIL COMO QUISER
-                            outro_erro(navegador)
-                            #PEDE PARA USUARIO ESCREVER EMAIL E DIGITAR 1 PARA CONTINUAR
-                            while True:
-                                try:
-                                    confere = int(input('Escreva o email da forma que deseja e logo em seguida digite [1], caso queira cancelar digite [2]: '))
-                                    if confere == 1:
-                                        break
-                                    elif confere == 2:
-                                        break
-                                    else:
-                                        print("Opção inválida, tente novamente!")
-                                except ValueError:
-                                    print("Opção inválida, tente novamente!")
-                            if confere == 1:
-                                #ENVIA EMAIL
-                                navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
-                                time.sleep(0.5)
-                                #FECHA ALERTA DO NAVEGADOR
-                                alert = Alert(navegador)
-                                alert.accept()
-                                time.sleep(0.5)
-                                #RETORNA O FOCO PARA A JANELA PRINCIPAL
-                                navegador.switch_to.window(janela_principal)
-                                navegador.switch_to.default_content()
-                                #VAI PARA A JANELA INICIAL DO PROCESSO
-                                navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
-                                elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                                elementos.send_keys(Keys.ENTER)    
-                                time.sleep(1)
-                                navegador.switch_to.frame('ifrConteudoVisualizacao')
-                                #CLICA NO ICONE DE TAG
-                                time.sleep(0.5)
-                                navegador.find_element(By.XPATH, "//img[contains(@src, 'svg/marcador_gerenciar.svg?18')]").click()
-                                navegador.switch_to.frame('ifrVisualizacao')
-                                try:    
-                                    time.sleep(1)
-                                    navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-                                except:
-                                    time.sleep(0.3)
-                                    clica_noelemento(navegador, By.XPATH,'//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img')
-                                    #navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
-                                    alert.accept()
-                                    time.sleep(0.3)
-                                    clica_noelemento(navegador, By.XPATH,'//*[@id="btnAdicionar"]')
-                                    #navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
-                                    #time.sleep(0.5)
-                                    clica_noelemento(navegador, By.XPATH,'//*[@id="selMarcador"]/div/a')
-                                    #navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                            situacao = 'Exigência'
+                            envia_email(navegador, janela_principal, processo, nomeEstag, impProp, exig)
+                            # #PUXA FUNCAO OUTRO_ERRO EM QUE USUARIO INSERE O EMAIL COMO QUISER
+                            # outro_erro(navegador)
+                            # #PEDE PARA USUARIO ESCREVER EMAIL E DIGITAR 1 PARA CONTINUAR
+                            # while True:
+                            #     try:
+                            #         confere = int(input('Escreva o email da forma que deseja e logo em seguida digite [1], caso queira cancelar digite [2]: '))
+                            #         if confere == 1:
+                            #             break
+                            #         elif confere == 2:
+                            #             break
+                            #         else:
+                            #             print("Opção inválida, tente novamente!")
+                            #     except ValueError:
+                            #         print("Opção inválida, tente novamente!")
+                            # if confere == 1:
+                            #     #ENVIA EMAIL
+                            #     navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
+                            #     time.sleep(0.5)
+                            #     #FECHA ALERTA DO NAVEGADOR
+                            #     alert = Alert(navegador)
+                            #     alert.accept()
+                            #     time.sleep(0.5)
+                            #     #RETORNA O FOCO PARA A JANELA PRINCIPAL
+                            #     navegador.switch_to.window(janela_principal)
+                            #     navegador.switch_to.default_content()
+                            #     #VAI PARA A JANELA INICIAL DO PROCESSO
+                            #     navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
+                            #     elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+                            #     elementos.send_keys(Keys.ENTER)    
+                            #     time.sleep(1)
+                            #     navegador.switch_to.frame('ifrConteudoVisualizacao')
+                            #     #CLICA NO ICONE DE TAG
+                            #     time.sleep(0.5)
+                            #     navegador.find_element(By.XPATH, "//img[contains(@src, 'svg/marcador_gerenciar.svg?18')]").click()
+                            #     navegador.switch_to.frame('ifrVisualizacao')
+                            #     try:    
+                            #         time.sleep(1)
+                            #         navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+                            #     except:
+                            #         time.sleep(0.3)
+                            #         clica_noelemento(navegador, By.XPATH,'//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img')
+                            #         #navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
+                            #         alert.accept()
+                            #         time.sleep(0.3)
+                            #         clica_noelemento(navegador, By.XPATH,'//*[@id="btnAdicionar"]')
+                            #         #navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
+                            #         #time.sleep(0.5)
+                            #         clica_noelemento(navegador, By.XPATH,'//*[@id="selMarcador"]/div/a')
+                            #         #navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
                                 
-                                time.sleep(0.5)
-                                #INSERE TAG DE 'PENDENCIAS'
-                                navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[19]/a').click()
-                                #PEDE TEXTO DA TAG
-                                textoTag = input("Insira o texto da tag: ")
-                                #INSERE O TEXTO DA TAG
-                                navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoTag)
-                                #SALVA TAG
-                                navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
-                                #DEFINE SITUACAO DO PROCESSO
-                                situacao = 'Exigência'
-                            else:
-                                #CANCELA ENVIO DO PROCESSO
-                                print("Faça as alterações necessárias mais tarde.")
-                                navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
-                                navegador.switch_to.window(janela_principal)
-                                return
+                            #     time.sleep(0.5)
+                            #     #INSERE TAG DE 'PENDENCIAS'
+                            #     navegador.find_element(By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Pendência').click()
+                            #     #PEDE TEXTO DA TAG
+                            #     textoTag = input("Insira o texto da tag: ")
+                            #     #INSERE O TEXTO DA TAG
+                            #     navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoTag)
+                            #     #SALVA TAG
+                            #     navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
+                            #     #DEFINE SITUACAO DO PROCESSO
+                            #     situacao = 'Exigência'
+                            # else:
+                            #     #CANCELA ENVIO DO PROCESSO
+                            #     print("Faça as alterações necessárias mais tarde.")
+                            #     navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
+                            #     navegador.switch_to.window(janela_principal)
+                            #     return
                         #VOLTA PARA A PAGINA INICIAL DO PROCESSO
                         navegador.switch_to.default_content()
                         navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
@@ -1628,6 +1821,92 @@ def endereco_email(endereco, navegador):
     clica_noelemento(navegador, By.XPATH, '//*[@id="select2-drop"]/ul')
     time.sleep(0.2)
 
+def envia_email(navegador, janela_principal, processo, nomeEstag, impProp, tipoExig):
+    if tipoExig == 1:
+        #PUXA FUNCAO INSIRA_ANEXO CONTENDO O CORPO DE EMAIL PEDINDO ANEXOS
+        insira_anexo(processo, navegador)
+    elif tipoExig == 2:
+        #PUXA FUNCAO ERRO_DECLARACAO CONTENDO O CORPO DE EMAIL PEDINDO PARA ABRIR NOVO PROCESSO SEI
+        erro_declaracao(processo, impProp, navegador, jaHomologado=False)
+    elif tipoExig == 3:
+        #PUXA FUNCAO ERRO_DECLARACAO CONTENDO O CORPO DE EMAIL PEDINDO PARA ABRIR NOVO PROCESSO SEI
+        erro_declaracao(processo, impProp, navegador, jaHomologado=True)
+    elif tipoExig == 4:
+        #PUXA FUNCAO OUTRO_ERRO EM QUE USUARIO INSERE O EMAIL COMO QUISER
+        outro_erro(navegador)
+    else:
+        processo_errado(processo, navegador)
+
+    #PEDE PARA USUARIO CONFERIR SE ESTÁ TUDO CERTO COM O EMAIL
+    while True:
+        try:
+            confere = int(input('Caso esteja tudo certo digite [1], caso tenha algum erro digite [2]: '))
+            if confere == 1:
+                break
+            elif confere == 2:
+                break
+            else:
+                print("Opção inválida, tente novamente!")
+        except ValueError:
+            print("Opção inválida, tente novamente!")
+    if confere == 1:
+        #ENVIA EMAIL COM A EXIGENCIA
+        navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
+        time.sleep(0.5)
+        #FECHA ALERTA DO NAVEGADOR
+        alert = Alert(navegador)
+        alert.accept()
+        time.sleep(0.5)
+        #VOLTA O FOCO DO SELENIUM PARA A PAGINA PRINCIPAL NOVAMENTE
+        navegador.switch_to.window(janela_principal)
+        navegador.switch_to.default_content()
+        #VOLTA PARA A PAGINA INICIAL DO PROCESSO
+        navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
+        elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+        elementos.send_keys(Keys.ENTER)
+        time.sleep(1)
+        navegador.switch_to.frame('ifrConteudoVisualizacao')
+        #CLICA NO ICONE DE TAG
+        time.sleep(0.5)
+        navegador.find_element(By.XPATH, "//img[contains(@src, 'svg/marcador_gerenciar.svg?18')]").click()
+        navegador.switch_to.frame('ifrVisualizacao')
+        try:    
+            time.sleep(1)
+            navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+        except:
+            time.sleep(0.3)
+            clica_noelemento(navegador, By.XPATH,'//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img')
+            #navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
+            alert.accept()
+            time.sleep(0.3)
+            clica_noelemento(navegador, By.XPATH,'//*[@id="btnAdicionar"]')
+            #navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
+            #time.sleep(0.5)
+            clica_noelemento(navegador, By.XPATH,'//*[@id="selMarcador"]/div/a')
+            #navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+        
+        time.sleep(0.5)
+        if tipoExig == 1:
+            #CLICA NA TAG DE INTERCORRENTE
+            navegador.find_element(By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Intercorrente').click()
+        else:
+            #CLICA NA TAG DE PENDENCIA
+            navegador.find_element(By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Pendência').click()
+
+        #PEDE O TEXTO DA TAG
+        textoTag = input("Insira o texto da tag: ")
+        textoFinaltag = nomeEstag+"\n"+textoTag
+        #COLOCA O TEXTO NA TAG
+        navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoFinaltag)
+        #SALVA TAG
+        navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
+
+    else:
+        #CANCELA ENVIO DO EMAIL SE HOUVER ALGUM ERRO
+        print("Faça as alterações necessárias mais tarde.")
+        navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
+        navegador.switch_to.window(janela_principal)
+        return
 
 #FUNCAO PARA CONCLUIR PROCESSO
 def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
