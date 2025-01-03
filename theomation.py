@@ -43,27 +43,12 @@ def main():
                     navegador.find_element(By.XPATH,'//*[@id="txtUsuario"]').clear()
                     print('Usuário ou senha incorretos. Digite novamente')
         
-        #PEGA O CORPO DA TABELA NO NAVEGADOR
-        tbody = navegador.find_element(By.XPATH, '//*[@id="tblProcessosRecebidos"]/tbody')
-        #PEGA TODAS AS LINHAS (TR) DO CORPO DA TABELA, EXCETO A PRIMEIRA
-        trs = tbody.find_elements(By.TAG_NAME, 'tr')[1:]
-
-        lista_processos = []
-        lista_procConformes = []
-
-        for tr in trs:
-            processo_texto, possui_anotacao, aguardando_assinatura = fc.processa_tr(tr)
-            if aguardando_assinatura:
-                lista_procConformes.append(processo_texto)  
-            elif not possui_anotacao:
-                lista_processos.append(processo_texto) 
-
-        #INVERTE A ORDEM DOS PROCESSOS NAS LISTAS
-        lista_processos.reverse()
+        lista_procConformes, lista_procCancelamento, lista_processos = fc.fazListasProcessos(navegador)
 
         #IMPRIME A QUANTIDADE DE PROCESSOS QUE SERÃO ANALISADOS E CONCLUÍDOS
-        print("Quantidade de processos para analisar",len(lista_processos))
+        print("Quantidade de processos para analisar", len(lista_processos))
         print("Quantidade de processos para concluir", len(lista_procConformes))
+        print("Quantidade de pedidos de cancelamento a concluir", len(lista_procCancelamento))
 
         #ABRE DICIONARIO
         with open('usuarios/usuarios.json', 'r') as arquivo:
@@ -97,13 +82,15 @@ def main():
 
         while True:
             #MOSTRA OPÇÕES DE EXECUCAO PARA O USUARIO
-            print("O que deseja fazer?\n",
-                  "Digite [1] para analisar processo e criar despacho.\n",
-                  "Digite [2] para concluir processos assinados.\n",
-                  "Digite [3] para atribuir processos para si.\n",
-                  "Digite [4] para analisar um processo específico.\n",
-                  "Digite [5] para reiniciar o programa\n",
-                  "Digite [6] para encerrar o programa\n",
+            print("O que deseja fazer?",
+                  "Digite [1] para analisar processo e criar despacho.",
+                  "Digite [2] para concluir processos assinados.",
+                  "Digite [3] para atribuir processos para si.",
+                  "Digite [4] para analisar um processo específico.",
+                  "Digite [5] para refazer a lista de processos a analisar e a concluir.",
+                  "Digite [6] para reiniciar o programa",
+                  "Digite [7] para encerrar o programa",
+                  sep='\n'
                   )
             opcoes = str(input("Opção: "))
             if opcoes == '1':
@@ -112,7 +99,7 @@ def main():
                 print("Análise finalizada.")
             elif opcoes == '2':
                 #EXECUTA FUNCAO PARA CONCLUIR PROCESSO
-                fc.concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral)
+                fc.concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nomeEstag, planilhaGeral)
                 print("Todos os processos foram concluídos.")
             elif opcoes == '3':
                 try:
@@ -124,10 +111,25 @@ def main():
                 #EXECUTA FUNCAO PARA ANALISAR  UM ÚNICO PROCESSO
                 fc.analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones, planilhaRadios)
             elif opcoes == '5':
+                # Clica no icone que mostra a lista de processos 
+                navegador.switch_to.default_content()
+                fc.clica_noelemento(navegador, By.XPATH, '//*[@id="lnkControleProcessos"]')
+
+                # Clica no filtro de processsos atribuidos ao usuario
+                try:
+                    fc.clica_noelemento(navegador, By.XPATH,'//*[@id="divFiltro"]/div[2]/a', 2)
+                except:
+                    pass
+                lista_procConformes, lista_procCancelamento, lista_processos = fc.fazListasProcessos(navegador)
+                print("Lista de processos a analisar e a concluir refeita:")
+                print("Quantidade de processos para analisar", len(lista_processos))
+                print("Quantidade de processos para concluir", len(lista_procConformes))
+                print("Quantidade de pedidos de cancelamento a concluir", len(lista_procCancelamento))
+            elif opcoes == '6':
                 print("Reiniciando programa")
                 reset = True
                 break
-            elif opcoes == '6':
+            elif opcoes == '7':
                 #ENCERRA O PROGRAMA
                 print("Encerrando programa")
                 reset = False

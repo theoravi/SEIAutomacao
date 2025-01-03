@@ -66,6 +66,7 @@ def processa_tr(tr):
     processo_texto = ""
     possui_anotacao = False
     aguardando_assinatura = False
+    pedido_cancelamento = False
     #ITERA SOBRE CADA COLUNA (TD) DA LINHA ATUAL (TR)
     for td in tds:
         #PEGA O TEXTO DA COLUNA ATUAL (TD)
@@ -86,8 +87,10 @@ def processa_tr(tr):
             if tr.find_elements(By.XPATH, ".//*[contains(translate(@onmouseover, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'aguardando assinatura')]"):
                 #SE CONTÉM, MARCA A VARIÁVEL 'AGUARDANDO_ASSINATURA' COMO VERDADEIRA
                 aguardando_assinatura = True
+            if tr.find_elements(By.XPATH, ".//*[contains(translate(@onmouseover, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'pedido de cancelamento')]"):
+                pedido_cancelamento = True
     #RETORNA AS INFORMAÇÕES DO PROCESSO COMO UMA TUPLA
-    return (processo_texto.strip(), possui_anotacao, aguardando_assinatura)
+    return (processo_texto.strip(), possui_anotacao, aguardando_assinatura, pedido_cancelamento)
   
 #FUNCAO PARA EXIGENCIA DE INSERIR ANEXOS
 def insira_anexo(processos, navegador):
@@ -324,7 +327,7 @@ def processo_errado(processo, navegador):
 
 def processo_reaberto(navegador, processo, nomeEstag):
     #VAI PARA A PÁGINA INICIAL DO PROCESSO
-    retorna_pagina_inicial(navegador, processo)
+    vai_para_processo(navegador, processo)
 
     #CLICA NO INCONE DE INCLUIR DOCUMENTO
     navegador.switch_to.frame('ifrConteudoVisualizacao')
@@ -397,7 +400,7 @@ def processo_reaberto(navegador, processo, nomeEstag):
             #navegador.find_element(By.XPATH, '//*[@id="sbmIncluir"]').click()
 
     #VOLTA PARA PAGINA INICIAL DO PROCESSO
-    retorna_pagina_inicial(navegador, processo)
+    vai_para_processo(navegador, processo)
     time.sleep(1)
     #ADICIONA NOTA PARA AGUARDAR ASSINATURA
     #CLICA NO ICONE DE ANOTACAO
@@ -536,7 +539,7 @@ def preenche_planilhageral(processo, nomeEstag, retido='', situacao='', codigo_r
     pyautogui.click(chrome)
 
 #FUNCAO QUE ESPERA UM ELEMENTO CARREGAR NA TELA E CLICA NELE
-def clica_noelemento(navegador, modo_procura, element_id, tempo=10):
+def clica_noelemento(navegador, modo_procura, element_id, tempo=5):
     # Espera até que o elemento seja carregado (exemplo: elemento localizado por ID)
     element = WebDriverWait(navegador, tempo).until(
         EC.element_to_be_clickable((modo_procura, element_id))
@@ -544,7 +547,7 @@ def clica_noelemento(navegador, modo_procura, element_id, tempo=10):
     # Clica no elemento
     element.click()
 
-def retorna_pagina_inicial(navegador, processo):
+def vai_para_processo(navegador, processo):
     navegador.switch_to.default_content()
     navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
     elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
@@ -588,7 +591,7 @@ def abre_email(navegador, processo, processo_errado=False):
         emailSol = navegador.find_element(By.XPATH, '/html/body/div[3]/a[1]').text
 
     #RETORNA PARA A PAGINA INICIAL DO PROCESSO
-    retorna_pagina_inicial(navegador, processo)
+    vai_para_processo(navegador, processo)
     time.sleep(1)
     navegador.switch_to.frame('ifrConteudoVisualizacao')
     #CLICA NO ICONE DE ENVIO DE EMAIL
@@ -624,6 +627,125 @@ def sendkeys_elemento(navegador, modo_procura, element_id, texto):
     except TimeoutException:
         print(f"Elemento {element_id} não foi carregado no tempo esperado")
         return TimeoutException
+
+#FUNCAO PARA INSERIR O EMAIL
+def endereco_email(endereco, navegador):
+    navegador.find_element(By.XPATH, '//*[@id="s2id_autogen1"]').send_keys(endereco)
+    time.sleep(1)
+    #CLICA NO EMAIL DO SOLICITANTE
+    clica_noelemento(navegador, By.XPATH, '//*[@id="select2-drop"]/ul')
+    time.sleep(0.2)
+
+def envia_email(navegador, janela_principal, processo, nomeEstag, impProp, tipoExig):
+    if tipoExig == 1:
+        #PUXA FUNCAO INSIRA_ANEXO CONTENDO O CORPO DE EMAIL PEDINDO ANEXOS
+        insira_anexo(processo, navegador)
+    elif tipoExig == 2:
+        #PUXA FUNCAO ERRO_DECLARACAO CONTENDO O CORPO DE EMAIL PEDINDO PARA ABRIR NOVO PROCESSO SEI
+        erro_declaracao(processo, impProp, navegador, jaHomologado=False)
+    elif tipoExig == 3:
+        #PUXA FUNCAO ERRO_DECLARACAO CONTENDO O CORPO DE EMAIL PEDINDO PARA ABRIR NOVO PROCESSO SEI
+        erro_declaracao(processo, impProp, navegador, jaHomologado=True)
+    elif tipoExig == 4:
+        #PUXA FUNCAO OUTRO_ERRO EM QUE USUARIO INSERE O EMAIL COMO QUISER
+        outro_erro(navegador)
+    else:
+        processo_errado(processo, navegador)
+
+    #PEDE PARA USUARIO CONFERIR SE ESTÁ TUDO CERTO COM O EMAIL
+    while True:
+        try:
+            confere = int(input('Caso esteja tudo certo digite [1], caso tenha algum erro digite [2]: '))
+            if confere == 1:
+                break
+            elif confere == 2:
+                break
+            else:
+                print("Opção inválida, tente novamente!")
+        except ValueError:
+            print("Opção inválida, tente novamente!")
+    if confere == 1:
+        #ENVIA EMAIL COM A EXIGENCIA
+        navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
+        time.sleep(0.5)
+        #FECHA ALERTA DO NAVEGADOR
+        alert = Alert(navegador)
+        alert.accept()
+        time.sleep(0.5)
+        #VOLTA O FOCO DO SELENIUM PARA A PAGINA PRINCIPAL NOVAMENTE
+        navegador.switch_to.window(janela_principal)
+        navegador.switch_to.default_content()
+        #VOLTA PARA A PAGINA INICIAL DO PROCESSO
+        navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
+        elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+        elementos.send_keys(Keys.ENTER)
+        time.sleep(1)
+        navegador.switch_to.frame('ifrConteudoVisualizacao')
+        #CLICA NO ICONE DE TAG
+        time.sleep(0.5)
+        navegador.find_element(By.XPATH, "//img[contains(@src, 'svg/marcador_gerenciar.svg?18')]").click()
+        navegador.switch_to.frame('ifrVisualizacao')
+        try:    
+            time.sleep(1)
+            navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+        except:
+            time.sleep(0.3)
+            clica_noelemento(navegador, By.XPATH,'//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img')
+            #navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
+            alert.accept()
+            time.sleep(0.3)
+            clica_noelemento(navegador, By.XPATH,'//*[@id="btnAdicionar"]')
+            #navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
+            #time.sleep(0.5)
+            clica_noelemento(navegador, By.XPATH,'//*[@id="selMarcador"]/div/a')
+            #navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
+        
+        time.sleep(0.5)
+        if tipoExig == 1:
+            #CLICA NA TAG DE INTERCORRENTE
+            navegador.find_element(By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Intercorrente').click()
+        else:
+            #CLICA NA TAG DE PENDENCIA
+            navegador.find_element(By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Pendência').click()
+
+        #PEDE O TEXTO DA TAG
+        textoTag = input("Insira o texto da tag: ")
+        textoFinaltag = nomeEstag+"\n"+textoTag
+        #COLOCA O TEXTO NA TAG
+        navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoFinaltag)
+        #SALVA TAG
+        navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
+
+    else:
+        #CANCELA ENVIO DO EMAIL SE HOUVER ALGUM ERRO
+        print("Faça as alterações necessárias mais tarde.")
+        navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
+        navegador.switch_to.window(janela_principal)
+        return
+
+def fazListasProcessos(navegador):
+    #PEGA O CORPO DA TABELA NO NAVEGADOR
+    tbody = navegador.find_element(By.XPATH, '//*[@id="tblProcessosRecebidos"]/tbody')
+    #PEGA TODAS AS LINHAS (TR) DO CORPO DA TABELA, EXCETO A PRIMEIRA
+    trs = tbody.find_elements(By.TAG_NAME, 'tr')[1:]
+
+    lista_processos = []
+    lista_procConformes = []
+    lista_procCancelamento = []
+
+    for tr in trs:
+        processo_texto, possui_anotacao, aguardando_assinatura, pedido_cancelamento = processa_tr(tr)
+        if aguardando_assinatura:
+            lista_procConformes.append(processo_texto) 
+        if pedido_cancelamento:
+            lista_procCancelamento.append(processo_texto)
+        elif not possui_anotacao:
+            lista_processos.append(processo_texto) 
+
+    #INVERTE A ORDEM DOS PROCESSOS NAS LISTAS
+    lista_processos.reverse()
+    return lista_procConformes, lista_procCancelamento, lista_processos
+
 #FUNCAO QUE ABRE O CHROME E O EDGE
 def abreChromeEdge():
     #INSTALA O CHROME DRIVEr MAIS ATUALIZADO
@@ -818,9 +940,9 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     if confirmacao == '1':
                         abre_email(navegador, processo, processo_errado=True)
                         envia_email(navegador, janela_principal, processo, nomeEstag, impProp, 5)
-                        retorna_pagina_inicial(navegador, processo)
+                        vai_para_processo(navegador, processo)
                         nomeSol = armazena_nomesolicitante(navegador)
-                        preenche_planilhageral(processo, nomeEstag, 'Não', 'Exigência', '', nomeSol)
+                        preenche_planilhageral(processo, nomeEstag, 'Não', 'Cancelado', '', nomeSol)
                         return
                     elif confirmacao == '2':
                         return
@@ -1008,6 +1130,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 verifica_retido = int(input('O produto está retido? Se sim digite [1], se não digite [2]: '))
                 if verifica_retido == 1:
                     retido='Sim'
+                    print('O código de rastreio é:', codigo_rastreio)
                 elif verifica_retido == 2:
                     retido='Não'
         print('\n')
@@ -1812,104 +1935,8 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
         print(f"Ocorreu um erro: {error}")
     pyautogui.PAUSE = 0.7
 
-
-#FUNCAO PARA INSERIR O EMAIL
-def endereco_email(endereco, navegador):
-    navegador.find_element(By.XPATH, '//*[@id="s2id_autogen1"]').send_keys(endereco)
-    time.sleep(1)
-    #CLICA NO EMAIL DO SOLICITANTE
-    clica_noelemento(navegador, By.XPATH, '//*[@id="select2-drop"]/ul')
-    time.sleep(0.2)
-
-def envia_email(navegador, janela_principal, processo, nomeEstag, impProp, tipoExig):
-    if tipoExig == 1:
-        #PUXA FUNCAO INSIRA_ANEXO CONTENDO O CORPO DE EMAIL PEDINDO ANEXOS
-        insira_anexo(processo, navegador)
-    elif tipoExig == 2:
-        #PUXA FUNCAO ERRO_DECLARACAO CONTENDO O CORPO DE EMAIL PEDINDO PARA ABRIR NOVO PROCESSO SEI
-        erro_declaracao(processo, impProp, navegador, jaHomologado=False)
-    elif tipoExig == 3:
-        #PUXA FUNCAO ERRO_DECLARACAO CONTENDO O CORPO DE EMAIL PEDINDO PARA ABRIR NOVO PROCESSO SEI
-        erro_declaracao(processo, impProp, navegador, jaHomologado=True)
-    elif tipoExig == 4:
-        #PUXA FUNCAO OUTRO_ERRO EM QUE USUARIO INSERE O EMAIL COMO QUISER
-        outro_erro(navegador)
-    else:
-        processo_errado(processo, navegador)
-
-    #PEDE PARA USUARIO CONFERIR SE ESTÁ TUDO CERTO COM O EMAIL
-    while True:
-        try:
-            confere = int(input('Caso esteja tudo certo digite [1], caso tenha algum erro digite [2]: '))
-            if confere == 1:
-                break
-            elif confere == 2:
-                break
-            else:
-                print("Opção inválida, tente novamente!")
-        except ValueError:
-            print("Opção inválida, tente novamente!")
-    if confere == 1:
-        #ENVIA EMAIL COM A EXIGENCIA
-        navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
-        time.sleep(0.5)
-        #FECHA ALERTA DO NAVEGADOR
-        alert = Alert(navegador)
-        alert.accept()
-        time.sleep(0.5)
-        #VOLTA O FOCO DO SELENIUM PARA A PAGINA PRINCIPAL NOVAMENTE
-        navegador.switch_to.window(janela_principal)
-        navegador.switch_to.default_content()
-        #VOLTA PARA A PAGINA INICIAL DO PROCESSO
-        navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
-        elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-        elementos.send_keys(Keys.ENTER)
-        time.sleep(1)
-        navegador.switch_to.frame('ifrConteudoVisualizacao')
-        #CLICA NO ICONE DE TAG
-        time.sleep(0.5)
-        navegador.find_element(By.XPATH, "//img[contains(@src, 'svg/marcador_gerenciar.svg?18')]").click()
-        navegador.switch_to.frame('ifrVisualizacao')
-        try:    
-            time.sleep(1)
-            navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-        except:
-            time.sleep(0.3)
-            clica_noelemento(navegador, By.XPATH,'//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img')
-            #navegador.find_element(By.XPATH, '//*[@id="tblMarcadores"]/tbody/tr[2]/td[6]/a[2]/img').click()
-            alert.accept()
-            time.sleep(0.3)
-            clica_noelemento(navegador, By.XPATH,'//*[@id="btnAdicionar"]')
-            #navegador.find_element(By.XPATH, '//*[@id="btnAdicionar"]').click()
-            #time.sleep(0.5)
-            clica_noelemento(navegador, By.XPATH,'//*[@id="selMarcador"]/div/a')
-            #navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/div/a').click()
-        
-        time.sleep(0.5)
-        if tipoExig == 1:
-            #CLICA NA TAG DE INTERCORRENTE
-            navegador.find_element(By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Intercorrente').click()
-        else:
-            #CLICA NA TAG DE PENDENCIA
-            navegador.find_element(By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Pendência').click()
-
-        #PEDE O TEXTO DA TAG
-        textoTag = input("Insira o texto da tag: ")
-        textoFinaltag = nomeEstag+"\n"+textoTag
-        #COLOCA O TEXTO NA TAG
-        navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoFinaltag)
-        #SALVA TAG
-        navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
-
-    else:
-        #CANCELA ENVIO DO EMAIL SE HOUVER ALGUM ERRO
-        print("Faça as alterações necessárias mais tarde.")
-        navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
-        navegador.switch_to.window(janela_principal)
-        return
-
 #FUNCAO PARA CONCLUIR PROCESSO
-def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
+def concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nomeEstag, planilhaGeral):
     #DEFINE EMAIL PARA PROCESSO RETIDO
     textoRetido = '''Prezado(a) Senhor(a),
 
@@ -1985,6 +2012,7 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
         df = pd.read_excel(planilhaGeral, usecols=[0,2,3])
 
     #ITERA SOBRE OS processo DA LISTA DE PROCESSOS CONFORMES
+    print('Concluindo processos conformes\n')
     for processosAssinados in lista_procConformes[:]:
         print('\n')
         print(f'Concluindo processo nº {processosAssinados}')
@@ -2131,11 +2159,11 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
                     #VERIFICA SE ESTA RETIDO
                     if retido == 'não':
                         #CLICA NA TAG DE NAO RETIDO
-                        clica_noelemento(navegador, By.XPATH,'//*[@id="selMarcador"]/ul/li[16]')
+                        clica_noelemento(navegador, By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Concluido')
                         # navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[16]').click()
                     else:
                         #CLICA NA TAG DE RETIDO
-                        clica_noelemento(navegador, By.XPATH,'//*[@id="selMarcador"]/ul/li[17]')
+                        clica_noelemento(navegador, By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Concluido - Retidos')
                         # navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[17]').click()
                         time.sleep(0.2)
                         navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(nomeEstag)
@@ -2161,8 +2189,6 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
                     #NAO ENVIA EMAIL CASO NAO ESTEJA COM DESPACHO
                     print(f"O despacho do processo {processosAssinados} ainda não foi assinado, execute o script novamente após conter a assinatura do gerente.")
                     time.sleep(0.5)
-
-
         #CONDICAO DE ERRO
         except Exception as e:
             print("Ocorreu algum erro.\nPulando processo...")
@@ -2171,7 +2197,130 @@ def concluiProcesso(navegador, lista_procConformes, nomeEstag, planilhaGeral):
         
         finally:
             # Remover o processo da lista fora da iteração original
-            lista_procConformes.remove(processosAssinados) 
+            lista_procConformes.remove(processosAssinados)
+    
+    print("Concluindo pedidos de cancelamento")
+
+    textoCancelamento = f"""Prezado(a) Senhor(a),
+
+    Informamos que a solicitação de cancelamento de homologação foi deferida.
+
+
+    FAVOR NÃO RESPONDER ESTE E-MAIL. 
+
+    
+
+    Atenciosamente,
+
+    ORCN - Gerência de Certificação e Numeração
+
+    SOR - Superintendência de Outorga e Recursos à Prestação
+
+    Anatel - Agência Nacional de Telecomunicações"""
+
+    for processosAssinados in lista_procCancelamento[:]:
+        print('\n')
+        print(f'Concluindo processo nº {processosAssinados}')
+        vai_para_processo(navegador, processosAssinados)
+        time.sleep(1)
+        #PEGA DADOS DA DECLARACAO DE CONFORMIDADE
+        navegador.switch_to.frame('ifrArvore')
+
+        #CONFERE SE EXISTE A DECLARACAO DE CONFORMIDADE OU UMA PASTA
+        if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade", navegador):
+            navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
+            time.sleep(0.3)
+        elif check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]', navegador):
+            navegador.find_element(By.XPATH, '//*[@id="spanPASTA1"]').click()
+            time.sleep(1)
+            navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
+            time.sleep(0.3)
+
+        navegador.switch_to.default_content()
+        navegador.switch_to.frame('ifrConteudoVisualizacao')
+        navegador.switch_to.frame('ifrVisualizacao')
+
+        #ARMAZENA EMAIL DO SOLICITANTE
+        emailSol = navegador.find_element(By.XPATH, '/html/body/div[3]/a[1]').text
+
+        navegador.switch_to.default_content()
+        navegador.switch_to.frame('ifrArvore')
+        lista_despachos = navegador.find_elements(By.PARTIAL_LINK_TEXT, 'Despacho Decisório')
+        for i in lista_despachos:
+            navegador.switch_to.default_content()
+            navegador.switch_to.frame('ifrArvore')
+            i.click()
+            navegador.switch_to.default_content()
+            navegador.switch_to.frame('ifrConteudoVisualizacao')
+            navegador.switch_to.frame('ifrVisualizacao')
+            time.sleep(1)
+            if check_element_exists(By.XPATH, "//*[contains(text(), 'Revogar o')]", navegador):
+                print('Encontrado despacho de cancelamento')
+                #VERIFICA SE EXISTE ASSINATURA DO GERENTE
+                navegador.switch_to.default_content()
+                navegador.switch_to.frame('ifrConteudoVisualizacao')
+                navegador.switch_to.frame('ifrVisualizacao')
+                if check_element_exists(By.XPATH, "/html/body/div[1]/table[1]", navegador):
+                    navegador.switch_to.default_content()
+                    navegador.switch_to.frame('ifrConteudoVisualizacao')
+                    #CLICA NO ICONE DE ENVIO DE EMAIL
+                    clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/email_enviar.svg?18')]")
+                    #clica_noelemento(navegador, By.XPATH, '//*[@id="divArvoreAcoes"]/a[10]')
+                    time.sleep(1)
+                    #VAI PARA A JANELA MAIS RECENTE ABERTA
+                    navegador.switch_to.window(navegador.window_handles[-1])
+                    #time.sleep(1)
+                    #ABRE O DROPDOWN COM AS OPCOES DE EMAIL DA ANATEL
+                    select_element = WebDriverWait(navegador, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selDe"]')))
+                    select = Select(select_element)
+                    #SELECIONA O EMAIL DA ANATEL
+                    select.select_by_visible_text('ANATEL/E-mail de replicação <nao-responda@anatel.gov.br>')
+                    #ESCREVE O EMAIL DO SOLICITANTE
+                    navegador.find_element(By.XPATH, '//*[@id="s2id_autogen1"]').send_keys(emailSol)
+                    time.sleep(1.2)
+                    #CLICA NO EMAIL DO SOLICITANTE
+                    clica_noelemento(navegador, By.CLASS_NAME, 'select2-result-label')
+                    #INSERE ASSUNTO DO PROCESO
+                    navegador.find_element(By.ID, 'txtAssunto').send_keys(f"Processo SEI nº {processosAssinados}")
+                    #INSERE EMAIL COM CORPO DO EMAIL
+                    navegador.find_element(By.ID, 'txaMensagem').send_keys(textoCancelamento)
+                    #ENVIA EMAIL
+                    clica_noelemento(navegador, By.XPATH,'//*[@id="divInfraBarraComandosInferior"]/button[1]')
+                    # navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
+                    #FECHA ALERTA DO NAVEGADOR
+                    alert = Alert(navegador)
+                    alert.accept()
+
+                    #RETORNA PARA A JANELA PRINCIPAL
+                    navegador.switch_to.window(janela_principal)
+                    vai_para_processo(navegador, processosAssinados)
+                    time.sleep(1)
+                    #CLICA NO ICONE DE ANOTACAO
+                    navegador.switch_to.frame('ifrConteudoVisualizacao')
+                    #time.sleep(1)
+                    clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/anotacao_cadastro.svg?18')]")
+                    #navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[17]').click()
+                    #LIMPA O TEXTO DA ANOTACAO
+                    time.sleep(0.3)
+                    navegador.switch_to.frame('ifrVisualizacao')
+                    navegador.find_element(By.XPATH, '//*[@id="txaDescricao"]').clear()
+                    #SALVA ANOTACAO
+                    clica_noelemento(navegador, By.XPATH,'//*[@id="divInfraBarraComandosSuperior"]/button')
+                    #CONCLUI PROCESSO
+
+                    vai_para_processo(navegador, processosAssinados)
+                    navegador.switch_to.frame('ifrConteudoVisualizacao')
+                    clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/processo_concluir.svg?18')]")
+                    #clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[19]')
+                    navegador.switch_to.frame('ifrVisualizacao')
+                    clica_noelemento(navegador, By.XPATH, '//*[@id="sbmSalvar"]')
+                    # navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[20]').click()
+                    print(f"Processo nº {processosAssinados}")
+                    time.sleep(0.3)
+                    navegador.switch_to.default_content()
+                else:
+                    print(f"O despacho de cancelamento do processo {processosAssinados} ainda não foi assinado, execute o script novamente após conter a assinatura do gerente.")
+
 
 
 def atribuir_processos(planilhaGeral, num_processos):
