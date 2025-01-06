@@ -1,6 +1,7 @@
 import pyautogui
 import pyperclip
 import time
+import funcoes as fc
 import tkinter as tk
 # import undetected_chromedriver as uc
 from selenium import webdriver
@@ -34,7 +35,7 @@ def check_element_exists(by, value):
 
 
 def preenche_plan(nomeSol, nomeInt, data, retido, codigo_rastreio, n_serie, n_serie2):
-    edge=pyautogui.locateOnScreen('main/imagensAut/edge.png', confidence=0.7)
+    edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
     pyautogui.click(edge)
     time.sleep(0.4)
     pyautogui.PAUSE = 0.2
@@ -84,7 +85,7 @@ def preenche_plan(nomeSol, nomeInt, data, retido, codigo_rastreio, n_serie, n_se
 
 
 def preenche_plan2(nomeSol, nomeInt, data):
-    edge=pyautogui.locateOnScreen('main/imagensAut/edge.png', confidence=0.7)
+    edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
     pyautogui.click(edge)
     time.sleep(0.4)
     pyautogui.PAUSE = 0.2
@@ -138,7 +139,7 @@ def manda_email(n_processo, codigo_rastreio):
     select.select_by_visible_text('ANATEL/E-mail de replicação <nao-responda@anatel.gov.br>')
     endereco_email('documentacao.sp@anatel.gov.br')
     endereco_email('documentacao.rj@anatel.gov.br')
-    endereco_email('documentacao.pr@anatel.gov.br')
+    endereco_email('fiscalizacao1.pr@anatel.gov.br')
     navegador.find_element(By.ID, 'txtAssunto').send_keys(f'Processo SEI nº {n_processo} - Código de rastreio: {codigo_rastreio} - Aberto')
     navegador.find_element(By.ID, 'txaMensagem').send_keys(f'Processo SEI nº {n_processo} - Código de rastreio: {codigo_rastreio} - Aberto')
     #ENVIA EMAIL
@@ -164,6 +165,27 @@ def clica_noelemento(modo_procura, element_id):
     except TimeoutException:
         print(f"Elemento {element_id} não foi carregado no tempo esperado")
 
+def reabre_processo():
+    navegador.switch_to.default_content()
+    navegador.switch_to.frame('ifrConteudoVisualizacao')
+    try:
+        fc.clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/processo_reabrir.svg?18')]", 2)
+        print('Processo foi aberto novamente')
+        navegador.switch_to.default_content()
+        return True
+    except:
+        navegador.switch_to.default_content()
+        return False
+    
+def fecha_processo():
+    navegador.switch_to.default_content()
+    navegador.switch_to.frame('ifrConteudoVisualizacao')
+    try:
+        navegador.find_element(By.XPATH, "//img[contains(@src, 'svg/processo_concluir.svg?18')]").click()
+        navegador.switch_to.frame('ifrVisualizacao')
+        fc.clica_noelemento(navegador, By.XPATH, '//*[@id="sbmSalvar"]')
+    except:
+        pass
 
 def tira_restrito():
     navegador.switch_to.default_content()
@@ -212,7 +234,7 @@ navegador = webdriver.Chrome(service=servico)
 navegador.maximize_window()
 navegador.get('https://sei.anatel.gov.br/')
 janela_principal = navegador.current_window_handle
-edge=pyautogui.locateOnScreen('main/imagensAut/edge.png', confidence=0.7)
+edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
 pyautogui.click(edge)
 time.sleep(3)
 sitePlan = 'https://anatel365.sharepoint.com/:x:/r/sites/lista.orcn/_layouts/15/Doc.aspx?sourcedoc=%7B4130A4D6-7F00-45D4-A328-ED0866A62335%7D&file=Distribui%C3%A7%C3%A3o%20Processo%20Drone.xlsx&action=default&mobileredirect=true'
@@ -220,7 +242,7 @@ pyperclip.copy(sitePlan)
 pyautogui.hotkey('ctrl', 'l')
 pyautogui.hotkey('ctrl', 'v')
 pyautogui.press('enter')
-chrome=pyautogui.locateOnScreen('main/imagensAut/chrome.png', confidence=0.7)
+chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
 pyautogui.click(chrome)
 
 
@@ -288,9 +310,9 @@ while True:
 
 verifica=input('Aperte enter após filtrar a planilha geral.')
 
-edge=pyautogui.locateOnScreen('main/imagensAut/edge.png', confidence=0.7)
+edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
 pyautogui.click(edge)
-pyautogui.click(x=204, y=365)
+pyautogui.click(x=160, y=375)
 
 while True:
     try:
@@ -302,7 +324,7 @@ while True:
         pyautogui.hotkey('ctrl', 'c')
         time.sleep(0.2)
         n_processo = pyperclip.paste()
-        chrome=pyautogui.locateOnScreen('main/imagensAut/chrome.png', confidence=0.7)
+        chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
         pyautogui.click(chrome)
         navegador.switch_to.default_content()
         navegador.find_element(By.ID,'txtPesquisaRapida').click()
@@ -310,6 +332,7 @@ while True:
         elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
         elementos.send_keys(Keys.ENTER)    
         time.sleep(0.5)
+        processo_reaberto = reabre_processo()
         navegador.switch_to.frame('ifrArvore')
         if check_element_exists(By.PARTIAL_LINK_TEXT, 'Recibo Eletrônico'):
             if check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]'):
@@ -335,8 +358,12 @@ while True:
                 time.sleep(0.7)
                 codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[4]/tbody/tr/td[2]').text
                 codigo_rastreio = codigo_rastreio.replace('-','').replace('.','')
-                n_serie = navegador.find_element(By.XPATH,'/html/body/table[3]/tbody/tr[2]/td[3]').text
-                n_serie2 = navegador.find_element(By.XPATH,'/html/body/table[3]/tbody/tr[3]/td[3]').text
+                try:
+                    n_serie = navegador.find_element(By.XPATH,'/html/body/table[3]/tbody/tr[2]/td[3]').text
+                    n_serie2 = navegador.find_element(By.XPATH,'/html/body/table[3]/tbody/tr[3]/td[3]').text
+                except:
+                    n_serie = ''
+                    n_serie2 = ''
                 if not codigo_rastreio.strip():
                     retido='Não'
                 else:
@@ -372,10 +399,13 @@ while True:
         else:
             print("Processo não contém recibo.")
             print("Pulando processo...")
-            edge=pyautogui.locateOnScreen('main/imagensAut/edge.png', confidence=0.7)
-            edge=pyautogui.locateOnScreen('main/imagensAut/edge.png', confidence=0.7)
+            edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+            edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
             pyautogui.click(edge)
             pyautogui.press('down')
+    
+        if processo_reaberto:
+            fecha_processo()
     except Exception as e:
         print(e)
         pyautogui.click(edge)
