@@ -107,6 +107,21 @@ def main():
                     fc.atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral)
                 except Exception as e:
                     print(f"Ocorreu um erro! {e}")
+
+                # Clica no icone que mostra a lista de processos 
+                navegador.switch_to.default_content()
+                fc.clica_noelemento(navegador, By.XPATH, '//*[@id="lnkControleProcessos"]')
+
+                # Clica no filtro de processsos atribuidos ao usuario
+                try:
+                    fc.clica_noelemento(navegador, By.XPATH,'//*[@id="divFiltro"]/div[2]/a', 2)
+                except:
+                    pass
+                lista_procConformes, lista_procCancelamento, lista_processos = fc.fazListasProcessos(navegador)
+                print("Lista de processos a analisar e a concluir refeita:")
+                print("Quantidade de processos para analisar", len(lista_processos))
+                print("Quantidade de processos para concluir", len(lista_procConformes))
+                print("Quantidade de pedidos de cancelamento a concluir", len(lista_procCancelamento))
             elif opcoes == '4':
                 #EXECUTA FUNCAO PARA ANALISAR  UM ÚNICO PROCESSO
                 fc.analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones, planilhaRadios)

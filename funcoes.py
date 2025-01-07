@@ -21,6 +21,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from tabulate import tabulate
 from tkinter import scrolledtext
 from webdriver_manager.chrome import ChromeDriverManager
+import subprocess
+import pygetwindow as gw
 
 def preencher_campos(user_var, senha_var, navegador, root):
     global user_name
@@ -120,6 +122,9 @@ def insira_anexo(processos, navegador):
     btn_get_text = tk.Button(root, text="Obter Texto", command=get_text)
     btn_get_text.pack(pady=5)
 
+    #ASSOCIA O ATALHO CTRL + ENTER À AÇAO DE ENVIAR EXIGENCIA
+    root.bind('<Control-Return>', lambda event: get_text())
+
     #INICIA O LOOP PRINCIPAL QUE MANTEM A JANELA ATIVA
     root.mainloop()
     
@@ -180,6 +185,9 @@ def erro_declaracao(processos, impProp, navegador, jaHomologado=False):
     #CRIA BOTAO DE RECEBER O TEXTO
     btn_get_text = tk.Button(root, text="Obter Texto", command=get_text)
     btn_get_text.pack(pady=5)
+
+    #ASSOCIA O ATALHO CTRL + ENTER À AÇAO DE ENVIAR EXIGENCIA
+    root.bind('<Control-Return>', lambda event: get_text())
 
     #INICIA O LOOP PRINCIPAL QUE MANTEM A JANELA ATIVA
     root.mainloop()
@@ -293,6 +301,9 @@ def processo_errado(processo, navegador):
     #CRIA BOTAO DE RECEBER O TEXTO
     btn_get_text = tk.Button(root, text="Obter Texto", command=get_text)
     btn_get_text.pack(pady=5)
+
+    #ASSOCIA O ATALHO CTRL + ENTER À AÇAO DE ENVIAR EXIGENCIA
+    root.bind('<Control-Return>', lambda event: get_text())
 
     #INICIA O LOOP PRINCIPAL QUE MANTEM A JANELA ATIVA
     root.mainloop()
@@ -463,15 +474,30 @@ def corrige_planilha(planilha, drones: bool):
         tabela = tabela['MODELO']
     return tabela
 
+def muda_janela(janela: str):
+    # Lista todas as janelas abertas
+    windows = gw.getAllTitles()
+
+    # Filtra janelas válidas (não-vazias)
+    windows = [w for w in windows if w]
+
+    for i in range(len(windows)):
+        if janela in windows[i]:
+            window_to_activate = i
+    window = gw.getWindowsWithTitle(windows[window_to_activate])[0]
+    window.activate()
+    window.maximize()
+
 #FUNCAO QUE PREENCHE A PLANILHA GERAL
 def preenche_planilhageral(processo, nomeEstag, retido='', situacao='', codigo_rastreio='', nome_interessado=''):
     #ENCONTRA O ICONE DO EDGE E ABRE O NAVEGADOR DA PLANILHA
     pyautogui.PAUSE = 0.7
-    edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+    # edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
     #COPIA NUMERO DO PROCESSO
     pyperclip.copy(processo)
     #CLICA NO NAVEGADOR
-    pyautogui.click(edge)
+    # pyautogui.click(edge)
+    muda_janela('Distribuição Processo Drone.xlsx')
     time.sleep(0.5)
     #PESQUISA PROCESSO NA PLANILHA
     pyautogui.hotkey('ctrl', 'l')
@@ -494,7 +520,7 @@ def preenche_planilhageral(processo, nomeEstag, retido='', situacao='', codigo_r
             procure_manualmente = str(input("Houve um problema para encontrar o processo.\nBusque o manualmente e digite [1]. Caso não queira preencher a planilha, digite [2]: "))
             if procure_manualmente == '1':
                 time.sleep(1)
-                pyautogui.click(edge)
+                muda_janela('Distribuição Processo Drone.xlsx')
                 time.sleep(0.7)
                 break
             elif procure_manualmente == '2':
@@ -535,8 +561,9 @@ def preenche_planilhageral(processo, nomeEstag, retido='', situacao='', codigo_r
         pyautogui.hotkey('ctrl', 'v')
 
     #VOLTA PARA A JANELA DO CHROME
-    chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
-    pyautogui.click(chrome)
+    # chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
+    # pyautogui.click(chrome)
+    muda_janela('Google Chrome')
 
 #FUNCAO QUE ESPERA UM ELEMENTO CARREGAR NA TELA E CLICA NELE
 def clica_noelemento(navegador, modo_procura, element_id, tempo=5):
@@ -674,11 +701,8 @@ def envia_email(navegador, janela_principal, processo, nomeEstag, impProp, tipoE
         time.sleep(0.5)
         #VOLTA O FOCO DO SELENIUM PARA A PAGINA PRINCIPAL NOVAMENTE
         navegador.switch_to.window(janela_principal)
-        navegador.switch_to.default_content()
         #VOLTA PARA A PAGINA INICIAL DO PROCESSO
-        navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
-        elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-        elementos.send_keys(Keys.ENTER)
+        vai_para_processo(navegador, processo)
         time.sleep(1)
         navegador.switch_to.frame('ifrConteudoVisualizacao')
         #CLICA NO ICONE DE TAG
@@ -767,16 +791,17 @@ def abreChromeEdge():
     #LOCALIZA O ICONE DO EDGE E ABRE A PLANILHA GERAL
     #FOI UTILIZADO O PYPERCLIP PARA EVITAR QUALQUER ERRO NA HORA DE COLAR O URL DA PLANILHA
     time.sleep(1)
-    edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
-    pyautogui.click(edge)
+    # Abre o Edge
+    subprocess.Popen(["C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"])
     time.sleep(3)
     sitePlan = 'https://anatel365.sharepoint.com/:x:/r/sites/lista.orcn/_layouts/15/Doc.aspx?sourcedoc=%7B4130A4D6-7F00-45D4-A328-ED0866A62335%7D&file=Distribui%C3%A7%C3%A3o%20Processo%20Drone.xlsx&action=default&mobileredirect=true'
     pyperclip.copy(sitePlan)
     pyautogui.hotkey('ctrl', 'l')
     pyautogui.hotkey('ctrl', 'v')
     pyautogui.press('enter')
-    chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
-    pyautogui.click(chrome)
+    # chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
+    # pyautogui.click(chrome)
+    muda_janela('Google Chrome')
     return navegador
 
 #FUNCAO QUE PEDE A SENHA E O USUARIO
@@ -2423,9 +2448,9 @@ def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral):
     navegador.find_element(By.ID, 'btnSalvar').click()
     navegador.find_element(By.XPATH, '//*[@id="divFiltro"]/div[2]/a').click()
     pyautogui.PAUSE = 0.7
-    edge = pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+    # edge = pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
     # CLICA NO NAVEGADOR
-    pyautogui.click(edge)
+    muda_janela('Distribuição Processo Drone.xlsx')
     time.sleep(0.5)
     for processos_atr2 in processos_para_atr:
         pyautogui.PAUSE = 0.7

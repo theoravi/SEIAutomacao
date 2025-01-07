@@ -2,7 +2,7 @@
 
 
 a = Analysis(
-    ['main\\plan.py'],
+    ['plan.py'],
     pathex=[],
     binaries=[],
     datas=[],
