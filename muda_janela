@@ -1,0 +1,58 @@
+from pywinauto import Application
+from pywinauto.findwindows import find_windows, ElementAmbiguousError, ElementNotFoundError
+
+def muda_janela(janela: str):
+    try:
+        # Busca todas as janelas que contenham o título especificado
+        matches = find_windows(title_re=f".*{janela}.*", backend="win32", visible_only=True)
+        
+        if not matches:
+            raise ElementNotFoundError(f"Nenhuma janela encontrada com o título '{janela}'.")
+
+        if len(matches) > 1:
+            print(f"Mais de uma janela encontrada com o título '{janela}'. Selecionando a mais recente.")
+        
+        # Seleciona a última janela encontrada (mais recente/ativa)
+        handle = matches[-1]
+        app = Application(backend="win32").connect(handle=handle)
+        window = app.window(handle=handle)
+
+        # Garante que a janela será restaurada e focada
+        if not window.is_active():
+            # window.restore()
+            window.set_focus()
+
+    except ElementAmbiguousError:
+        print(f"Conflito: mais de uma janela corresponde ao título '{janela}'.")
+        # Lista as janelas e permite ao usuário escolher
+        matches = find_windows(title_re=f".*{janela}.*", backend="win32", visible_only=False)
+        for i, hwnd in enumerate(matches):
+            print(f"[{i}] Handle: {hwnd}")
+        
+        escolha = input("Digite o número da janela que deseja focar: ").strip()
+        if escolha.isdigit() and int(escolha) in range(len(matches)):
+            app = Application().connect(handle=matches[int(escolha)])
+            window = app.window(handle=matches[int(escolha)])
+            window.set_focus()
+            print("Janela selecionada com sucesso.")
+        else:
+            print("Opção inválida. Nenhuma ação foi tomada.")
+
+    except ElementNotFoundError:
+        while True:
+            print(f"Parece que a janela '{janela}' não está visível para o programa.")
+            opcao = input("Reabra-a e digite [1] para continuar ou [2] para encerrar: ").strip()
+            if opcao == '1':
+                muda_janela(janela)
+                break
+            elif opcao == '2':
+                break
+            else:
+                print('Opção inválida!')
+
+    except Exception as e:
+        print(f"Ocorreu um erro inesperado: {e}")
+
+# Exemplo de uso
+jan = 'Distribuição Processo Drone'
+muda_janela(jan)

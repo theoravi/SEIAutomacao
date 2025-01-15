@@ -391,7 +391,8 @@ while True:
                     manda_email(n_processo, codigo_rastreio)
                     retido='Sim'
                     time.sleep(0.2)
-                tira_restrito()
+                if not processo_reaberto:
+                    tira_restrito()
                 preenche_plan(nomeSol, nomeInt, data, retido, codigo_rastreio, n_serie, n_serie2)
             else:
                 print("Declaração de conformidade não encontrada.")

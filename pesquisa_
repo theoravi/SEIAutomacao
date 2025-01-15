@@ -1,0 +1,58 @@
+import funcoes as fc
+import time
+import pyautogui
+fc.muda_janela('Distribuição Processo Drone.xlsx')
+lista = ['53500.000615/2025-28',
+    '53500.000848/2025-21',
+    '53500.000850/2025-08',
+    '53500.000855/2025-22',
+    '53500.000860/2025-35',
+    '53500.000869/2025-46',
+    '53500.000871/2025-15',
+    '53500.000878/2025-37',
+    '53500.000883/2025-40',
+    '53500.000888/2025-72',
+    '53500.000893/2025-85',
+    '53500.000898/2025-16',
+    '53500.000900/2025-49',
+    '53500.000901/2025-93',
+    '53500.000903/2025-82',
+    '53500.000904/2025-27',
+    '53500.000907/2025-61',
+    '53500.000908/2025-13',
+    '53500.000909/2025-50',
+    '53500.000913/2025-18',
+    '53500.000916/2025-51',
+    '53500.000917/2025-04',
+    '53500.000921/2025-64',
+    '53500.000922/2025-17',
+    '53500.000925/2025-42',
+    '53500.000926/2025-97']
+# pyautogui.PAUSE = 0.7
+# # edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+# #COPIA NUMERO DO PROCESSO
+# pyperclip.copy(processo)
+# #CLICA NO NAVEGADOR
+# # pyautogui.click(edge)
+# pyautogui.click(940, 600)
+# time.sleep(0.5)
+# #PESQUISA PROCESSO NA PLANILHA
+# pyautogui.hotkey('ctrl', 'l')
+# time.sleep(0.3)
+# #COLA NUMERO DO PROCESSO E APERTA ENTER PARA PESQUISAR O PROCESSO
+# pyautogui.hotkey('ctrl', 'v')
+# time.sleep(0.3)
+# pyautogui.press('enter')
+# time.sleep(0.3)
+# pyautogui.press('esc')
+for processo in lista:
+    celula_encontrada = fc.pesquisa_processo(processo)
+    #COPIA O NUMERO DO PROCESSO NA CELULA PARA SABER SE ELE FOI ENCONTRADO CORRETAMENTE
+    # pyperclip.copy('nan')
+    # pyautogui.hotkey('ctrl','c')
+    # time.sleep(0.3)
+    # celula_encontrada = pyperclip.paste()
+    # celula_encontrada = celula_encontrada.replace('\n', '').strip('"')
+    print(f'Célula encontrada: {celula_encontrada}')
+    while celula_encontrada != processo:
+        celula_encontrada = fc.pesquisa_processo(processo)

@@ -22,7 +22,8 @@ from tabulate import tabulate
 from tkinter import scrolledtext
 from webdriver_manager.chrome import ChromeDriverManager
 import subprocess
-import pygetwindow as gw
+from pywinauto import Application
+from pywinauto.findwindows import find_windows, ElementAmbiguousError, ElementNotFoundError
 
 def preencher_campos(user_var, senha_var, navegador, root):
     global user_name
@@ -475,30 +476,59 @@ def corrige_planilha(planilha, drones: bool):
     return tabela
 
 def muda_janela(janela: str):
-    # Lista todas as janelas abertas
-    windows = gw.getAllTitles()
+    try:
+        # Busca todas as janelas que contenham o título especificado
+        matches = find_windows(title_re=f".*{janela}.*", backend="win32", visible_only=True)
+        
+        if not matches:
+            raise ElementNotFoundError(f"Nenhuma janela encontrada com o título '{janela}'.")
 
-    # Filtra janelas válidas (não-vazias)
-    windows = [w for w in windows if w]
+        if len(matches) > 1:
+            print(f"Mais de uma janela encontrada com o título '{janela}'. Selecionando a mais recente.")
+        
+        # Seleciona a última janela encontrada (mais recente/ativa)
+        handle = matches[-1]
+        app = Application(backend="win32").connect(handle=handle)
+        window = app.window(handle=handle)
 
-    for i in range(len(windows)):
-        if janela in windows[i]:
-            window_to_activate = i
-    window = gw.getWindowsWithTitle(windows[window_to_activate])[0]
-    window.activate()
-    window.maximize()
+        # Garante que a janela será restaurada e focada
+        if not window.is_active():
+            # window.restore()
+            window.set_focus()
 
-#FUNCAO QUE PREENCHE A PLANILHA GERAL
-def preenche_planilhageral(processo, nomeEstag, retido='', situacao='', codigo_rastreio='', nome_interessado=''):
-    #ENCONTRA O ICONE DO EDGE E ABRE O NAVEGADOR DA PLANILHA
+    except ElementAmbiguousError:
+        print(f"Conflito: mais de uma janela corresponde ao título '{janela}'.")
+        # Lista as janelas e permite ao usuário escolher
+        matches = find_windows(title_re=f".*{janela}.*", backend="win32", visible_only=False)
+        for i, hwnd in enumerate(matches):
+            print(f"[{i}] Handle: {hwnd}")
+        
+        escolha = input("Digite o número da janela que deseja focar: ").strip()
+        if escolha.isdigit() and int(escolha) in range(len(matches)):
+            app = Application().connect(handle=matches[int(escolha)])
+            window = app.window(handle=matches[int(escolha)])
+            window.set_focus()
+            print("Janela selecionada com sucesso.")
+        else:
+            print("Opção inválida. Nenhuma ação foi tomada.")
+
+    except ElementNotFoundError:
+        while True:
+            print(f"Parece que a janela '{janela}' não está visível para o programa.")
+            opcao = input("Reabra-a e digite [1] para continuar ou [2] para encerrar: ").strip()
+            if opcao == '1':
+                muda_janela(janela)
+                break
+            elif opcao == '2':
+                break
+            else:
+                print('Opção inválida!')
+
+    except Exception as e:
+        print(f"Ocorreu um erro inesperado: {e}")
+def pesquisa_processo(processo):
     pyautogui.PAUSE = 0.7
-    # edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
-    #COPIA NUMERO DO PROCESSO
     pyperclip.copy(processo)
-    #CLICA NO NAVEGADOR
-    # pyautogui.click(edge)
-    muda_janela('Distribuição Processo Drone.xlsx')
-    time.sleep(0.5)
     #PESQUISA PROCESSO NA PLANILHA
     pyautogui.hotkey('ctrl', 'l')
     time.sleep(0.3)
@@ -514,19 +544,41 @@ def preenche_planilhageral(processo, nomeEstag, retido='', situacao='', codigo_r
     time.sleep(0.3)
     celula_encontrada = pyperclip.paste()
     celula_encontrada = celula_encontrada.replace('\n', '').strip('"')
+    return celula_encontrada
+
+#FUNCAO QUE PREENCHE A PLANILHA GERAL
+def preenche_planilhageral(processo, nomeEstag, retido='', situacao='', codigo_rastreio='', nome_interessado=''):
+    #ENCONTRA O ICONE DO EDGE E ABRE O NAVEGADOR DA PLANILHA
+    muda_janela('Distribuição Processo Drone.xlsx')
+    # pyautogui.PAUSE = 0.7
+    # # edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+    # #COPIA NUMERO DO PROCESSO
+    # pyperclip.copy(processo)
+    # #CLICA NO NAVEGADOR
+    # # pyautogui.click(edge)
+    # time.sleep(0.5)
+    # #PESQUISA PROCESSO NA PLANILHA
+    # pyautogui.hotkey('ctrl', 'l')
+    # time.sleep(0.3)
+    # #COLA NUMERO DO PROCESSO E APERTA ENTER PARA PESQUISAR O PROCESSO
+    # pyautogui.hotkey('ctrl', 'v')
+    # time.sleep(0.3)
+    # pyautogui.press('enter')
+    # time.sleep(0.3)
+    # pyautogui.press('esc')
+    celula_encontrada = pesquisa_processo(processo)
+    #COPIA O NUMERO DO PROCESSO NA CELULA PARA SABER SE ELE FOI ENCONTRADO CORRETAMENTE
+    # pyperclip.copy('nan')
+    # pyautogui.hotkey('ctrl','c')
+    # time.sleep(0.3)
+    # celula_encontrada = pyperclip.paste()
+    # celula_encontrada = celula_encontrada.replace('\n', '').strip('"')
     print(f'Célula encontrada: {celula_encontrada}')
-    if celula_encontrada != processo:
-        while True:
-            procure_manualmente = str(input("Houve um problema para encontrar o processo.\nBusque o manualmente e digite [1]. Caso não queira preencher a planilha, digite [2]: "))
-            if procure_manualmente == '1':
-                time.sleep(1)
-                muda_janela('Distribuição Processo Drone.xlsx')
-                time.sleep(0.7)
-                break
-            elif procure_manualmente == '2':
-                return
-            else:
-                print("Opção inválida")
+    while celula_encontrada != processo:
+        if celula_encontrada == 'nan':
+            input('Parece que o Excel não estava em foco na janela do Microsoft Edge. Volte para a página do app, coloque em foco (clicando em qualquer lugar da planilha) e pressione enter.')
+            muda_janela('Distribuição Processo Drone.xlsx')
+        celula_encontrada = pesquisa_processo(processo)
     if situacao == 'Cancelado':
         pyautogui.PAUSE = 0.3
         for i in range(6):
@@ -739,13 +791,13 @@ def envia_email(navegador, janela_principal, processo, nomeEstag, impProp, tipoE
         navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(textoFinaltag)
         #SALVA TAG
         navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
-
+        return True
     else:
         #CANCELA ENVIO DO EMAIL SE HOUVER ALGUM ERRO
         print("Faça as alterações necessárias mais tarde.")
         navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
         navegador.switch_to.window(janela_principal)
-        return
+        return False
 
 def fazListasProcessos(navegador):
     #PEGA O CORPO DA TABELA NO NAVEGADOR
@@ -791,14 +843,35 @@ def abreChromeEdge():
     #LOCALIZA O ICONE DO EDGE E ABRE A PLANILHA GERAL
     #FOI UTILIZADO O PYPERCLIP PARA EVITAR QUALQUER ERRO NA HORA DE COLAR O URL DA PLANILHA
     time.sleep(1)
-    # Abre o Edge
-    subprocess.Popen(["C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"])
-    time.sleep(3)
-    sitePlan = 'https://anatel365.sharepoint.com/:x:/r/sites/lista.orcn/_layouts/15/Doc.aspx?sourcedoc=%7B4130A4D6-7F00-45D4-A328-ED0866A62335%7D&file=Distribui%C3%A7%C3%A3o%20Processo%20Drone.xlsx&action=default&mobileredirect=true'
-    pyperclip.copy(sitePlan)
-    pyautogui.hotkey('ctrl', 'l')
-    pyautogui.hotkey('ctrl', 'v')
-    pyautogui.press('enter')
+    # Tenta selecionar o Edge
+    try:
+        # Busca todas as janelas que contenham o título especificado
+        matches = find_windows(title_re=f".*Distribuição Processo Drone.xlsx.*", backend="win32", visible_only=True)
+        
+        if not matches:
+            raise ElementNotFoundError(f"Nenhuma janela encontrada com o título 'Distribuição Processo Drone.xlsx'.")
+
+        if len(matches) > 1:
+            print(f"Mais de uma janela encontrada com o título 'Distribuição Processo Drone.xlsx'. Selecionando a mais recente.")
+        
+        # Seleciona a última janela encontrada (mais recente/ativa)
+        handle = matches[-1]
+        app = Application(backend="win32").connect(handle=handle)
+        window = app.window(handle=handle)
+
+        # Garante que a janela será restaurada e focada
+        if not window.is_active():
+            # window.restore()
+            window.set_focus()
+    except ElementNotFoundError:
+        # Abre o Edge
+        subprocess.Popen(["C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"])
+        time.sleep(3)
+        sitePlan = 'https://anatel365.sharepoint.com/:x:/r/sites/lista.orcn/_layouts/15/Doc.aspx?sourcedoc=%7B4130A4D6-7F00-45D4-A328-ED0866A62335%7D&file=Distribui%C3%A7%C3%A3o%20Processo%20Drone.xlsx&action=default&mobileredirect=true'
+        pyperclip.copy(sitePlan)
+        pyautogui.hotkey('ctrl', 'l')
+        pyautogui.hotkey('ctrl', 'v')
+        pyautogui.press('enter')
     # chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
     # pyautogui.click(chrome)
     muda_janela('Google Chrome')
@@ -1644,7 +1717,6 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                         if exig == 1:
                             #DEFINE SITUACAO DO PROCESSO
                             situacao = 'Intercorrente'
-                            envia_email(navegador, janela_principal, processo, nomeEstag, impProp, exig)
                             # #PUXA FUNCAO INSIRA_ANEXO CONTENDO O CORPO DE EMAIL PEDINDO ANEXOS
                             # insira_anexo(processo, navegador)
                             # #PEDE PARA USUARIO CONFERIR SE ESTÁ TUDO CERTO COM O EMAIL
@@ -1716,7 +1788,6 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                             #     return
                         elif exig == 2:
                             situacao = 'Exigência'
-                            envia_email(navegador, janela_principal, processo, nomeEstag, impProp, exig)
                             # #PUXA FUNCAO ERRO_DECLARACAO CONTENDO O CORPO DE EMAIL PEDINDO PARA ABRIR NOVO PROCESSO SEI
                             # erro_declaracao(processo, impProp, navegador, jaHomologado=False)
                             # #PEDE PARA USUARIO CONFERIR O EMAIL
@@ -1788,7 +1859,6 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                             #     return
                         elif exig == 3:
                             situacao = 'Exigência'
-                            envia_email(navegador, janela_principal, processo, nomeEstag, impProp, exig)
                             # #PUXA FUNCAO ERRO_DECLARACAO CONTENDO O CORPO DE EMAIL PEDINDO PARA ABRIR NOVO PROCESSO SEI
                             # erro_declaracao(processo, impProp, navegador, jaHomologado=True)
                             # #PEDE PARA USUARIO CONFERIR O EMAIL
@@ -1861,7 +1931,6 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                         
                         elif exig == 4:
                             situacao = 'Exigência'
-                            envia_email(navegador, janela_principal, processo, nomeEstag, impProp, exig)
                             # #PUXA FUNCAO OUTRO_ERRO EM QUE USUARIO INSERE O EMAIL COMO QUISER
                             # outro_erro(navegador)
                             # #PEDE PARA USUARIO ESCREVER EMAIL E DIGITAR 1 PARA CONTINUAR
@@ -1929,18 +1998,23 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                             #     navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
                             #     navegador.switch_to.window(janela_principal)
                             #     return
-                        #VOLTA PARA A PAGINA INICIAL DO PROCESSO
-                        navegador.switch_to.default_content()
-                        navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
-                        elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-                        elementos.send_keys(Keys.ENTER)
-                        time.sleep(1)
-                        navegador.switch_to.frame('ifrConteudoVisualizacao')
-                        #CLICA NO ICONE DE CONCLUIR PROCESSO
-                        clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/processo_concluir.svg?18')]")
-                        #clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[19]')
-                        navegador.switch_to.frame('ifrVisualizacao')
-                        clica_noelemento(navegador, By.XPATH, '//*[@id="sbmSalvar"]')
+                        email_enviado = envia_email(navegador, janela_principal, processo, nomeEstag, impProp, exig)
+                        if email_enviado:
+                            #VOLTA PARA A PAGINA INICIAL DO PROCESSO
+                            navegador.switch_to.default_content()
+                            navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo) 
+                            elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+                            elementos.send_keys(Keys.ENTER)
+                            time.sleep(1)
+                            navegador.switch_to.frame('ifrConteudoVisualizacao')
+                            #CLICA NO ICONE DE CONCLUIR PROCESSO
+                            clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/processo_concluir.svg?18')]")
+                            #clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[19]')
+                            navegador.switch_to.frame('ifrVisualizacao')
+                            clica_noelemento(navegador, By.XPATH, '//*[@id="sbmSalvar"]')
+                        else:
+                            print('Cancelado envio de email')
+                            return
                         print("Próximo processo...")
                         break
                     #CONDICAO PARA OPCAO INEXISTENTE
@@ -2380,15 +2454,9 @@ def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral):
     # Exemplo de uso
     navegador.switch_to.default_content()
     try:    
-        navegador.find_element(By.ID, 'lnkControleProcessos').click()
+        clica_noelemento(navegador, By.ID, 'lnkControleProcessos').click()
     except Exception as e:
-        print(e)
-        while True:
-            apertei = str(input("Aperte o botao para voltar para a pagina principal e digite 1: "))
-            if apertei == '1':
-                break
-            else:
-                print("Opcao invalida!")
+        pass
 
     try:
         navegador.find_element(By.ID, 'ancLiberarMeusProcessos').click()
@@ -2411,7 +2479,7 @@ def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral):
 
     for processos_atr in lista_processos_atr:
         try:
-            navegador.find_element(By.XPATH, f'//label[@title="{processos_atr}"]').click()
+            clica_noelemento(navegador, By.XPATH, f'//label[@title="{processos_atr}"]', 1)
             processos_para_atr.append(processos_atr)
             processos_restantes.remove(processos_atr)
             time.sleep(0.3)
@@ -2451,21 +2519,34 @@ def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral):
     # edge = pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
     # CLICA NO NAVEGADOR
     muda_janela('Distribuição Processo Drone.xlsx')
+    
     time.sleep(0.5)
     for processos_atr2 in processos_para_atr:
-        pyautogui.PAUSE = 0.7
-        # COPIA NUMERO DO PROCESSO
-        pyperclip.copy(processos_atr2)
-        # PESQUISA PROCESSO NA PLANILHA
-        pyautogui.hotkey('ctrl', 'l')
-        time.sleep(0.5)
-        # COLA NUMERO DO PROCESSO E APERTA ENTER PARA PESQUISAR O PROCESSO
-        pyautogui.hotkey('ctrl', 'v')
-        time.sleep(0.3)
-        pyautogui.press('enter')
-        pyautogui.PAUSE = 0.4
-        pyautogui.press('esc')
+        # pyautogui.PAUSE = 0.7
+        # # COPIA NUMERO DO PROCESSO
+        # pyperclip.copy(processos_atr2)
+        # # PESQUISA PROCESSO NA PLANILHA
+        # pyautogui.hotkey('ctrl', 'l')
+        # time.sleep(0.5)
+        # # COLA NUMERO DO PROCESSO E APERTA ENTER PARA PESQUISAR O PROCESSO
+        # pyautogui.hotkey('ctrl', 'v')
+        # time.sleep(0.3)
+        # pyautogui.press('enter')
+        # pyautogui.PAUSE = 0.4
+        # pyautogui.press('esc')
+        celula_encontrada = pesquisa_processo(processos_atr2)
+        #COPIA O NUMERO DO PROCESSO NA CELULA PARA SABER SE ELE FOI ENCONTRADO CORRETAMENTE
+        # pyperclip.copy('nan')
+        # pyautogui.hotkey('ctrl','c')
+        # time.sleep(0.3)
+        # celula_encontrada = pyperclip.paste()
+        # celula_encontrada = celula_encontrada.replace('\n', '').strip('"')
+        print(f'Célula encontrada: {celula_encontrada}')
+        while celula_encontrada != processos_atr2:
+            if celula_encontrada == 'nan':
+                input('Parece que o Excel não estava em foco na janela do Microsoft Edge. Volte para a página do app, coloque em foco (clicando em qualquer lugar da planilha) e pressione enter.')
+                muda_janela('Distribuição Processo Drone.xlsx')
+            celula_encontrada = pesquisa_processo(processos_atr2)
         pyautogui.press('right')
         pyperclip.copy(nomeEstag)
         pyautogui.hotkey('ctrl', 'v')
-
