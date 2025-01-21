@@ -14,7 +14,6 @@ import json
 import subprocess
 
 DEV_MODE = True
-
 def main():
     reset = True
     while reset:
