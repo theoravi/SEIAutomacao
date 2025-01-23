@@ -1737,7 +1737,7 @@ def concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nome
 
     6. Em caso de equipamento retido, recomendamos que apresente cópia do Despacho decisório ao e-mail corporativo, para que seja liberada a entrega da encomenda retida, de acordo com o local onde está sendo feita a fiscalização.
 
-    Caso encomenda retida no Paraná, encaminhar email para - documentacao.pr@anatel.gov.br
+    Caso encomenda retida no Paraná, encaminhar email para - fiscalizacao1.pr@anatel.gov.br
     Caso encomenda retida em São Paulo, encaminhar email para - documentacao.sp@anatel.gov.br
     Caso encomenda retida em Rio de Janeiro, encaminhar email para - documentacao.rj@anatel.gov.br
 
