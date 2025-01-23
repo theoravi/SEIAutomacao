@@ -495,6 +495,7 @@ def muda_janela(janela: str):
         if not window.is_active():
             # window.restore()
             window.set_focus()
+        return True
 
     except ElementAmbiguousError:
         print(f"Conflito: mais de uma janela corresponde ao título '{janela}'.")
@@ -509,6 +510,7 @@ def muda_janela(janela: str):
             window = app.window(handle=matches[int(escolha)])
             window.set_focus()
             print("Janela selecionada com sucesso.")
+            return True
         else:
             print("Opção inválida. Nenhuma ação foi tomada.")
 
@@ -518,14 +520,16 @@ def muda_janela(janela: str):
             opcao = input("Reabra-a e digite [1] para continuar ou [2] para encerrar: ").strip()
             if opcao == '1':
                 muda_janela(janela)
-                break
+                return True
             elif opcao == '2':
-                break
+                return False
             else:
                 print('Opção inválida!')
 
     except Exception as e:
         print(f"Ocorreu um erro inesperado: {e}")
+        return False
+    
 def pesquisa_processo(processo):
     pyautogui.PAUSE = 0.7
     pyperclip.copy(processo)
@@ -549,73 +553,58 @@ def pesquisa_processo(processo):
 #FUNCAO QUE PREENCHE A PLANILHA GERAL
 def preenche_planilhageral(processo, nomeEstag, retido='', situacao='', codigo_rastreio='', nome_interessado=''):
     #ENCONTRA O ICONE DO EDGE E ABRE O NAVEGADOR DA PLANILHA
-    muda_janela('Distribuição Processo Drone.xlsx')
-    # pyautogui.PAUSE = 0.7
-    # # edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
-    # #COPIA NUMERO DO PROCESSO
-    # pyperclip.copy(processo)
-    # #CLICA NO NAVEGADOR
-    # # pyautogui.click(edge)
-    # time.sleep(0.5)
-    # #PESQUISA PROCESSO NA PLANILHA
-    # pyautogui.hotkey('ctrl', 'l')
-    # time.sleep(0.3)
-    # #COLA NUMERO DO PROCESSO E APERTA ENTER PARA PESQUISAR O PROCESSO
-    # pyautogui.hotkey('ctrl', 'v')
-    # time.sleep(0.3)
-    # pyautogui.press('enter')
-    # time.sleep(0.3)
-    # pyautogui.press('esc')
-    celula_encontrada = pesquisa_processo(processo)
-    #COPIA O NUMERO DO PROCESSO NA CELULA PARA SABER SE ELE FOI ENCONTRADO CORRETAMENTE
-    # pyperclip.copy('nan')
-    # pyautogui.hotkey('ctrl','c')
-    # time.sleep(0.3)
-    # celula_encontrada = pyperclip.paste()
-    # celula_encontrada = celula_encontrada.replace('\n', '').strip('"')
-    print(f'Célula encontrada: {celula_encontrada}')
-    while celula_encontrada != processo:
-        if celula_encontrada == 'nan':
-            input('Parece que o Excel não estava em foco na janela do Microsoft Edge. Volte para a página do app, coloque em foco (clicando em qualquer lugar da planilha) e pressione enter.')
-            muda_janela('Distribuição Processo Drone.xlsx')
+    mudou_janela = muda_janela('Distribuição Processo Drone.xlsx')
+    if mudou_janela:
         celula_encontrada = pesquisa_processo(processo)
-    if situacao == 'Cancelado':
-        pyautogui.PAUSE = 0.3
-        for i in range(6):
+        print(f'Célula encontrada: {celula_encontrada}')
+        while celula_encontrada != processo:
+            if celula_encontrada == 'nan':
+                muda_janela('theomation')
+                input('Parece que o Excel não estava em foco na janela do Microsoft Edge. Volte para a página do app, coloque em foco (clicando em qualquer lugar da planilha) e pressione enter.')
+                muda_janela('Distribuição Processo Drone.xlsx')
+            if celula_encontrada == 'Recuperando dados. Aguarde alguns segundos e tente cortar ou copiar novamente.':
+                muda_janela('theomation')
+                input('Parece que o Excel está lento. Tente reiniciar a página e pressione enter.')
+                muda_janela('Distribuição Processo Drone.xlsx')
+            celula_encontrada = pesquisa_processo(processo)
+        if situacao == 'Cancelado':
+            pyautogui.PAUSE = 0.3
+            for i in range(6):
+                pyautogui.press('right')
+
+            pyperclip.copy(situacao)
+            pyautogui.hotkey('ctrl', 'v')
+
+        else:
+            #NAVEGA ENTRE AS CELULAS E INSERE OS DADOS SOBRE O PROCESSO
             pyautogui.press('right')
-
-        pyperclip.copy(situacao)
-        pyautogui.hotkey('ctrl', 'v')
-
-    else:
-        #NAVEGA ENTRE AS CELULAS E INSERE OS DADOS SOBRE O PROCESSO
-        pyautogui.press('right')
-        pyautogui.PAUSE = 0.3
-        pyperclip.copy(nomeEstag)
-        pyautogui.hotkey('ctrl', 'v')
-        pyautogui.press('right')
-        pyperclip.copy(retido)
-        pyautogui.hotkey('ctrl', 'v')
-        pyautogui.press('right')
-
-        #VERIFICA SE ESTÁ RETIDO, SE NAO ESTIVER NAO ESCREVE CODIGO DE RASTREIO
-        if retido == 'Sim':
-            pyperclip.copy(codigo_rastreio)
+            pyautogui.PAUSE = 0.3
+            pyperclip.copy(nomeEstag)
             pyautogui.hotkey('ctrl', 'v')
             pyautogui.press('right')
-        else:
+            pyperclip.copy(retido)
+            pyautogui.hotkey('ctrl', 'v')
             pyautogui.press('right')
-        pyautogui.press('right')
-        pyperclip.copy(nome_interessado)
-        pyautogui.hotkey('ctrl', 'v')
-        pyautogui.press('right')
-        pyperclip.copy(situacao)
-        pyautogui.hotkey('ctrl', 'v')
 
-    #VOLTA PARA A JANELA DO CHROME
-    # chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
-    # pyautogui.click(chrome)
-    muda_janela('theomation')
+            #VERIFICA SE ESTÁ RETIDO, SE NAO ESTIVER NAO ESCREVE CODIGO DE RASTREIO
+            if retido == 'Sim':
+                pyperclip.copy(codigo_rastreio)
+                pyautogui.hotkey('ctrl', 'v')
+                pyautogui.press('right')
+            else:
+                pyautogui.press('right')
+            pyautogui.press('right')
+            pyperclip.copy(nome_interessado)
+            pyautogui.hotkey('ctrl', 'v')
+            pyautogui.press('right')
+            pyperclip.copy(situacao)
+            pyautogui.hotkey('ctrl', 'v')
+            #VOLTA PARA A JANELA DO CHROME
+            # chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
+            # pyautogui.click(chrome)
+            muda_janela('Google Chrome')
+            muda_janela('theomation')
+
 
 #FUNCAO QUE ESPERA UM ELEMENTO CARREGAR NA TELA E CLICA NELE
 def clica_noelemento(navegador, modo_procura, element_id, tempo=5):
@@ -732,6 +721,7 @@ def envia_email(navegador, janela_principal, processo, nomeEstag, impProp, tipoE
         processo_errado(processo, navegador)
 
     #PEDE PARA USUARIO CONFERIR SE ESTÁ TUDO CERTO COM O EMAIL
+    muda_janela('theomation')
     while True:
         try:
             confere = int(input('Caso esteja tudo certo digite [1], caso tenha algum erro digite [2]: '))
@@ -785,6 +775,7 @@ def envia_email(navegador, janela_principal, processo, nomeEstag, impProp, tipoE
             navegador.find_element(By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Pendência').click()
 
         #PEDE O TEXTO DA TAG
+        muda_janela('theomation')
         textoTag = input("Insira o texto da tag: ")
         textoFinaltag = nomeEstag+"\n"+textoTag
         #COLOCA O TEXTO NA TAG
@@ -940,7 +931,6 @@ def analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrone
         analisa(navegador, processos, nomeEstag, drone_modelos, radio_modelos)
         #REMOVE O PROCESSO ANALISADO DA LISTA
         lista_processos.remove(processos)
-        muda_janela('theomation')
         while True:
             opcao = str(input("Caso deseje analisar o próximo processo digite [1], caso contrario, digite [2]: "))
             if opcao == '2':
@@ -1671,6 +1661,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
             #CONDICAO DE EXIGENCIA
             if exigencia == '1':
                 abre_email(navegador, processo)
+                muda_janela('theomation')
                 while True:
                     try:
                         print("Selecione o tipo de exigência abaixo:\n",
@@ -2232,6 +2223,7 @@ def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral):
         print(f'Célula encontrada: {celula_encontrada}')
         while celula_encontrada != processos_atr2:
             if celula_encontrada == 'nan':
+                muda_janela('theomation')
                 input('Parece que o Excel não estava em foco na janela do Microsoft Edge. Volte para a página do app, coloque em foco (clicando em qualquer lugar da planilha) e pressione enter.')
                 muda_janela('Distribuição Processo Drone.xlsx')
             celula_encontrada = pesquisa_processo(processos_atr2)
