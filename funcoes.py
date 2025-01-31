@@ -1723,26 +1723,32 @@ def concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nome
     1. O pedido foi APROVADO
     2. O Despacho Decisório que aprovou o pedido está disponível publicamente por meio do sistema SEI na área de Pesquisa Pública, no link:
 
-        https://sei.anatel.gov.br/sei/modulos/pesquisa/md_pesq_processo_pesquisar.php?acao_externa=protocolo_pesquisar&acao_origem_externa=protocolo_pesquisar&id_orgao_acesso_externo=0
+              https://sei.anatel.gov.br/sei/modulos/pesquisa/md_pesq_processo_pesquisar.php?acao_externa=protocolo_pesquisar&acao_origem_externa=protocolo_pesquisar&id_orgao_acesso_externo=0
 
 
-    3. O Despacho Decisório deverá ser portado junto ao Equipamento (fisicamente ou eletronicamente), para que as autoridades competentes possam conferir a regularidade, quando necessário.
-    4. Visto que o produto se encontra retido, para que seja informado o número de série, solicitamos que acesse o sistema SEI da Anatel por meio do seguinte link:
+    3. O Despacho Decisório deverá ser portado junto ao Equipamento (fisicamente ou eletronicamente), para que as autoridades competentes possam conferir a regularidade, quando necessário. 
+    4. Visto que o produto se encontra retido, para que seja informado o número de série, solicitamos que acesse o sistema SEI da Anatel por meio do seguinte link:
 
 
-                https://sei.anatel.gov.br/sei/controlador_externo.php?acao=usuario_externo_logar&id_orgao_acesso_externo=0.
+                 https://sei.anatel.gov.br/sei/controlador_externo.php?acao=usuario_externo_logar&id_orgao_acesso_externo=0.
 
 
-    5. Após autenticação no sistema SEI, solicitamos que inclua os documentos selecionando a opção "Intercorrente" e informando o número do processo em referência.
+    5. Após autenticação no sistema SEI, solicitamos que inclua os documentos selecionando a opção "Intercorrente" e informando o número do processo em referência.
 
-    6. Em caso de equipamento retido, recomendamos que apresente cópia do Despacho decisório ao e-mail corporativo, para que seja liberada a entrega da encomenda retida, de acordo com o local onde está sendo feita a fiscalização.
+    6. Após a confirmação da homologação por declaração por conformidade pela Anatel, os Correios serão comunicados para dar sequência aos trâmites de importação do produto.
+    7. Caso o produto permaneça retido pelos Correios, primeiramente, deverá ser realizada consulta por meio do endereço: https://www2.correios.com.br/sistemas/falecomoscorreios/ para obter informação sobre a etapa do processo de importação que a encomenda se encontra.
+    8. Se ainda persistir essa situação, a Anatel poderá ser consultada por meio do Portal da Anatel no endereço: https://www.gov.br/anatel/pt-br/consumidor/quer-reclamar/reclamacao , selecionando as seguintes opções:
 
-    Caso encomenda retida no Paraná, encaminhar email para - fiscalizacao1.pr@anatel.gov.br
-    Caso encomenda retida em São Paulo, encaminhar email para - documentacao.sp@anatel.gov.br
-    Caso encomenda retida em Rio de Janeiro, encaminhar email para - documentacao.rj@anatel.gov.br
+    Registrar solicitação;
+    Outras Manifestações (Registrar);
+    Certificação e Homologação de Produtos (Equipamento) de Telecomunicações;
+    Produtos retidos.
+    9. No campo “Descreva seu pedido” deverá ser informado o código de rastreio da encomenda, o tipo de produto de telecomunicações com marca, modelo e quantidade.
+    10. Deverão ser anexados os arquivos do processo de solicitação de homologação para confirmar que o produto foi homologado por declaração por conformidade pela Anatel.
 
 
-    FAVOR NÃO RESPONDER ESTE E-MAIL.
+
+    FAVOR NÃO RESPONDER ESTE E-MAIL. 
 
     Atenciosamente,
 
@@ -1760,12 +1766,12 @@ def concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nome
     1. O pedido foi APROVADO
     2. O Despacho Decisório que aprovou o pedido está disponível publicamente por meio do sistema SEI na área de Pesquisa Pública, no link:
 
-            https://sei.anatel.gov.br/sei/modulos/pesquisa/md_pesq_processo_pesquisar.php?acao_externa=protocolo_pesquisar&acao_origem_externa=protocolo_pesquisar&id_orgao_acesso_externo=0
+             https://sei.anatel.gov.br/sei/modulos/pesquisa/md_pesq_processo_pesquisar.php?acao_externa=protocolo_pesquisar&acao_origem_externa=protocolo_pesquisar&id_orgao_acesso_externo=0
 
 
-    3. O Despacho Decisório deverá ser portado junto ao Equipamento (fisicamente ou eletronicamente), para que as autoridades competentes possam conferir a regularidade, quando necessário.
+    3. O Despacho Decisório deverá ser portado junto ao Equipamento (fisicamente ou eletronicamente), para que as autoridades competentes possam conferir a regularidade, quando necessário. 
 
-    FAVOR NÃO RESPONDER ESTE E-MAIL.
+    FAVOR NÃO RESPONDER ESTE E-MAIL. 
 
     Atenciosamente,
 
@@ -1876,7 +1882,7 @@ def concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nome
                     # navegador.find_element(By.XPATH, '//*[@id="select2-result-label-2"]').click()
                     #INSERE ASSUNTO DO EMAIL E TEXTO DO EMAIL
                     if retido == "sim":
-                        endereco_email("documentacao.sp@anatel.gov.br", navegador)
+                        endereco_email("notificacaosei.sp@anatel.gov.br", navegador)
                         endereco_email("documentacao.rj@anatel.gov.br", navegador)
                         endereco_email("fiscalizacao1.pr@anatel.gov.br", navegador)
                         navegador.find_element(By.ID, 'txtAssunto').send_keys(f'Processo SEI nº {processosAssinados} - Aprovado ({codRastreio})')
