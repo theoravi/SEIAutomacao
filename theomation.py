@@ -43,7 +43,7 @@ def main():
                     print('Usuário ou senha incorretos. Digite novamente')
         
         lista_procConformes, lista_procCancelamento, lista_processos = fc.fazListasProcessos(navegador)
-
+            
         #IMPRIME A QUANTIDADE DE PROCESSOS QUE SERÃO ANALISADOS E CONCLUÍDOS
         print("Quantidade de processos para analisar", len(lista_processos))
         print("Quantidade de processos para concluir", len(lista_procConformes))

@@ -1886,10 +1886,16 @@ def concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nome
                         endereco_email("documentacao.rj@anatel.gov.br", navegador)
                         endereco_email("fiscalizacao1.pr@anatel.gov.br", navegador)
                         navegador.find_element(By.ID, 'txtAssunto').send_keys(f'Processo SEI nº {processosAssinados} - Aprovado ({codRastreio})')
-                        navegador.find_element(By.ID, 'txaMensagem').send_keys(textoRetido)
+                        select_element = WebDriverWait(navegador, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selTextoPadrao"]')))
+                        select = Select(select_element)
+                        #SELECIONA O TEXTO PADRAO DE DRONES RETIDOS APROVADOS
+                        select.select_by_visible_text('Processo SEI ORCN - APROVAÇÃO - DRONE RETIDO')
                     else:
                         navegador.find_element(By.ID, 'txtAssunto').send_keys(f'Processo SEI nº {processosAssinados} - Aprovado')
-                        navegador.find_element(By.ID, 'txaMensagem').send_keys(textoNaoRetido)
+                        select_element = WebDriverWait(navegador, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selTextoPadrao"]')))
+                        select = Select(select_element)
+                        #SELECIONA O TEXTO PADRAO DE DRONES APROVADOS
+                        select.select_by_visible_text('Processo SEI ORCN - APROVAÇÃO - DRONE')
 
                     #ENVIA EMAIL
                     clica_noelemento(navegador, By.XPATH,'//*[@id="divInfraBarraComandosInferior"]/button[1]')
