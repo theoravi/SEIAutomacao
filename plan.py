@@ -137,9 +137,9 @@ def manda_email(n_processo, codigo_rastreio):
     select_element = WebDriverWait(navegador, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selDe"]')))
     select = Select(select_element)
     select.select_by_visible_text('ANATEL/E-mail de replicação <nao-responda@anatel.gov.br>')
-    endereco_email('notificacaosei.sp@anatel.gov.br')
-    endereco_email('documentacao.rj@anatel.gov.br')
-    endereco_email('fiscalizacao1.pr@anatel.gov.br')
+    endereco_email("notificacaosei.sp@anatel.gov.br", navegador)
+    endereco_email("notificacaosei.rj@anatel.gov.br", navegador)
+    endereco_email("notificacaosei.pr@anatel.gov.br", navegador)
     navegador.find_element(By.ID, 'txtAssunto').send_keys(f'Processo SEI nº {n_processo} - Código de rastreio: {codigo_rastreio} - Aberto')
     navegador.find_element(By.ID, 'txaMensagem').send_keys(f'Processo SEI nº {n_processo} - Código de rastreio: {codigo_rastreio} - Aberto')
     #ENVIA EMAIL
