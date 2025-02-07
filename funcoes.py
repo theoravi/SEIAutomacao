@@ -633,6 +633,44 @@ def armazena_nomesolicitante(navegador):
     nomeSol = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[1]/td[2]').text
     return nomeSol
 
+def tira_restrito(navegador):
+    navegador.switch_to.default_content()
+    navegador.switch_to.frame('ifrArvore')
+    arvoredocs = navegador.find_elements(By.CLASS_NAME, 'infraArvoreNo')
+
+    #VERIFICA SE O DOCUMENTO ESTÁ RESTRITO, SE ESTIVER ELE IRÁ DEIXAR COMO PUBLICO UTILIZANDO O SIMBOLO DE RESTRITO COMO REFERENCIA
+    elementos_com_src = navegador.find_elements(By.CSS_SELECTOR, "[src='svg/processo_restrito.svg?18']")
+    #CRIA UMA LISTA PARA OS DOCUMENTOS QUE DEVERÃO SER DEIXADOS COMO PUBLICO
+    elementos_para_clicar = []
+    #ITERA SOBRE OS DOCUMENTOS 
+    for doc in arvoredocs:
+        #ITERA SOBRE OS ELEMENTOS COM O SIMBOLO DE RESTRITO
+        for elemento in elementos_com_src:
+            #VERIFICA SE O DOCUMENTO ESTÁ AO LADO DO SIMBOLO DE RESTRITO
+            if elemento in doc.find_elements(By.XPATH, 'following-sibling::*[2]/*'):
+                #SE O SIMBOLO DE RESTRITO ESTIVER NO DOCUMENTO ELE INCLUIRÁ NA LISTA DE DOCUMENTOS A SEREM ACESSADOS
+                elementos_para_clicar.append(doc.get_attribute("id"))
+                break
+
+    for id in elementos_para_clicar:
+        #ENCONTRA O ELEMENTO PARA CLICAR
+        doc = navegador.find_element(By.ID, id)
+        doc.click()
+        time.sleep(1)
+        navegador.switch_to.default_content()
+        navegador.switch_to.frame('ifrConteudoVisualizacao')
+        #CLICA NO SIMBOLO DE ALTERAR DOCUMENTO
+        clica_noelemento(navegador, By.XPATH, '//*[@id="divArvoreAcoes"]/a[2]/img')
+        time.sleep(0.7)
+        navegador.switch_to.frame('ifrVisualizacao')
+        #SELECIONA A OPCAO DE PUBLICO NO DOCUMENTO
+        clica_noelemento(navegador, By.XPATH,'//*[@id="divOptPublico"]/div/label')
+        #SALVA AS MUDANCAS
+        clica_noelemento(navegador, By.ID,'btnSalvar')
+        navegador.switch_to.default_content()
+        navegador.switch_to.frame('ifrArvore')
+    navegador.switch_to.default_content()
+
 def abre_email(navegador, processo, processo_errado=False):
     navegador.switch_to.default_content()
     navegador.switch_to.frame('ifrArvore')
@@ -992,7 +1030,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
         
         elif check_element_exists(By.PARTIAL_LINK_TEXT, 'Despacho Decisório', navegador) and (check_element_exists(By.XPATH, "//img[contains(@src, 'svg/marcador_verde.svg?18')]", navegador) or check_element_exists(By.XPATH, "//img[contains(@src, 'svg/marcador_preto.svg?18')]", navegador)):
             tipo_processo = 'Reaberto'
-            print('Este processo foi reaberto!')
+            print(f"O processo {processo} foi reaberto!")
             while True:
                 try:
                     confirmacao = str(input('Caso este seja um PEDIDO DE CANCELAMENTO, digite [1] para gerar o despacho. Caso contrário digite [2]: '))
@@ -1007,10 +1045,10 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                     print("Opção inválida, tente novamente!")
         
         #CONFERE SE EXISTE A DECLARACAO DE CONFORMIDADE OU UMA PASTA
-        if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade", navegador):
-            navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
-            time.sleep(0.3)
-        elif check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]', navegador):
+        # if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade", navegador):
+        #     navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
+        #     time.sleep(0.3)
+        if check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]', navegador):
             navegador.find_element(By.XPATH, '//*[@id="spanPASTA1"]').click()
             time.sleep(1)
             navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
@@ -1477,6 +1515,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
         #CRIA DESPACHO DECISORIO
         #PEDE PRA USUARIO VERIFICAR SE ESTÁ TUDO CERTO
         #VOLTA PARA A PAGINA DE INICIO DO PROCESSO
+        tira_restrito(navegador)
         while True:
             try:
                 confirmacao = str(input('Caso esteja tudo certo e NÃO HAJA UM DESPACHO JÁ CRIADO digite [1] para continuar, senão, digite [2]: '))
@@ -1491,44 +1530,44 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
             except ValueError:
                 print("Opção inválida, tente novamente!")
         if confirmacao == '1':
-            navegador.switch_to.frame('ifrArvore')
-            arvoredocs = navegador.find_elements(By.CLASS_NAME, 'infraArvoreNo')
+            # navegador.switch_to.frame('ifrArvore')
+            # arvoredocs = navegador.find_elements(By.CLASS_NAME, 'infraArvoreNo')
 
-            #VERIFICA SE O DOCUMENTO ESTÁ RESTRITO, SE ESTIVER ELE IRÁ DEIXAR COMO PUBLICO UTILIZANDO O SIMBOLO DE RESTRITO COMO REFERENCIA
-            elementos_com_src = navegador.find_elements(By.CSS_SELECTOR, "[src='svg/processo_restrito.svg?18']")
-            #CRIA UMA LISTA PARA OS DOCUMENTOS QUE DEVERÃO SER DEIXADOS COMO PUBLICO
-            elementos_para_clicar = []
-            #ITERA SOBRE OS DOCUMENTOS 
-            for doc in arvoredocs:
-                #ITERA SOBRE OS ELEMENTOS COM O SIMBOLO DE RESTRITO
-                for elemento in elementos_com_src:
-                    #VERIFICA SE O DOCUMENTO ESTÁ AO LADO DO SIMBOLO DE RESTRITO
-                    if elemento in doc.find_elements(By.XPATH, 'following-sibling::*[2]/*'):
-                        #SE O SIMBOLO DE RESTRITO ESTIVER NO DOCUMENTO ELE INCLUIRÁ NA LISTA DE DOCUMENTOS A SEREM ACESSADOS
-                        elementos_para_clicar.append(doc.get_attribute("id"))
-                        break
+            # #VERIFICA SE O DOCUMENTO ESTÁ RESTRITO, SE ESTIVER ELE IRÁ DEIXAR COMO PUBLICO UTILIZANDO O SIMBOLO DE RESTRITO COMO REFERENCIA
+            # elementos_com_src = navegador.find_elements(By.CSS_SELECTOR, "[src='svg/processo_restrito.svg?18']")
+            # #CRIA UMA LISTA PARA OS DOCUMENTOS QUE DEVERÃO SER DEIXADOS COMO PUBLICO
+            # elementos_para_clicar = []
+            # #ITERA SOBRE OS DOCUMENTOS 
+            # for doc in arvoredocs:
+            #     #ITERA SOBRE OS ELEMENTOS COM O SIMBOLO DE RESTRITO
+            #     for elemento in elementos_com_src:
+            #         #VERIFICA SE O DOCUMENTO ESTÁ AO LADO DO SIMBOLO DE RESTRITO
+            #         if elemento in doc.find_elements(By.XPATH, 'following-sibling::*[2]/*'):
+            #             #SE O SIMBOLO DE RESTRITO ESTIVER NO DOCUMENTO ELE INCLUIRÁ NA LISTA DE DOCUMENTOS A SEREM ACESSADOS
+            #             elementos_para_clicar.append(doc.get_attribute("id"))
+            #             break
 
-            #AGORA COM O ID DO DOCUMENTO ELE CLICARÁ EM CADA DOCUMENTO RESTRITO PARA DEIXAR PUBLICO
-            for id in elementos_para_clicar:
-                #ENCONTRA O ELEMENTO PARA CLICAR
-                doc = navegador.find_element(By.ID, id)
-                doc.click()
-                time.sleep(0.7)
-                navegador.switch_to.default_content()
-                navegador.switch_to.frame('ifrConteudoVisualizacao')
-                #CLICA NO SIMBOLO DE ALTERAR DOCUMENTO
-                clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[2]')
-                # navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[2]').click()
-                #SELECIONA A OPCAO DE PUBLICO NO DOCUMENTO
-                time.sleep(0.5)
-                navegador.switch_to.frame('ifrVisualizacao')
-                clica_noelemento(navegador, By.XPATH,'//*[@id="divOptPublico"]/div/label')
-                # navegador.find_element(By.XPATH,'//*[@id="divOptPublico"]/div/label').click()
-                #SALVA AS MUDANCAS
-                clica_noelemento(navegador, By.ID,'btnSalvar')
-                # navegador.find_element(By.ID,'btnSalvar').click()
-                navegador.switch_to.default_content()
-                navegador.switch_to.frame('ifrArvore')
+            # #AGORA COM O ID DO DOCUMENTO ELE CLICARÁ EM CADA DOCUMENTO RESTRITO PARA DEIXAR PUBLICO
+            # for id in elementos_para_clicar:
+            #     #ENCONTRA O ELEMENTO PARA CLICAR
+            #     doc = navegador.find_element(By.ID, id)
+            #     doc.click()
+            #     time.sleep(0.7)
+            #     navegador.switch_to.default_content()
+            #     navegador.switch_to.frame('ifrConteudoVisualizacao')
+            #     #CLICA NO SIMBOLO DE ALTERAR DOCUMENTO
+            #     clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[2]')
+            #     # navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[2]').click()
+            #     #SELECIONA A OPCAO DE PUBLICO NO DOCUMENTO
+            #     time.sleep(0.5)
+            #     navegador.switch_to.frame('ifrVisualizacao')
+            #     clica_noelemento(navegador, By.XPATH,'//*[@id="divOptPublico"]/div/label')
+            #     # navegador.find_element(By.XPATH,'//*[@id="divOptPublico"]/div/label').click()
+            #     #SALVA AS MUDANCAS
+            #     clica_noelemento(navegador, By.ID,'btnSalvar')
+            #     # navegador.find_element(By.ID,'btnSalvar').click()
+            #     navegador.switch_to.default_content()
+            #     navegador.switch_to.frame('ifrArvore')
             navegador.switch_to.default_content()
             navegador.switch_to.frame('ifrArvore')
             #ENTRA NA PAGINA INICIAL DO PROCESSO
