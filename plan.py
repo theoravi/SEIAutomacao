@@ -15,6 +15,9 @@ from selenium.webdriver.support.ui import Select
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import subprocess
+from pywinauto import Application
+from pywinauto.findwindows import find_windows, ElementAmbiguousError, ElementNotFoundError
 
 
 def preencher_campos():
@@ -35,8 +38,7 @@ def check_element_exists(by, value):
 
 
 def preenche_plan(nomeSol, nomeInt, data, retido, codigo_rastreio, n_serie, n_serie2):
-    edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
-    pyautogui.click(edge)
+    fc.muda_janela('Distribuição Processo Drone.xlsx')
     time.sleep(0.4)
     pyautogui.PAUSE = 0.2
     pyautogui.press('right')
@@ -85,8 +87,7 @@ def preenche_plan(nomeSol, nomeInt, data, retido, codigo_rastreio, n_serie, n_se
 
 
 def preenche_plan2(nomeSol, nomeInt, data):
-    edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
-    pyautogui.click(edge)
+    fc.muda_janela('Distribuição Processo Drone.xlsx')
     time.sleep(0.4)
     pyautogui.PAUSE = 0.2
     pyautogui.press('right')
@@ -117,7 +118,7 @@ def preenche_plan2(nomeSol, nomeInt, data):
     pyautogui.press('down')
 
 
-def endereco_email(endereco):
+def endereco_email(endereco, navegador):
     navegador.find_element(By.XPATH, '//*[@id="s2id_autogen1"]').send_keys(endereco)
     time.sleep(1)
     #CLICA NO EMAIL DO SOLICITANTE
@@ -181,11 +182,11 @@ def fecha_processo():
     navegador.switch_to.default_content()
     navegador.switch_to.frame('ifrConteudoVisualizacao')
     try:
-        navegador.find_element(By.XPATH, "//img[contains(@src, 'svg/processo_concluir.svg?18')]").click()
+        fc.clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/processo_concluir.svg?18')]", 2)
         navegador.switch_to.frame('ifrVisualizacao')
         fc.clica_noelemento(navegador, By.XPATH, '//*[@id="sbmSalvar"]')
-    except:
-        pass
+    except Exception as e:
+        print(e)
 
 def tira_restrito():
     navegador.switch_to.default_content()
@@ -234,17 +235,46 @@ navegador = webdriver.Chrome(service=servico)
 navegador.maximize_window()
 navegador.get('https://sei.anatel.gov.br/')
 janela_principal = navegador.current_window_handle
-edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
-pyautogui.click(edge)
-time.sleep(3)
-sitePlan = 'https://anatel365.sharepoint.com/:x:/r/sites/lista.orcn/_layouts/15/Doc.aspx?sourcedoc=%7B4130A4D6-7F00-45D4-A328-ED0866A62335%7D&file=Distribui%C3%A7%C3%A3o%20Processo%20Drone.xlsx&action=default&mobileredirect=true'
-pyperclip.copy(sitePlan)
-pyautogui.hotkey('ctrl', 'l')
-pyautogui.hotkey('ctrl', 'v')
-pyautogui.press('enter')
-chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
-pyautogui.click(chrome)
+# edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+# pyautogui.click(edge)
+try:
+    # Busca todas as janelas que contenham o título especificado
+    matches = find_windows(title_re=f".*Distribuição Processo Drone.xlsx.*", backend="win32", visible_only=True)
+    
+    if not matches:
+        raise ElementNotFoundError(f"Nenhuma janela encontrada com o título 'Distribuição Processo Drone.xlsx'.")
 
+    if len(matches) > 1:
+        print(f"Mais de uma janela encontrada com o título 'Distribuição Processo Drone.xlsx'. Selecionando a mais recente.")
+    
+    # Seleciona a última janela encontrada (mais recente/ativa)
+    handle = matches[-1]
+    app = Application(backend="win32").connect(handle=handle)
+    window = app.window(handle=handle)
+
+    # Garante que a janela será restaurada e focada
+    if not window.is_active():
+        # window.restore()
+        window.set_focus()
+except ElementNotFoundError:
+    # Abre o Edge
+    subprocess.Popen(["C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"])
+    time.sleep(3)
+    sitePlan = 'https://anatel365.sharepoint.com/:x:/r/sites/lista.orcn/_layouts/15/Doc.aspx?sourcedoc=%7B4130A4D6-7F00-45D4-A328-ED0866A62335%7D&file=Distribui%C3%A7%C3%A3o%20Processo%20Drone.xlsx&action=default&mobileredirect=true'
+    pyperclip.copy(sitePlan)
+    pyautogui.hotkey('ctrl', 'l')
+    pyautogui.hotkey('ctrl', 'v')
+    pyautogui.press('enter')
+
+# time.sleep(3)
+# sitePlan = 'https://anatel365.sharepoint.com/:x:/r/sites/lista.orcn/_layouts/15/Doc.aspx?sourcedoc=%7B4130A4D6-7F00-45D4-A328-ED0866A62335%7D&file=Distribui%C3%A7%C3%A3o%20Processo%20Drone.xlsx&action=default&mobileredirect=true'
+# pyperclip.copy(sitePlan)
+# pyautogui.hotkey('ctrl', 'l')
+# pyautogui.hotkey('ctrl', 'v')
+# pyautogui.press('enter')
+# chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
+# pyautogui.click(chrome)
+fc.muda_janela('Google Chrome')
 
 while True:
     #INICIA JANELA
@@ -310,8 +340,9 @@ while True:
 
 verifica=input('Aperte enter após filtrar a planilha geral.')
 
-edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
-pyautogui.click(edge)
+# edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+# pyautogui.click(edge)
+fc.muda_janela('Distribuição Processo Drone.xlsx')
 pyautogui.click(x=160, y=375)
 
 while True:
@@ -324,8 +355,10 @@ while True:
         pyautogui.hotkey('ctrl', 'c')
         time.sleep(0.2)
         n_processo = pyperclip.paste()
-        chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
-        pyautogui.click(chrome)
+        print("Processo: " + n_processo)
+        # chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
+        # pyautogui.click(chrome)
+        fc.muda_janela('Google Chrome')
         navegador.switch_to.default_content()
         navegador.find_element(By.ID,'txtPesquisaRapida').click()
         pyautogui.hotkey('ctrl', 'v')
@@ -373,12 +406,16 @@ while True:
                 tira_restrito()
                 preenche_plan(nomeSol, nomeInt, data, retido, codigo_rastreio, n_serie, n_serie2)
             elif check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio"):
+                print('Encontrada declaracao de conformidade drone')
                 clica_noelemento(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio")
                 navegador.switch_to.default_content()
                 navegador.switch_to.frame('ifrConteudoVisualizacao')
                 navegador.switch_to.frame('ifrVisualizacao')
                 time.sleep(0.7)
-                codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[5]/tbody/tr/td[2]').text
+                try:
+                    codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[5]/tbody/tr/td[2]').text
+                except Exception as e:
+                    print(e)   
                 codigo_rastreio = codigo_rastreio.replace('-','').replace('.','')
                 n_serie = navegador.find_element(By.XPATH,'/html/body/table[4]/tbody/tr[2]/td[3]').text
                 try:
@@ -400,14 +437,16 @@ while True:
         else:
             print("Processo não contém recibo.")
             print("Pulando processo...")
-            edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
-            edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
-            pyautogui.click(edge)
+            # edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+            # edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
+            # pyautogui.click(edge)
+            fc.muda_janela('Distribuição Processo Drone.xlsx')
             pyautogui.press('down')
     
         if processo_reaberto:
             fecha_processo()
     except Exception as e:
         print(e)
-        pyautogui.click(edge)
+        # pyautogui.click(edge)
+        fc.muda_janela('Distribuição Processo Drone.xlsx')
         pyautogui.press('down')        
