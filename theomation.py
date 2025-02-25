@@ -12,6 +12,7 @@ import time
 import funcoes as fc
 import json
 import subprocess
+from datetime import datetime
 
 DEV_MODE = True
 def main():
@@ -49,13 +50,13 @@ def main():
         print("Quantidade de processos para concluir", len(lista_procConformes))
         print("Quantidade de pedidos de cancelamento a concluir", len(lista_procCancelamento))
 
+        
+
         #ABRE DICIONARIO
         with open('usuarios/usuarios.json', 'r') as arquivo:
             usuarios = json.load(arquivo)
-
         try: 
             nomeEstag = usuarios[user_name]
-            print("Coletado nome do usuário:", nomeEstag)
         except:
             while True:
                 nomeEstag = str(input("Como é seu primeiro acesso, digite seu nome completo: "))
@@ -67,6 +68,14 @@ def main():
                 json.dump(usuarios, arquivo)
         finally:
             nomeEstag_sem_acento = unidecode.unidecode(nomeEstag)
+            apelidoEstag = nomeEstag.split()[0]
+            now = datetime.now()
+            if now.hour < 12:
+                print(f"Bom dia, {apelidoEstag}!")
+            elif now.hour < 18:
+                print(f"Boa tarde, {apelidoEstag}!")
+            else:
+                print(f"Boa noite, {apelidoEstag}!")
 
         #COLETA CAMINHO DAS PLANILHAS DE EQUIPAMENTOS CONFORMES
    

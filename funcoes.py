@@ -1869,15 +1869,24 @@ def concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nome
             navegador.switch_to.frame('ifrArvore')
 
             #CONFERE SE EXISTE A DECLARACAO DE CONFORMIDADE OU UMA PASTA
-            if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade", navegador):
-                navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
-                time.sleep(0.3)
-            elif check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]', navegador):
+            # if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade", navegador):
+            #     navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
+            #     time.sleep(0.3)
+            # elif check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]', navegador):
+            #     navegador.find_element(By.XPATH, '//*[@id="spanPASTA1"]').click()
+            #     time.sleep(1)
+            #     navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
+            #     time.sleep(0.3)
+            #CONFERE SE EXISTE A DECLARACAO DE CONFORMIDADE OU UMA PASTA
+            if check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]', navegador):
                 navegador.find_element(By.XPATH, '//*[@id="spanPASTA1"]').click()
                 time.sleep(1)
                 navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
                 time.sleep(0.3)
 
+            elif check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade", navegador):
+                navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade").click()
+                time.sleep(0.3)
             navegador.switch_to.default_content()
             navegador.switch_to.frame('ifrConteudoVisualizacao')
             navegador.switch_to.frame('ifrVisualizacao')
@@ -1994,10 +2003,12 @@ def concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nome
                         #CLICA NA TAG DE RETIDO
                         clica_noelemento(navegador, By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Concluido - Retidos')
                         # navegador.find_element(By.XPATH, '//*[@id="selMarcador"]/ul/li[17]').click()
-                        time.sleep(0.2)
-                        navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(nomeEstag)
+                    time.sleep(0.2)
+                    #COLOCA O TEXTO NA TAG
+                    navegador.find_element(By.XPATH, '//*[@id="txaTexto"]').send_keys(nomeEstag)
                     #SALVA TAG
-                    clica_noelemento(navegador, By.XPATH,'//*[@id="sbmSalvar"]')
+                    navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
+                    
                     # navegador.find_element(By.XPATH, '//*[@id="sbmSalvar"]').click()
                     navegador.switch_to.default_content()
                     #ENTRA NA PAGINA INICIAL DO PROCESSO
@@ -2022,13 +2033,16 @@ def concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nome
         except Exception as e:
             print("Ocorreu algum erro.\nPulando processo...")
             print(e)
-            continue  # Não interrompe, mas pula para o próximo processo
+            input("Ocorreu um erro ao concluir um dos processos. Pressione enter para cancelar a conclusão...")
+            return
+            # continue  # Não interrompe, mas pula para o próximo processo
         
         finally:
             # Remover o processo da lista fora da iteração original
             lista_procConformes.remove(processosAssinados)
     
-    print("Concluindo pedidos de cancelamento")
+    if len(lista_procCancelamento) > 0:
+        print("Concluindo pedidos de cancelamento")
 
     textoCancelamento = f"""Prezado(a) Senhor(a),
 
