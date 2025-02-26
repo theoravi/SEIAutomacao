@@ -530,7 +530,7 @@ def muda_janela(janela: str):
         print(f"Ocorreu um erro inesperado: {e}")
         return False
     
-def pesquisa_processo(processo):
+def localiza_processo(processo):
     pyautogui.PAUSE = 0.7
     pyperclip.copy(processo)
     #PESQUISA PROCESSO NA PLANILHA
@@ -555,18 +555,19 @@ def preenche_planilhageral(processo, nomeEstag, retido='', situacao='', codigo_r
     #ENCONTRA O ICONE DO EDGE E ABRE O NAVEGADOR DA PLANILHA
     mudou_janela = muda_janela('Distribuição Processo Drone.xlsx')
     if mudou_janela:
-        celula_encontrada = pesquisa_processo(processo)
+        celula_encontrada = localiza_processo(processo)
         print(f'Célula encontrada: {celula_encontrada}')
         while celula_encontrada != processo:
+            muda_janela('theomation')
             if celula_encontrada == 'nan':
-                muda_janela('theomation')
                 input('Parece que o Excel não estava em foco na janela do Microsoft Edge. Volte para a página do app, coloque em foco (clicando em qualquer lugar da planilha) e pressione enter.')
-                muda_janela('Distribuição Processo Drone.xlsx')
             if celula_encontrada == 'Recuperando dados. Aguarde alguns segundos e tente cortar ou copiar novamente.':
-                muda_janela('theomation')
-                input('Parece que o Excel está lento. Tente reiniciar a página e pressione enter.')
-                muda_janela('Distribuição Processo Drone.xlsx')
-            celula_encontrada = pesquisa_processo(processo)
+                opcao = input('Parece que o Excel está lento. Caso o processo tenha sido encontrado, pressione [1]. Caso contrário, pressione enter para que o programa tente localizá-lo novamente')
+                if opcao == '1':
+                    muda_janela('Distribuição Processo Drone.xlsx')
+                    break
+            muda_janela('Distribuição Processo Drone.xlsx')
+            celula_encontrada = localiza_processo(processo)
         if situacao == 'Cancelado':
             pyautogui.PAUSE = 0.3
             for i in range(6):
@@ -2278,7 +2279,7 @@ def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral):
         # pyautogui.press('enter')
         # pyautogui.PAUSE = 0.4
         # pyautogui.press('esc')
-        celula_encontrada = pesquisa_processo(processos_atr2)
+        celula_encontrada = localiza_processo(processos_atr2)
         #COPIA O NUMERO DO PROCESSO NA CELULA PARA SABER SE ELE FOI ENCONTRADO CORRETAMENTE
         # pyperclip.copy('nan')
         # pyautogui.hotkey('ctrl','c')
@@ -2291,7 +2292,7 @@ def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral):
                 muda_janela('theomation')
                 input('Parece que o Excel não estava em foco na janela do Microsoft Edge. Volte para a página do app, coloque em foco (clicando em qualquer lugar da planilha) e pressione enter.')
                 muda_janela('Distribuição Processo Drone.xlsx')
-            celula_encontrada = pesquisa_processo(processos_atr2)
+            celula_encontrada = localiza_processo(processos_atr2)
         pyautogui.press('right')
         pyperclip.copy(nomeEstag)
         pyautogui.hotkey('ctrl', 'v')
