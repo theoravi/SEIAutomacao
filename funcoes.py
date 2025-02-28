@@ -1846,7 +1846,11 @@ def concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nome
 
         if not resultado.empty:
             # Se o processo for encontrado, pegar o valor da coluna 'Retido'
-            retido = resultado.iloc[0]['Retido'].lower()
+            try:
+                retido = resultado.iloc[0]['Retido'].lower()
+            except Exception as e:
+                print(f"Processo {processosAssinados} não possui informação quanto à situação 'retido' na planilha.")
+                continue
             codRastreio = resultado.iloc[0]['NumerodoRastreio']
 
             # Diz se o processo está retido ou não
@@ -2032,10 +2036,11 @@ def concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nome
                     time.sleep(0.5)
         #CONDICAO DE ERRO
         except Exception as e:
-            print("Ocorreu algum erro.\nPulando processo...")
+            print("Ops! Algo deu errado.")
             print(e)
-            input("Ocorreu um erro ao concluir um dos processos. Pressione enter para cancelar a conclusão...")
-            return
+            print("Ocorreu um erro ao concluir um dos processos. Tire print da mensagem de erro e comunique ao desenvolvedor.")
+            input("Pressione enter para continuar...")
+            continue
             # continue  # Não interrompe, mas pula para o próximo processo
         
         finally:
@@ -2047,20 +2052,20 @@ def concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nome
 
     textoCancelamento = f"""Prezado(a) Senhor(a),
 
-    Informamos que a solicitação de cancelamento de homologação foi deferida.
+        Informamos que a solicitação de cancelamento de homologação foi deferida.
 
 
-    FAVOR NÃO RESPONDER ESTE E-MAIL. 
+        FAVOR NÃO RESPONDER ESTE E-MAIL. 
 
-    
+        
 
-    Atenciosamente,
+        Atenciosamente,
 
-    ORCN - Gerência de Certificação e Numeração
+        ORCN - Gerência de Certificação e Numeração
 
-    SOR - Superintendência de Outorga e Recursos à Prestação
+        SOR - Superintendência de Outorga e Recursos à Prestação
 
-    Anatel - Agência Nacional de Telecomunicações"""
+        Anatel - Agência Nacional de Telecomunicações"""
 
     for processosAssinados in lista_procCancelamento[:]:
         print('\n')
