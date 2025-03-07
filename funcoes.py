@@ -693,9 +693,35 @@ def abre_email(navegador, processo, processo_errado=False):
 
     #ARMAZENA O EMAIL DO SOLICITANTE
     if processo_errado and processo_sem_email:
-        emailSol = str(input("Não foi possível encontrar um documento que contenha o email do usuário.\n Digite o email do solicitante: "))
+        print("Não foi possivel obter o email do solicitante!")
+        while True:
+            emailSol = input("Digite o email do solicitante: ")
+            opcao = input("Confirma o email digitado? Digite [1] para confirmar, [2] para digitar novamente ou [3] para cancelar: ")
+            if opcao == '1':
+                break   
+            elif opcao == '2':  
+                continue            
+            elif opcao == '3':
+                return
+            else:
+                print("Opção inválida! Tente novamente.")
     else:
-        emailSol = navegador.find_element(By.XPATH, '/html/body/div[3]/a[1]').text
+        try:
+            emailSol = navegador.find_element(By.XPATH, '/html/body/div[3]/a[1]').text
+        except:
+            print("Não foi possivel obter o email do solicitante!")
+            while True:
+                emailSol = input("Digite o email do solicitante: ")
+                opcao = input("Confirma o email digitado? Digite [1] para confirmar, [2] para digitar novamente ou [3] para cancelar: ")
+                if opcao == '1':
+                    break   
+                elif opcao == '2':  
+                    continue            
+                elif opcao == '3':
+                    return
+                else:
+                    print("Opção inválida! Tente novamente.")
+
 
     #RETORNA PARA A PAGINA INICIAL DO PROCESSO
     vai_para_processo(navegador, processo)
@@ -1246,6 +1272,10 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
             n_serie = navegador.find_element(By.XPATH, '/html/body/table[4]/tbody/tr[2]/td[3]').text
             codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[5]/tbody/tr/td[2]').text
         #VERIFICA SE HÁ ALGUM TEXTO NA TABELA COM O CÓDIGO DE RASTREIO
+        
+        #RETIRA O RESTRITO DOS DOCUMENTOS
+        tira_restrito(navegador)
+        
         #SE HOUVER ALGUM TEXTO ELE DA COMO RETIDO, CASO NAO TENHA TEXTO ELE DA COMO NAO RETIDO
         if not codigo_rastreio.strip():
             print("Produto não retido ou código de rastreio não informado.")
@@ -1274,249 +1304,10 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
 
         time.sleep(1)
         navegador.switch_to.default_content()
-
-        # #ENCONTRAR DECLARAÇÃO DE CONFORMIDADE NO PROCESSO DRONE
-        # if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Drone", navegador):
-        #     #ACESSA O RECIBO PARA PEGAR NOME DO SOLICITANTE
-        #     navegador.find_element(By.PARTIAL_LINK_TEXT, 'Recibo Eletrônico').click()
-        #     navegador.switch_to.default_content()
-        #     #ENTRA NOS FRAMES QUE POSSUE O NOME DO SOLICITANTE
-        #     navegador.switch_to.frame('ifrConteudoVisualizacao')
-        #     navegador.switch_to.frame('ifrVisualizacao')
-        #     #ARMAZENA NOME DO SOLICITANTE NA VARIAVEL
-        #     nomeSol = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[1]/td[2]').text
-        #     #RETORNA AO FRAME DEFAULT
-        #     navegador.switch_to.default_content()
-        #     #COLETAR DADOS DA DECLARAÇÃO DE CONFORMIDADE
-        #     #RETORNA AO FRAME QUE CONTÉM OS DOCUMENTOS
-        #     navegador.switch_to.frame('ifrArvore')
-        #     #CLICA NA DECLARACAO DE CONFORMIDADE
-        #     navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Drone").click()
-        #     time.sleep(1)
-        #     #RETORNA AO FRAME DEFAULT E ENTRA NOS FRAMES QUE CONTÉM A VISUALIZACAO DA DECLARACAO
-        #     navegador.switch_to.default_content()
-        #     navegador.switch_to.frame('ifrConteudoVisualizacao')
-        #     navegador.switch_to.frame('ifrVisualizacao')
-        #     #EXIBE INFORMACOES DO PROCESSO
-        #     print("--------------------------------------------------------------------------")
-        #     print('--------------------------------------------------------------------------')
-        #     print(f"Processo: {processo}")
-
-        #     #COLETAR TEXTO NOME DO INTERESSADO
-        #     nome_interessado = navegador.find_element(By.XPATH, '/html/body/table[1]/tbody/tr/td').text
-        #     #VERIFICA SE O CAMPO ESTÁ VAZIO, CASO ESTEJA DEFINIRA CM NAO INFORMADO
-        #     if not nome_interessado.strip():
-        #         nome_interessado = 'Não informado'
-        #         print("NOME DO INTERESSADO NÃO INFORMADO")
-        #     #EXIBE NOMES DO INTERESSADO E SOLICITANTE
-        #     print("Interessado: ",nome_interessado)
-        #     print("Solicitante: ",nomeSol)
-        #     print('\n')
-
-        #     #CHECKBOX DE QUEM ESTÁ FAZENDO O PETICIONAMENTO
-        #     checkbox=navegador.find_element(By.XPATH,'/html/body/table[2]/tbody/tr[1]/td[1]').text
-        #     checkbox2=navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[1]').text
-        #     #VERIFICA CAMPO DA CHECKBOX
-        #     #SE OS DOIS CAMPOS ESTIVEREM VAZIOS AVISA QUE NAO FOI INFORMADO QUEM ESTÁ FAZENDO O PETICIONAMENTO
-        #     if not checkbox.strip() and not checkbox2.strip():
-        #         print("O usuário não informou quem está fazendo o peticionamento, confira os nomes do documento.")
-        #     elif not checkbox.strip():
-        #         procuracao_eletronica = navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[3]').text
-        #         print("Peticionamento representando terceiro, Pessoa Jurídica ou Pessoa Física.", f"\nProcuração eletrônica: {procuracao_eletronica}.")
-        #     else:
-        #         print("Peticionamento em interesse próprio como Pessoa Física.")
-        #     print('\n')
-
-        #     #CONTA QUANTIDADE DE LINHAS DA TABELA SOBRE O PRODUTO
-        #     quantidade_linhas = len(navegador.find_elements(By.XPATH, '/html/body/table[3]/tbody/tr'))
-
-        #     #VERIFICA CAMPOS QUE CONTÉM AS INFORMAÇÕES SOBRE O PRODUTO
-        #     #ARMAZENA OS MODELOS INFORMADOS PARA VERIFICAR SE ESTÃO NA PLANILHA DE DRONES CONFORMES
-        #     modelos = []
-        #     for i in range(1, quantidade_linhas, 1):
-        #         linha = navegador.find_element('xpath', f'/html/body/table[3]/tbody/tr[{i}]')
-        #         celulas = linha.find_elements(By.TAG_NAME,'td')
-        #         modelos_produto = [celula.text for celula in celulas]
-        #         modelos.append(modelos_produto)
-
-        #     #CRIA DATAFRAME PARA PRINTAR AS INFORMAÇÕES DO PRODUTO JÁ TRATADAS
-        #     df = pd.DataFrame(modelos)
-        #     df.columns = ['Modelo', 'Nome Comercial', 'Número de Série (incluindo rádio controle e óculos)']
-        #     df = df[1:]
-        #     df = df.replace(' ', np.nan)
-        #     df = df.dropna(how='all')
-        #     data = df.values.tolist()
-        #     headers = df.columns.tolist()
-        #     print(tabulate(data, headers=headers, tablefmt='pretty'))
-        #     print('\n')
-
-        #     #VERIFICA SE O MODELO DO DRONE E RADIO CONTROLE ESTA NA PLANILHA DE DRONES CONFORMES
-        #     modelos = df['Modelo']
-        #     modelos = modelos.reset_index(drop=True)
-            
-        #     drone_modelos['MODELO_CORRIGIDO'] = drone_modelos['MODELO'].apply(lambda x: str(x).lower().replace(' ', '').replace('-', ''))
-        #     for mod in modelos:
-        #         mod2 = mod.lower().replace(' ','').replace('-','').strip('\n')
-        #         if mod2 in drone_modelos['MODELO_CORRIGIDO'].values:
-        #             linha_nome = drone_modelos['MODELO_CORRIGIDO'] == mod2
-        #             nome_comercial = drone_modelos.loc[linha_nome, 'NOME COMERCIAL'].values[0]
-        #             print(f"O modelo '{mod}' está na lista de drones conformes. Seu nome comercial é '{nome_comercial}'")
-        #         else:
-        #             print(f"O modelo '{mod}' não se encontra na lista de drones conformes")
-        #     print('\n')
-        #     #EXIBE CÓDIGO DE RASTREIO 
-        #     #LINHA ESPECIFICA ESCREVE NA PLANILHA SE O PRODUTO ESTA RETIDO E, CASO ESTEJA, ESCREVE O CODIGO DE RASTREIO
-        #     n_serie = navegador.find_element(By.XPATH, '/html/body/table[3]/tbody/tr[2]/td[3]').text
-        #     codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[4]/tbody/tr/td[2]').text
-        #     #VERIFICA SE HÁ ALGUM TEXTO NA TABELA COM O CÓDIGO DE RASTREIO
-        #     #SE HOUVER ALGUM TEXTO ELE DA COMO RETIDO, CASO NAO TENHA TEXTO ELE DA COMO NAO RETIDO
-        #     if not codigo_rastreio.strip():
-        #         print("Produto não retido ou código de rastreio não informado.")
-        #         retido='Não'
-        #     else:
-        #         if not n_serie.strip():
-        #             print(f'O código de rastreio é: {codigo_rastreio}.')
-        #             retido='Sim'
-        #         elif n_serie.strip():
-        #             print('Confira se o produto está retido.')
-        #             verifica_retido = str(input('O produto está retido? Se sim digite [1], se não digite [2]: '))
-        #             if verifica_retido == '1':
-        #                 retido='Sim'
-        #                 print('O código de rastreio é:', codigo_rastreio)
-        #             elif verifica_retido == '2':
-        #                 retido='Não'
-        #     print('\n')
-        #     print('Confira o relatório fotográfico e veja se os documentos estão conformes!\n')
-        #     print('--------------------------------------------------------------------------')
-        #     print('--------------------------------------------------------------------------')
-            
-        # #ENCONTRAR SE HÁ ALGUMA PASTA DE DOCUMENTOS OU DECLARAÇÃO DE CONFORMIDADE NO PROCESSO
-        # elif check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio", navegador) or check_element_exists(By.XPATH, '//*[@id="spanPASTA1"]', navegador):
-        #     #PEGAR NOME DO SOLICITANTE NO RECIBO ELETRONICO
-        #     navegador.find_element(By.PARTIAL_LINK_TEXT, 'Recibo Eletrônico').click()
-        #     navegador.switch_to.default_content()
-        #     time.sleep(0.5)
-        #     navegador.switch_to.frame('ifrConteudoVisualizacao')
-        #     navegador.switch_to.frame('ifrVisualizacao')
-        #     nomeSol = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[1]/td[2]').text
-        #     navegador.switch_to.default_content()
-        #     #CLICA NA DECLARACAO DE CONFORMIDADE
-        #     #COLETAR DADOS DA DECLARAÇÃO DE CONFORMIDADE
-        #     navegador.switch_to.frame('ifrArvore')
-        #     navegador.find_element(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio").click()
-        #     time.sleep(0.5)
-        #     navegador.switch_to.default_content()
-        #     navegador.switch_to.frame('ifrConteudoVisualizacao')
-        #     navegador.switch_to.frame('ifrVisualizacao')
-
-        #     #EXIBE INFORMACOES DO PROCESSO
-        #     print("--------------------------------------------------------------------------")
-        #     print('--------------------------------------------------------------------------')
-        #     print(f"Processo: {processo}")
-
-        #     #COLETAR TEXTO NOME DO INTERESSADO
-        #     nome_interessado=navegador.find_element(By.XPATH, '/html/body/table[1]/tbody/tr/td/p').text
-        #     if not nome_interessado.strip():
-        #         nome_interessado = 'Não informado'
-        #         print("NOME DO INTERESSADO NÃO INFORMADO")
-        #     print(nome_interessado)
-        #     print(nomeSol)
-        #     print('\n')
-        #     #CHECKBOX DE QUEM ESTÁ FAZENDO O PETICIONAMENTO
-        #     checkbox=navegador.find_element('xpath','/html/body/table[2]/tbody/tr[1]/td[1]/p').text
-        #     checkbox2=navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[1]').text
-
-        #     #CHECA CAMPO DA CHECKBOX
-        #     if not checkbox.strip() and not checkbox2.strip():
-        #         print("O usuário não informou quem está fazendo o peticionamento, confira os nomes do documento.")
-        #     elif not checkbox.strip():
-        #         procuracao_eletronica = navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[3]').text
-        #         print("Peticionamento representando terceiro, Pessoa Jurídica ou Pessoa Física.", f"\nProcuração eletrônica: {procuracao_eletronica}.")
-        #     else:
-        #         print("Peticionamento em interesse próprio como Pessoa Física.")
-        #     print('\n')
-
-        #     #INFORMA O TIPO DE PRODUTO QUE ESTÁ SENDO TRATADO
-        #     print("\nTipo de produto:")
-        #     quantidade_linhasPro = len(navegador.find_elements(By.XPATH, '/html/body/table[3]/tbody/tr'))
-        #     tipoPro = []
-        #     for i in range(1, quantidade_linhasPro, 1):
-        #         linhas = navegador.find_element(By.XPATH, f'/html/body/table[3]/tbody/tr[{i}]')
-        #         celulas2 = linhas.find_elements(By.TAG_NAME,'td')
-        #         produtos = [celula2.text for celula2 in celulas2]
-        #         tipoPro.append(produtos)
-        #     dfPro = pd.DataFrame(tipoPro)
-        #     dfPro.columns = ['Tipo de Equipamento', 'Assinale com um X', 'Observação:']
-        #     dfPro = dfPro.drop('Observação:', axis=1)
-        #     dfPro = dfPro[1:]
-
-        #     #EXIBE A TABELA DO TIPO DE PRODUTO
-        #     data = dfPro.values.tolist()
-        #     headers = dfPro.columns.tolist()
-        #     print(tabulate(data, headers=headers, tablefmt='pretty'))
-        #     print('\n')
-
-        #     #CONTA QUANTIDADE DE LINHAS DA TABELA SOBRE O PRODUTO
-        #     quantidade_linhas = len(navegador.find_elements(By.XPATH, '/html/body/table[4]/tbody/tr'))
-        #     #VERIFICA CAMPOS QUE CONTÉM AS INFORMAÇÕES SOBRE O PRODUTO
-        #     modelos = []
-        #     for i in range(1, quantidade_linhas, 1):
-        #         linha = navegador.find_element('xpath', f'/html/body/table[4]/tbody/tr[{i}]')
-        #         celulas = linha.find_elements(By.TAG_NAME,'td')
-        #         modelos_produto = [celula.text for celula in celulas]
-        #         modelos.append(modelos_produto)
-            
-        #     #CRIA DATAFRAME E VERIFICA SE OS MODELOS FORNECIDOS ESTÃO NA PLANILHA DE DRONES CONFORMES
-        #     df = pd.DataFrame(modelos)
-        #     df.columns = ['Modelo', 'Nome Comercial', 'Número de Série']
-        #     df = df[1:]
-        #     df = df.replace(' ', np.nan)
-        #     df = df.dropna(how='all')
-        #     modelos = df['Modelo']
-        #     modelos = modelos.reset_index(drop=True) 
-        #     checkexcel = verifica_conformidade(modelos, radio_modelos, 1)            
-        #     print("Modelos:")
-        #     #CRIA DATAFRAME PARA PRINTAR AS INFORMAÇÕES DO PRODUTO
-        #     data2 = df.values.tolist()
-        #     headers2 = df.columns.tolist()
-        #     print(tabulate(data2, headers=headers2, tablefmt='pretty'))
-        #     print('\n')
-        #     for i in range(len(checkexcel)):
-        #         if checkexcel[i] == True:
-        #             print(f"O modelo {modelos[i]} está na lista de rádios conformes.")
-        #         else:
-        #             print(f"O modelo {modelos[i]} não se encontra na lista de rádios conformes")
-        #             print('\n')
-        #     #EXIBE CÓDIGO DE RASTREIO
-        #     #ESCREVE NA TABELA EXCEL SE ESTA RETIDO, CASO ESTEJA INSERE CODIGO DE RASTREIO
-        #     n_serie = navegador.find_element(By.XPATH, '/html/body/table[4]/tbody/tr[2]/td[3]').text
-        #     codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[5]/tbody/tr/td[2]').text
-        #     if not codigo_rastreio.strip():
-        #         print("Produto não retido ou código de rastreio não informado.")
-        #         retido='Não'
-        #     else:
-        #         if not n_serie.strip():
-        #             print(f'O código de rastreio é: {codigo_rastreio}.')
-        #             retido='Sim'
-        #         elif n_serie.strip():
-        #             print('Confira se o produto está retido.')
-        #             verifica_retido = str(input('O produto está retido? Se sim digite [1], se não digite [2]: '))
-        #             if verifica_retido == '1':
-        #                 retido='Sim'
-        #             elif verifica_retido == '2':
-        #                 retido='Não'
-        #     print('\n')
-        #     print('Confira o relatório fotográfico e veja se os documentos estão conformes!\n')
-        #     print('--------------------------------------------------------------------------')
-        #     print('--------------------------------------------------------------------------')
-            
-        # time.sleep(1)
-        # navegador.switch_to.default_content()
-
         #CRIA DESPACHO DECISORIO
         #PEDE PRA USUARIO VERIFICAR SE ESTÁ TUDO CERTO
         #VOLTA PARA A PAGINA DE INICIO DO PROCESSO
-        tira_restrito(navegador)
+        
         while True:
             try:
                 confirmacao = str(input('Caso esteja tudo certo e NÃO HAJA UM DESPACHO JÁ CRIADO digite [1] para continuar, senão, digite [2]: '))
@@ -1531,44 +1322,6 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
             except ValueError:
                 print("Opção inválida, tente novamente!")
         if confirmacao == '1':
-            # navegador.switch_to.frame('ifrArvore')
-            # arvoredocs = navegador.find_elements(By.CLASS_NAME, 'infraArvoreNo')
-
-            # #VERIFICA SE O DOCUMENTO ESTÁ RESTRITO, SE ESTIVER ELE IRÁ DEIXAR COMO PUBLICO UTILIZANDO O SIMBOLO DE RESTRITO COMO REFERENCIA
-            # elementos_com_src = navegador.find_elements(By.CSS_SELECTOR, "[src='svg/processo_restrito.svg?18']")
-            # #CRIA UMA LISTA PARA OS DOCUMENTOS QUE DEVERÃO SER DEIXADOS COMO PUBLICO
-            # elementos_para_clicar = []
-            # #ITERA SOBRE OS DOCUMENTOS 
-            # for doc in arvoredocs:
-            #     #ITERA SOBRE OS ELEMENTOS COM O SIMBOLO DE RESTRITO
-            #     for elemento in elementos_com_src:
-            #         #VERIFICA SE O DOCUMENTO ESTÁ AO LADO DO SIMBOLO DE RESTRITO
-            #         if elemento in doc.find_elements(By.XPATH, 'following-sibling::*[2]/*'):
-            #             #SE O SIMBOLO DE RESTRITO ESTIVER NO DOCUMENTO ELE INCLUIRÁ NA LISTA DE DOCUMENTOS A SEREM ACESSADOS
-            #             elementos_para_clicar.append(doc.get_attribute("id"))
-            #             break
-
-            # #AGORA COM O ID DO DOCUMENTO ELE CLICARÁ EM CADA DOCUMENTO RESTRITO PARA DEIXAR PUBLICO
-            # for id in elementos_para_clicar:
-            #     #ENCONTRA O ELEMENTO PARA CLICAR
-            #     doc = navegador.find_element(By.ID, id)
-            #     doc.click()
-            #     time.sleep(0.7)
-            #     navegador.switch_to.default_content()
-            #     navegador.switch_to.frame('ifrConteudoVisualizacao')
-            #     #CLICA NO SIMBOLO DE ALTERAR DOCUMENTO
-            #     clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[2]')
-            #     # navegador.find_element(By.XPATH,'//*[@id="divArvoreAcoes"]/a[2]').click()
-            #     #SELECIONA A OPCAO DE PUBLICO NO DOCUMENTO
-            #     time.sleep(0.5)
-            #     navegador.switch_to.frame('ifrVisualizacao')
-            #     clica_noelemento(navegador, By.XPATH,'//*[@id="divOptPublico"]/div/label')
-            #     # navegador.find_element(By.XPATH,'//*[@id="divOptPublico"]/div/label').click()
-            #     #SALVA AS MUDANCAS
-            #     clica_noelemento(navegador, By.ID,'btnSalvar')
-            #     # navegador.find_element(By.ID,'btnSalvar').click()
-            #     navegador.switch_to.default_content()
-            #     navegador.switch_to.frame('ifrArvore')
             navegador.switch_to.default_content()
             navegador.switch_to.frame('ifrArvore')
             #ENTRA NA PAGINA INICIAL DO PROCESSO
@@ -1755,72 +1508,6 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
 
 #FUNCAO PARA CONCLUIR PROCESSO
 def concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nomeEstag, planilhaGeral):
-    #DEFINE EMAIL PARA PROCESSO RETIDO
-    # textoRetido = '''Prezado(a) Senhor(a),
-
-    # Em atenção ao pedido de homologação constante do processo SEI em referência, informamos que:
-
-    # 1. O pedido foi APROVADO
-    # 2. O Despacho Decisório que aprovou o pedido está disponível publicamente por meio do sistema SEI na área de Pesquisa Pública, no link:
-
-    #           https://sei.anatel.gov.br/sei/modulos/pesquisa/md_pesq_processo_pesquisar.php?acao_externa=protocolo_pesquisar&acao_origem_externa=protocolo_pesquisar&id_orgao_acesso_externo=0
-
-
-    # 3. O Despacho Decisório deverá ser portado junto ao Equipamento (fisicamente ou eletronicamente), para que as autoridades competentes possam conferir a regularidade, quando necessário. 
-    # 4. Visto que o produto se encontra retido, para que seja informado o número de série, solicitamos que acesse o sistema SEI da Anatel por meio do seguinte link:
-
-
-    #              https://sei.anatel.gov.br/sei/controlador_externo.php?acao=usuario_externo_logar&id_orgao_acesso_externo=0.
-
-
-    # 5. Após autenticação no sistema SEI, solicitamos que inclua os documentos selecionando a opção "Intercorrente" e informando o número do processo em referência.
-
-    # 6. Após a confirmação da homologação por declaração por conformidade pela Anatel, os Correios serão comunicados para dar sequência aos trâmites de importação do produto.
-    # 7. Caso o produto permaneça retido pelos Correios, primeiramente, deverá ser realizada consulta por meio do endereço: https://www2.correios.com.br/sistemas/falecomoscorreios/ para obter informação sobre a etapa do processo de importação que a encomenda se encontra.
-    # 8. Se ainda persistir essa situação, a Anatel poderá ser consultada por meio do Portal da Anatel no endereço: https://www.gov.br/anatel/pt-br/consumidor/quer-reclamar/reclamacao , selecionando as seguintes opções:
-
-    # Registrar solicitação;
-    # Outras Manifestações (Registrar);
-    # Certificação e Homologação de Produtos (Equipamento) de Telecomunicações;
-    # Produtos retidos.
-    # 9. No campo “Descreva seu pedido” deverá ser informado o código de rastreio da encomenda, o tipo de produto de telecomunicações com marca, modelo e quantidade.
-    # 10. Deverão ser anexados os arquivos do processo de solicitação de homologação para confirmar que o produto foi homologado por declaração por conformidade pela Anatel.
-
-
-
-    # FAVOR NÃO RESPONDER ESTE E-MAIL. 
-
-    # Atenciosamente,
-
-    # ORCN - Gerência de Certificação e Numeração
-
-    # SOR - Superintendência de Outorga e Recursos à Prestação
-
-    # Anatel - Agência Nacional de Telecomunicações'''
-
-    # #DEFINE EMAIL PARA PROCESSO NAO RETIDO
-    # textoNaoRetido = '''Prezado(a) Senhor(a),
-
-    # Em atenção ao pedido de homologação constante do processo SEI em referência, informamos que:
-
-    # 1. O pedido foi APROVADO
-    # 2. O Despacho Decisório que aprovou o pedido está disponível publicamente por meio do sistema SEI na área de Pesquisa Pública, no link:
-
-    #          https://sei.anatel.gov.br/sei/modulos/pesquisa/md_pesq_processo_pesquisar.php?acao_externa=protocolo_pesquisar&acao_origem_externa=protocolo_pesquisar&id_orgao_acesso_externo=0
-
-
-    # 3. O Despacho Decisório deverá ser portado junto ao Equipamento (fisicamente ou eletronicamente), para que as autoridades competentes possam conferir a regularidade, quando necessário. 
-
-    # FAVOR NÃO RESPONDER ESTE E-MAIL. 
-
-    # Atenciosamente,
-
-    # ORCN - Gerência de Certificação e Numeração
-
-    # SOR - Superintendência de Outorga e Recursos à Prestação
-
-    # Anatel - Agência Nacional de Telecomunicações'''
-
     #VARIAVEL PARA VOLTAR À JANELA INICIAL
     janela_principal = navegador.current_window_handle
 
@@ -2089,8 +1776,22 @@ def concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nome
         navegador.switch_to.frame('ifrConteudoVisualizacao')
         navegador.switch_to.frame('ifrVisualizacao')
 
-        #ARMAZENA EMAIL DO SOLICITANTE
-        emailSol = navegador.find_element(By.XPATH, '/html/body/div[3]/a[1]').text
+        try:
+            #ARMAZENA EMAIL DO SOLICITANTE
+            emailSol = navegador.find_element(By.XPATH, '/html/body/div[3]/a[1]').text
+        except Exception as e:
+            print("Não foi possivel obter o email do solicitante!")
+            while True:
+                emailSol = input("Digite o email do solicitante: ")
+                opcao = input("Confirma o email digitado? Digite [1] para confirmar, [2] para digitar novamente ou [3] para cancelar: ")
+                if opcao == '1':
+                    break   
+                elif opcao == '2':  
+                    continue            
+                elif opcao == '3':
+                    return
+                else:
+                    print("Opção inválida! Tente novamente.")
 
         navegador.switch_to.default_content()
         navegador.switch_to.frame('ifrArvore')
