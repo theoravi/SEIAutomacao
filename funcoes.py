@@ -25,6 +25,8 @@ import subprocess
 from pywinauto import Application
 from pywinauto.findwindows import find_windows, ElementAmbiguousError, ElementNotFoundError
 import traceback
+from selenium.webdriver import Edge
+# from selenium.webdriver.firefox.options import Options
 
 def preencher_campos(user_var, senha_var, navegador, root):
     global user_name
@@ -559,11 +561,12 @@ def preenche_planilhageral(processo, nomeEstag, retido='', situacao='', codigo_r
         celula_encontrada = localiza_processo(processo)
         print(f'Célula encontrada: {celula_encontrada}')
         while celula_encontrada != processo:
-            muda_janela('theomation')
             if celula_encontrada == 'nan':
+                muda_janela('theomation')
                 input('Parece que o Excel não estava em foco na janela do Microsoft Edge. Volte para a página do app, coloque em foco (clicando em qualquer lugar da planilha) e pressione enter.')
             if celula_encontrada == 'Recuperando dados. Aguarde alguns segundos e tente cortar ou copiar novamente.':
-                opcao = input('Parece que o Excel está lento. Caso o processo tenha sido encontrado, pressione [1]. Caso contrário, pressione enter para que o programa tente localizá-lo novamente')
+                muda_janela('theomation')
+                opcao = input('Parece que o Excel está lento. Caso o processo tenha sido encontrado, pressione [1]. Caso contrário, pressione enter para que o programa tente localizá-lo novamente: ')
                 if opcao == '1':
                     muda_janela('Distribuição Processo Drone.xlsx')
                     break
@@ -604,7 +607,7 @@ def preenche_planilhageral(processo, nomeEstag, retido='', situacao='', codigo_r
             #VOLTA PARA A JANELA DO CHROME
             # chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
             # pyautogui.click(chrome)
-            muda_janela('Google Chrome')
+            muda_janela('SEI')
             muda_janela('theomation')
 
 
@@ -616,6 +619,14 @@ def clica_noelemento(navegador, modo_procura, element_id, tempo=5):
     )
     # Clica no elemento
     element.click()
+
+def muda_para_iframe(navegador, modo_procura, element_id, tempo=5):
+    # Espera até que o iframe esteja disponível
+    iframe = WebDriverWait(navegador, tempo).until(
+        EC.presence_of_element_located((modo_procura, element_id))
+    )
+    # Muda para o iframe
+    navegador.switch_to.frame(iframe)
 
 def vai_para_processo(navegador, processo):
     navegador.switch_to.default_content()
@@ -882,18 +893,21 @@ def fazListasProcessos(navegador):
 #FUNCAO QUE ABRE O CHROME E O EDGE
 def abreChromeEdge():
     #INSTALA O CHROME DRIVEr MAIS ATUALIZADO
-    # Desativa o bloqueio de pop-ups
-    options = webdriver.ChromeOptions()
-    options.add_argument("--disable-popup-blocking") 
-    #DEFINE O TEMPO DE EXECUÇÃO PARA CADA COMANDO DO PYAUTOGUI
-    pyautogui.PAUSE = 0.7
-    #INICIA O NAVEGADOR
-    # Caminho do ChromeDriver local
-    # chrome_driver_path = r"main\chromedriver-win64\chromedriver.exe"  # Altere para o caminho correto do seu ChromeDriver
-    # Configura o serviço do ChromeDriver
-    servico = Service(ChromeDriverManager().install())
-    # Inicia o navegador Chrome
-    navegador = webdriver.Chrome(service=servico, options=options)
+    # options = webdriver.ChromeOptions()
+    # options.add_argument("--disable-popup-blocking") 
+    # #DEFINE O TEMPO DE EXECUÇÃO PARA CADA COMANDO DO PYAUTOGUI
+    # pyautogui.PAUSE = 0.7
+    # #INICIA O NAVEGADOR
+    # chrome_driver_path = r"chromedriver-win64\chromedriver.exe"
+    # # Configura o serviço do ChromeDriver
+    # print("Instalando chrome driver")
+    # # servico = Service(ChromeDriverManager().install())
+    # servico = Service(chrome_driver_path)
+    # print("Chrome driver instalado")
+    # # Inicia o navegador Chrome
+    # print("Inicializando webdriver")
+    # navegador = webdriver.Chrome(service=servico, options=options)
+    navegador = Edge()
     navegador.maximize_window()
     #ENTRA NO SEI
     navegador.get('https://sei.anatel.gov.br/')
@@ -931,7 +945,7 @@ def abreChromeEdge():
         pyautogui.press('enter')
     # chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
     # pyautogui.click(chrome)
-    muda_janela('Google Chrome')
+    muda_janela('SEI')
     return navegador
 
 #FUNCAO QUE PEDE A SENHA E O USUARIO
@@ -1356,12 +1370,11 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
         #ENTRA NA PAGINA INICIAL DO PROCESSO
         #VERIFICA SE E UM PROCESSO DE DRONE OU IMPORTADO PARA USO PROPRIO
         if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Drone", navegador):
-            navegador.switch_to.default_content()
-            navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
-            elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-            elementos.send_keys(Keys.ENTER)
+            vai_para_processo(navegador, processo)
+            time.sleep(2)
             #CRIA DESPACHO
-            navegador.switch_to.frame('ifrConteudoVisualizacao')
+            muda_para_iframe(navegador, By.ID, 'ifrConteudoVisualizacao')
+            # navegador.switch_to.frame('ifrConteudoVisualizacao')
             #time.sleep(2)
             #CLICA NO INCONE DE INCLUIR DOCUMENTO
             clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]')
@@ -1382,12 +1395,14 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
         #VERIFICA SE E UM PROCESSO DE DRONE OU IMPORTADO PARA USO PROPRIO
         elif check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade - Importado Uso Próprio", navegador):
             impProp='Sim'
-            navegador.switch_to.default_content()
-            navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
-            elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-            elementos.send_keys(Keys.ENTER)
+            # navegador.switch_to.default_content()
+            # navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
+            # elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+            # elementos.send_keys(Keys.ENTER)
+            vai_para_processo(navegador, processo)
             #CRIA DESPACHO
-            navegador.switch_to.frame('ifrConteudoVisualizacao')
+            muda_para_iframe(navegador, By.ID, 'ifrConteudoVisualizacao')
+            # navegador.switch_to.frame('ifrConteudoVisualizacao')
             #time.sleep(1)
             #CLICA NO INCONE DE INCLUIR DOCUMENTO
             clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]')
@@ -1445,12 +1460,14 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
         clica_noelemento(navegador, By.XPATH,'//*[@id="sbmIncluir"]')
         #navegador.find_element(By.XPATH, '//*[@id="sbmIncluir"]').click()
         #VOLTA PARA PAGINA INICIAL DO PROCESSO
-        navegador.switch_to.default_content()
-        navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
-        elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-        elementos.send_keys(Keys.ENTER)
-        navegador.switch_to.frame('ifrConteudoVisualizacao')
-        time.sleep(1)
+        # navegador.switch_to.default_content()
+        # navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
+        # elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+        # elementos.send_keys(Keys.ENTER)
+        vai_para_processo(navegador, processo)
+        # time.sleep(3)
+        muda_para_iframe(navegador, By.ID, 'ifrConteudoVisualizacao')
+        # navegador.switch_to.frame('ifrConteudoVisualizacao')
         #ADICIONA NOTA PARA AGUARDAR ASSINATURA
         #CLICA NO ICONE DE ANOTACAO
         clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/anotacao_cadastro.svg?18')]")
