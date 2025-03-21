@@ -18,7 +18,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import subprocess
 from pywinauto import Application
 from pywinauto.findwindows import find_windows, ElementAmbiguousError, ElementNotFoundError
-
+from selenium.webdriver import Edge
 
 def preencher_campos():
     user = user_var.get()
@@ -228,10 +228,11 @@ def tira_restrito():
 
 #chrome_driver_path = "chromedriver-win64\chromedriver.exe" 
 #servico = Service(chrome_driver_path)
-servico = Service(ChromeDriverManager().install())
-pyautogui.PAUSE = 0.7
-#INICIA O NAVEGADOR
-navegador = webdriver.Chrome(service=servico)
+# servico = Service(ChromeDriverManager().install())
+# pyautogui.PAUSE = 0.7
+# #INICIA O NAVEGADOR
+# navegador = webdriver.Chrome(service=servico)
+navegador = Edge()
 navegador.maximize_window()
 navegador.get('https://sei.anatel.gov.br/')
 janela_principal = navegador.current_window_handle
@@ -274,7 +275,7 @@ except ElementNotFoundError:
 # pyautogui.press('enter')
 # chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
 # pyautogui.click(chrome)
-fc.muda_janela('Google Chrome')
+fc.muda_janela('SEI / ANATEL')
 
 while True:
     #INICIA JANELA
@@ -344,7 +345,7 @@ verifica=input('Aperte enter após filtrar a planilha geral.')
 # pyautogui.click(edge)
 fc.muda_janela('Distribuição Processo Drone.xlsx')
 pyautogui.click(x=160, y=375)
-
+counter = 0
 while True:
     try:
         retido=""
@@ -356,9 +357,15 @@ while True:
         time.sleep(0.2)
         n_processo = pyperclip.paste()
         print("Processo: " + n_processo)
+        if n_processo == '':
+            counter += 1
+        if counter == 5:
+            print('Parece que todos os processos foram preenchidos. Finalizando programa...')
+            navegador.close()
+            break
         # chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
         # pyautogui.click(chrome)
-        fc.muda_janela('Google Chrome')
+        fc.muda_janela('SEI -')
         navegador.switch_to.default_content()
         navegador.find_element(By.ID,'txtPesquisaRapida').click()
         pyautogui.hotkey('ctrl', 'v')

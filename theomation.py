@@ -104,7 +104,7 @@ def main():
             if opcoes == '1':
                 #EXECUTA FUNCAO PARA ANALISAR PROCESSO
                 fc.analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrones, planilhaRadios)
-                print("Análise finalizada.")
+                print("Análise finalizada.")        
             elif opcoes == '2':
                 #EXECUTA FUNCAO PARA CONCLUIR PROCESSO
                 fc.concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nomeEstag, planilhaGeral)

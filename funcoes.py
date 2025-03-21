@@ -5,11 +5,11 @@ import pyautogui
 import pyperclip
 import time
 import tkinter as tk
-import undetected_chromedriver as uc
+# import undetected_chromedriver as uc
 from datetime import datetime
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
+# from selenium import webdriver
+# from selenium.webdriver.chrome.service import Service
+# from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -20,7 +20,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from tabulate import tabulate
 from tkinter import scrolledtext
-from webdriver_manager.chrome import ChromeDriverManager
+# from webdriver_manager.chrome import ChromeDriverManager
 import subprocess
 from pywinauto import Application
 from pywinauto.findwindows import find_windows, ElementAmbiguousError, ElementNotFoundError
@@ -538,7 +538,7 @@ def localiza_processo(processo):
     pyperclip.copy(processo)
     #PESQUISA PROCESSO NA PLANILHA
     pyautogui.hotkey('ctrl', 'l')
-    time.sleep(0.3)
+    time.sleep(0.7)
     #COLA NUMERO DO PROCESSO E APERTA ENTER PARA PESQUISAR O PROCESSO
     pyautogui.hotkey('ctrl', 'v')
     time.sleep(0.3)
@@ -558,6 +558,7 @@ def preenche_planilhageral(processo, nomeEstag, retido='', situacao='', codigo_r
     #ENCONTRA O ICONE DO EDGE E ABRE O NAVEGADOR DA PLANILHA
     mudou_janela = muda_janela('Distribuição Processo Drone.xlsx')
     if mudou_janela:
+        #LOCALIZA O PROCESSO NA PLANILHA
         celula_encontrada = localiza_processo(processo)
         print(f'Célula encontrada: {celula_encontrada}')
         while celula_encontrada != processo:
@@ -607,7 +608,8 @@ def preenche_planilhageral(processo, nomeEstag, retido='', situacao='', codigo_r
             #VOLTA PARA A JANELA DO CHROME
             # chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
             # pyautogui.click(chrome)
-            muda_janela('SEI')
+            muda_janela('SEI -')
+            time.sleep(1)
             muda_janela('theomation')
 
 
@@ -811,13 +813,16 @@ def envia_email(navegador, janela_principal, processo, nomeEstag, impProp, tipoE
         except ValueError:
             print("Opção inválida, tente novamente!")
     if confere == 1:
-        #ENVIA EMAIL COM A EXIGENCIA
-        navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
-        time.sleep(0.5)
-        #FECHA ALERTA DO NAVEGADOR
-        alert = Alert(navegador)
-        alert.accept()
-        time.sleep(0.5)
+        try:
+            #ENVIA EMAIL COM A EXIGENCIA
+            navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
+            time.sleep(0.5)
+            #FECHA ALERTA DO NAVEGADOR
+            alert = Alert(navegador)
+            alert.accept()
+            time.sleep(0.5)
+        except Exception:
+            print("Não foi possivel selecionar o botão de enviar o e-mail. Pode ser que a janela tenha sido fechada.")
         #VOLTA O FOCO DO SELENIUM PARA A PAGINA PRINCIPAL NOVAMENTE
         navegador.switch_to.window(janela_principal)
         #VOLTA PARA A PAGINA INICIAL DO PROCESSO
@@ -866,6 +871,67 @@ def envia_email(navegador, janela_principal, processo, nomeEstag, impProp, tipoE
         navegador.find_element(By.XPATH, '//*[@id="btnCancelar"]').click()
         navegador.switch_to.window(janela_principal)
         return False
+
+def inclui_despacho(navegador, processo):    
+    #INCLUI DESPACHO NO BLOCO
+    navegador.switch_to.default_content()
+    navegador.switch_to.frame('ifrArvore')
+    #CLICA NO DESPACHO DECISORIO
+    clica_noelemento(navegador, By.PARTIAL_LINK_TEXT,"Despacho Decisório")
+    #navegador.find_element(By.PARTIAL_LINK_TEXT, "Despacho Decisório").click()
+    navegador.switch_to.default_content()
+    navegador.switch_to.frame('ifrConteudoVisualizacao')
+    time.sleep(1)
+    #CLICA NO ICONE DE LEGO
+    clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/bloco_incluir_protocolo.svg?18')]")
+    #navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[8]').click()
+    #SELECIONA BLOCO (SELECIONA O PRIMEIRO DESPACHO PARA DRONES APROVADOS QUE LER)
+    time.sleep(1.5)
+    navegador.switch_to.frame('ifrVisualizacao')
+    select_element = navegador.find_element(By.ID, 'selBloco')
+    select = Select(select_element)
+    #PROCURA O PRIMEIRO BLOCO QUE TENHA O TEXTO "Despachos para Drones aprovados"
+    despacho_achado = False
+    hoje = datetime.now().strftime("%d/%m/%y")
+    for opcao in select.options:
+        if "despachos para drones aprovados "+hoje in opcao.text.lower():
+            select.select_by_visible_text(opcao.text)
+            despacho_achado = True
+            break
+    if not despacho_achado:
+        while True:
+            opcao = input("Pode ser que o despacho nao foi achado. Crie o despacho (abrindo uma nova aba) e digite [1]. Caso houve algum problema e seja necessário incluir manualmente, digite [2]: ")
+            if opcao == '1':
+                inclui_despacho(navegador, processo)
+                return
+            elif opcao == '2':
+                return
+            else:
+                print("Opção inválida. Tente novamente.")
+    time.sleep(0.5)
+    #CLICA NO BOTAO DE INCLUIR NO BLOCO
+    clica_noelemento(navegador, By.XPATH,'//*[@id="sbmIncluir"]')
+    #navegador.find_element(By.XPATH, '//*[@id="sbmIncluir"]').click()
+    #VOLTA PARA PAGINA INICIAL DO PROCESSO
+    # navegador.switch_to.default_content()
+    # navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
+    # elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+    # elementos.send_keys(Keys.ENTER)
+    vai_para_processo(navegador, processo)
+    # time.sleep(3)
+    muda_para_iframe(navegador, By.ID, 'ifrConteudoVisualizacao')
+    # navegador.switch_to.frame('ifrConteudoVisualizacao')
+    #ADICIONA NOTA PARA AGUARDAR ASSINATURA
+    #CLICA NO ICONE DE ANOTACAO
+    clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/anotacao_cadastro.svg?18')]")
+    #clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[16]')
+    time.sleep(0.1)
+    #INSERE O TEXTO DA ANOTACAO
+    navegador.switch_to.frame('ifrVisualizacao')
+    navegador.find_element(By.ID, 'txaDescricao').send_keys('Aguardando assinatura.')
+    #SALVA O TEXTO
+    navegador.find_element(By.NAME, 'sbmRegistrarAnotacao').click()
+    #DA COMO APROVADO E ANOTA NO TXT DE PROCESSOS CONFORMES
 
 def fazListasProcessos(navegador):
     #PEGA O CORPO DA TABELA NO NAVEGADOR
@@ -945,7 +1011,7 @@ def abreChromeEdge():
         pyautogui.press('enter')
     # chrome=pyautogui.locateOnScreen('imagensAut/chrome.png', confidence=0.7)
     # pyautogui.click(chrome)
-    muda_janela('SEI')
+    muda_janela('SEI / ANATEL')
     return navegador
 
 #FUNCAO QUE PEDE A SENHA E O USUARIO
@@ -1177,12 +1243,12 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
     if not nome_interessado.strip():
         nome_interessado = 'Não informado'
         print("NOME DO INTERESSADO NÃO INFORMADO")
-    #EXIBE NOMES DO INTERESSADO E SOLICITANTE
+    #EXIBE NOMES DO INTERESSADO E SOLICITANTE NO CONSOLE
     print("Interessado: ",nome_interessado)
     print("Solicitante: ",nomeSol)
     print('\n')
 
-    #CHECKBOX DE QUEM ESTÁ FAZENDO O PETICIONAMENTO
+    #CHECKBOX DE QUEM ESTÁ FAZENDO O PETICIONAMENTO DO PROCESSO 
     if tipo_processo == "Drone":
         checkbox=navegador.find_element(By.XPATH,'/html/body/table[2]/tbody/tr[1]/td[1]').text
         checkbox2=navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[1]').text
@@ -1190,7 +1256,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
         checkbox=navegador.find_element('xpath','/html/body/table[2]/tbody/tr[1]/td[1]/p').text
         checkbox2=navegador.find_element(By.XPATH, '/html/body/table[2]/tbody/tr[2]/td[1]').text
 
-    #VERIFICA CAMPO DA CHECKBOX
+    #VERIFICA CAMPO DA CHECKBOX 
     #SE OS DOIS CAMPOS ESTIVEREM VAZIOS AVISA QUE NAO FOI INFORMADO QUEM ESTÁ FAZENDO O PETICIONAMENTO
     if not checkbox.strip() and not checkbox2.strip():
         print("O usuário não informou quem está fazendo o peticionamento, confira os nomes do documento.")
@@ -1257,7 +1323,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
             print(f"Ocorreu um erro: {error}")
             print("É possível que o solicitante tenha editado o layout da tabela. Confira manualmente os modelos.\n")
 
-    #CRIA DATAFRAME PARA PRINTAR AS INFORMAÇÕES DO PRODUTO JÁ TRATADAS
+    #CRIA DATAFRAME PARA PRINTAR AS INFORMAÇÕES DO PRODUTO JÁ TRATADAS 
     df = pd.DataFrame(modelos)
     try:
         if tipo_processo == "Drone":
@@ -1433,52 +1499,53 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
         time.sleep(0.7)
         #MUDA PARA JANELA PRINCIAPL DO PROGRAMA
         navegador.switch_to.window(janela_principal)
-        #INCLUI DESPACHO NO BLOCO
-        navegador.switch_to.default_content()
-        navegador.switch_to.frame('ifrArvore')
-        #CLICA NO DESPACHO DECISORIO
-        clica_noelemento(navegador, By.PARTIAL_LINK_TEXT,"Despacho Decisório")
-        #navegador.find_element(By.PARTIAL_LINK_TEXT, "Despacho Decisório").click()
-        navegador.switch_to.default_content()
-        navegador.switch_to.frame('ifrConteudoVisualizacao')
-        time.sleep(1)
-        #CLICA NO ICONE DE LEGO
-        clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/bloco_incluir_protocolo.svg?18')]")
-        #navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[8]').click()
-        #SELECIONA BLOCO (SELECIONA O PRIMEIRO DESPACHO PARA DRONES APROVADOS QUE LER)
-        time.sleep(1.5)
-        navegador.switch_to.frame('ifrVisualizacao')
-        select_element = navegador.find_element(By.ID, 'selBloco')
-        select = Select(select_element)
-        #PROCURA O PRIMEIRO BLOCO QUE TENHA O TEXTO "Despachos para Drones aprovados"
-        for opcao in select.options:
-            if "Despachos para Drones aprovados" in opcao.text:
-                select.select_by_visible_text(opcao.text)
-                break
-        time.sleep(0.5)
-        #CLICA NO BOTAO DE INCLUIR NO BLOCO
-        clica_noelemento(navegador, By.XPATH,'//*[@id="sbmIncluir"]')
-        #navegador.find_element(By.XPATH, '//*[@id="sbmIncluir"]').click()
-        #VOLTA PARA PAGINA INICIAL DO PROCESSO
+        inclui_despacho(navegador, processo)
+        # #INCLUI DESPACHO NO BLOCO
         # navegador.switch_to.default_content()
-        # navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
-        # elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
-        # elementos.send_keys(Keys.ENTER)
-        vai_para_processo(navegador, processo)
-        # time.sleep(3)
-        muda_para_iframe(navegador, By.ID, 'ifrConteudoVisualizacao')
+        # navegador.switch_to.frame('ifrArvore')
+        # #CLICA NO DESPACHO DECISORIO
+        # clica_noelemento(navegador, By.PARTIAL_LINK_TEXT,"Despacho Decisório")
+        # #navegador.find_element(By.PARTIAL_LINK_TEXT, "Despacho Decisório").click()
+        # navegador.switch_to.default_content()
         # navegador.switch_to.frame('ifrConteudoVisualizacao')
-        #ADICIONA NOTA PARA AGUARDAR ASSINATURA
-        #CLICA NO ICONE DE ANOTACAO
-        clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/anotacao_cadastro.svg?18')]")
-        #clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[16]')
-        time.sleep(0.1)
-        #INSERE O TEXTO DA ANOTACAO
-        navegador.switch_to.frame('ifrVisualizacao')
-        navegador.find_element(By.ID, 'txaDescricao').send_keys('Aguardando assinatura.')
-        #SALVA O TEXTO
-        navegador.find_element(By.NAME, 'sbmRegistrarAnotacao').click()
-        #DA COMO APROVADO E ANOTA NO TXT DE PROCESSOS CONFORMES
+        # time.sleep(1)
+        # #CLICA NO ICONE DE LEGO
+        # clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/bloco_incluir_protocolo.svg?18')]")
+        # #navegador.find_element(By.XPATH, '//*[@id="divArvoreAcoes"]/a[8]').click()
+        # #SELECIONA BLOCO (SELECIONA O PRIMEIRO DESPACHO PARA DRONES APROVADOS QUE LER)
+        # time.sleep(1.5)
+        # navegador.switch_to.frame('ifrVisualizacao')
+        # select_element = navegador.find_element(By.ID, 'selBloco')
+        # select = Select(select_element)
+        # #PROCURA O PRIMEIRO BLOCO QUE TENHA O TEXTO "Despachos para Drones aprovados"
+        # for opcao in select.options:
+        #     if "Despachos para Drones aprovados" in opcao.text:
+        #         select.select_by_visible_text(opcao.text)
+        #         break
+        # time.sleep(0.5)
+        # #CLICA NO BOTAO DE INCLUIR NO BLOCO
+        # clica_noelemento(navegador, By.XPATH,'//*[@id="sbmIncluir"]')
+        # #navegador.find_element(By.XPATH, '//*[@id="sbmIncluir"]').click()
+        # #VOLTA PARA PAGINA INICIAL DO PROCESSO
+        # # navegador.switch_to.default_content()
+        # # navegador.find_element(By.ID,'txtPesquisaRapida').send_keys(processo)
+        # # elementos = navegador.find_element(By.ID,'txtPesquisaRapida')
+        # # elementos.send_keys(Keys.ENTER)
+        # vai_para_processo(navegador, processo)
+        # # time.sleep(3)
+        # muda_para_iframe(navegador, By.ID, 'ifrConteudoVisualizacao')
+        # # navegador.switch_to.frame('ifrConteudoVisualizacao')
+        # #ADICIONA NOTA PARA AGUARDAR ASSINATURA
+        # #CLICA NO ICONE DE ANOTACAO
+        # clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/anotacao_cadastro.svg?18')]")
+        # #clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[16]')
+        # time.sleep(0.1)
+        # #INSERE O TEXTO DA ANOTACAO
+        # navegador.switch_to.frame('ifrVisualizacao')
+        # navegador.find_element(By.ID, 'txaDescricao').send_keys('Aguardando assinatura.')
+        # #SALVA O TEXTO
+        # navegador.find_element(By.NAME, 'sbmRegistrarAnotacao').click()
+        # #DA COMO APROVADO E ANOTA NO TXT DE PROCESSOS CONFORMES
         situacao = 'Aprovado'
         print("Próximo processo...")
 
