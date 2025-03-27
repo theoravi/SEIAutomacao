@@ -2015,7 +2015,10 @@ def atribuir_processos(planilhaGeral, num_processos):
     lista_processos_atr = processos_mais_antigos['Nº do Processo SEI'].tolist()
 
     # Remove os \n e as aspas
-    lista_processos_atr = [elemento.replace('\n', '') for elemento in lista_processos_atr]
+    # for elemento in lista_processos_atr:
+    #     print(type(elemento), elemento)
+    lista_processos_atr = [str(elemento) for elemento in lista_processos_atr]
+    lista_processos_atr = [elemento.replace('\n', '').replace('\t', '') for elemento in lista_processos_atr]
 
     return lista_processos_atr, df_com_datas
 
@@ -2046,17 +2049,22 @@ def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral):
     processos_para_atr = []
     processos_nao_encontrados = []
     processos_restantes = list(df_com_datas['Nº do Processo SEI'])
-    processos_restantes = [elemento.replace('\n', '') for elemento in processos_restantes]
+    # for processos_res in processos_restantes:
+    #     print(type(processos_res), processos_res)
+    processos_restantes = [str(elemento).replace('\n', '').strip() for elemento in processos_restantes]
 
     for processos_atr in lista_processos_atr:
         try:
             clica_noelemento(navegador, By.XPATH, f'//label[@title="{processos_atr}"]', 1)
             processos_para_atr.append(processos_atr)
+            # print(f'Processo {processos_atr} atribuído.')
             processos_restantes.remove(processos_atr)
+            # print(f'Removido processo nº {processos_atr} (try)')
             time.sleep(0.3)
         except:
             print(f'Processo {processos_atr} não encontrado.')
             processos_restantes.remove(processos_atr)
+            # print(f'Removido processo nº {processos_atr} (except)')
             processos_nao_encontrados.append(processos_atr)
 
     # Caso não encontre todos os processos, pegar os próximos na lista
