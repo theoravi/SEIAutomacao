@@ -141,8 +141,8 @@ def manda_email(n_processo, codigo_rastreio):
     endereco_email("notificacaosei.sp@anatel.gov.br", navegador)
     endereco_email("notificacaosei.rj@anatel.gov.br", navegador)
     endereco_email("notificacaosei.pr@anatel.gov.br", navegador)
-    navegador.find_element(By.ID, 'txtAssunto').send_keys(f'Processo SEI nº {n_processo} - Código de rastreio: {codigo_rastreio} - Aberto')
-    navegador.find_element(By.ID, 'txaMensagem').send_keys(f'Processo SEI nº {n_processo} - Código de rastreio: {codigo_rastreio} - Aberto')
+    navegador.find_element(By.ID, 'txtAssunto').send_keys(f'Processo SEI nº {n_processo} - Código de rastreio: {codigo_rastreio.strip()} - Aberto')
+    navegador.find_element(By.ID, 'txaMensagem').send_keys(f'Processo SEI nº {n_processo} - Código de rastreio: {codigo_rastreio.strip()} - Aberto')
     #ENVIA EMAIL
     navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
     #FECHA ALERTA DO NAVEGADOR
@@ -423,7 +423,8 @@ while True:
                     codigo_rastreio = navegador.find_element(By.XPATH,'/html/body/table[5]/tbody/tr/td[2]').text
                 except Exception as e:
                     print(e)   
-                codigo_rastreio = codigo_rastreio.replace('-','').replace('.','')
+                codigo_rastreio = codigo_rastreio.replace('-','').replace('.','').replace(' ','').strip()
+
                 n_serie = navegador.find_element(By.XPATH,'/html/body/table[4]/tbody/tr[2]/td[3]').text
                 try:
                     n_serie2 = navegador.find_element(By.XPATH,'/html/body/table[4]/tbody/tr[3]/td[3]').text

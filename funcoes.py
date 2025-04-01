@@ -547,8 +547,10 @@ def localiza_processo(processo):
     pyautogui.press('esc')
     #COPIA O NUMERO DO PROCESSO NA CELULA PARA SABER SE ELE FOI ENCONTRADO CORRETAMENTE
     pyperclip.copy('nan')
-    pyautogui.hotkey('ctrl','c')
-    time.sleep(0.3)
+    pyautogui.hotkey('ctrl', 'c')
+    time.sleep(0.5)
+    pyautogui.hotkey('ctrl', 'c')
+    time.sleep(0.2)
     celula_encontrada = pyperclip.paste()
     celula_encontrada = celula_encontrada.replace('\n', '').strip('"')
     return celula_encontrada
@@ -647,6 +649,51 @@ def armazena_nomesolicitante(navegador):
     #ARMAZENA NOME DO SOLICITANTE NA VARIAVEL
     nomeSol = navegador.find_element(By.XPATH, '//*[@id="conteudo"]/table/tbody/tr[1]/td[2]').text
     return nomeSol
+
+def poe_restrito(navegador):
+    navegador.switch_to.default_content()
+    muda_para_iframe(navegador, By.ID, 'ifrConteudoVisualizacao')
+    clica_noelemento(navegador, By.XPATH, '//*[@id="divArvoreAcoes"]/a[2]')
+    muda_para_iframe(navegador, By.ID, 'ifrVisualizacao')
+    clica_noelemento(navegador, By.XPATH, '//*[@id="divOptRestrito"]/div/label')
+    time.sleep(0.5)
+    select_element = navegador.find_element(By.ID, 'selHipoteseLegal')
+    select = Select(select_element)
+    #PROCURA A PRIMEIRA OPCAO QUE TENHA O TEXTO "Informação Pessoal".
+    for opcao in select.options:
+        if "Informação Pessoal" in opcao.text:
+            # print(opcao.text)
+            select.select_by_visible_text(opcao.text)
+            break
+    clica_noelemento(navegador, By.ID,'btnSalvar')
+    navegador.switch_to.default_content()
+
+def testa_informacao_restrita(navegador):
+    navegador.switch_to.default_content()
+    navegador.switch_to.frame('ifrArvore')
+    # time.sleep(4)
+    # arvoredocs = navegador.find_elements(By.CLASS_NAME, 'infraArvoreNo')
+
+    # VERIFICA SE O DOCUMENTO ESTÁ RESTRITO, SE ESTIVER ELE IRÁ DEIXAR COMO PUBLICO UTILIZANDO O SIMBOLO DE RESTRITO COMO REFERENCIA
+
+    cnh = navegador.find_elements(By.PARTIAL_LINK_TEXT, 'CNH')
+    rg  = navegador.find_elements(By.PARTIAL_LINK_TEXT, 'RG')
+    cpf = navegador.find_elements(By.PARTIAL_LINK_TEXT, 'CPF')
+
+    #CRIA UMA LISTA PARA OS DOCUMENTOS QUE DEVERÃO SER DEIXADOS COMO PUBLICO
+    inf_pessoais = cnh+rg+cpf
+    # print(inf_pessoais)
+    # print(len(inf_pessoais), "Elementos encontrados")
+    #ITERA SOBRE OS DOCUMENTOS 
+    elementos_para_clicar = []
+    for doc in inf_pessoais:
+        elementos_para_clicar.append(doc.get_attribute("id"))
+
+    navegador.switch_to.default_content()
+    for id in elementos_para_clicar:
+        muda_para_iframe(navegador, By.ID, 'ifrArvore')
+        clica_noelemento(navegador, By.ID, id)
+        poe_restrito(navegador)
 
 def tira_restrito(navegador):
     navegador.switch_to.default_content()
@@ -1183,12 +1230,16 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 print("Não foi possível encontrar a Declaração de Conformidade.")
                 confirmacao = str(input('Caso este seja um processo CRIADO COM O TIPO ERRADO, digite [1] para enviar exigência, senão, digite [2] para pular o processo: '))
                 if confirmacao == '1':
-                    abre_email(navegador, processo, processo_errado=True)
-                    email_enviado = envia_email(navegador, janela_principal, processo, nomeEstag, impProp, 5)
-                    vai_para_processo(navegador, processo)
-                    nomeSol = armazena_nomesolicitante(navegador)
-                    if email_enviado:
-                        preenche_planilhageral(processo, nomeEstag, 'Não', 'Cancelado', '', nomeSol)
+                    try:
+                        abre_email(navegador, processo, processo_errado=True)
+                        email_enviado = envia_email(navegador, janela_principal, processo, nomeEstag, impProp, 5)
+                        vai_para_processo(navegador, processo)
+                        nomeSol = armazena_nomesolicitante(navegador)
+                        if email_enviado:
+                            preenche_planilhageral(processo, nomeEstag, 'Não', 'Cancelado', '', nomeSol)
+                    except:
+                        print("Ocorreu um erro ao abrir o email, tente novamente!")
+                        navegador.switch_to.window(janela_principal)
                     return
                 elif confirmacao == '2':
                     return
@@ -1384,6 +1435,12 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
     
     #RETIRA O RESTRITO DOS DOCUMENTOS
     tira_restrito(navegador)
+
+    #VERIFICA SE ALGUMA CNH, CPF OU RG FOI ANEXADO
+    try:
+        testa_informacao_restrita(navegador)
+    except:
+        print("Houve um problema ao aplicar restrição para todos os documentos necessários. Faça isto manualmente.")
     
     #SE HOUVER ALGUM TEXTO ELE DA COMO RETIDO, CASO NAO TENHA TEXTO ELE DA COMO NAO RETIDO
     if not codigo_rastreio.strip():
@@ -1566,7 +1623,11 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                 print("Opção inválida, tente novamente!")
         #CONDICAO DE EXIGENCIA
         if exigencia == '1':
-            abre_email(navegador, processo)
+            try:   
+                abre_email(navegador, processo)
+            except:
+                print("Ocorreu um erro ao abrir o email, tente novamente!")
+                navegador.switch_to.window(janela_principal)
             muda_janela('theomation')
             while True:
                 try:
@@ -1589,7 +1650,11 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
                         situacao = 'Cancelado'
                     else:
                         situacao = 'Exigência'
-                    email_enviado = envia_email(navegador, janela_principal, processo, nomeEstag, impProp, exig)
+                    try:
+                        email_enviado = envia_email(navegador, janela_principal, processo, nomeEstag, impProp, exig)
+                    except:
+                        print("Ocorreu um erro ao enviar o email, tente novamente!")
+                        navegador.switch_to.window(janela_principal)
                     if email_enviado:
                         #VOLTA PARA A PAGINA INICIAL DO PROCESSO
                         vai_para_processo(navegador, processo)
