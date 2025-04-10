@@ -81,7 +81,8 @@ def main():
    
         planilhaDrones = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - Drones\\Lista de Drones Anatel_Corrigida.xlsx"
         planilhaRadios = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - Rádios\\Lista Radiamador.xlsx"
-        planilhaGeral = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - DRONES SEI PLANILHA\\Distribuição Processo Drone.xlsx"
+        planilhaGeral2024 = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - DRONES SEI PLANILHA\\Distribuição Processo Drone_2024.xlsx"
+        planilhaGeral2025 = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - DRONES SEI PLANILHA\\Distribuição Processo Drone_2025.xlsx"
 
         # #IMPRIME CAMINHOS ENCONTRADOS
         # print("Coletado caminho da planilha de drones conformes", planilhaDrones)
@@ -107,12 +108,12 @@ def main():
                 print("Análise finalizada.")        
             elif opcoes == '2':
                 #EXECUTA FUNCAO PARA CONCLUIR PROCESSO
-                fc.concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nomeEstag, planilhaGeral)
+                fc.concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nomeEstag, planilhaGeral2024, planilhaGeral2025)
                 print("Todos os processos foram concluídos.")
             elif opcoes == '3':
                 try:
                     #EXECUTA FUNCAO PARA ATRIBUIR PROCESSOS
-                    fc.atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral)
+                    fc.atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral2025)
                 except Exception as e:
                     print(f"Ocorreu um erro! {e}")
 

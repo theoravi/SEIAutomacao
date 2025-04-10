@@ -38,7 +38,7 @@ def check_element_exists(by, value):
 
 
 def preenche_plan(nomeSol, nomeInt, data, retido, codigo_rastreio, n_serie, n_serie2):
-    fc.muda_janela('Distribuição Processo Drone.xlsx')
+    fc.muda_janela('Distribuição Processo Drone_2025.xlsx')
     time.sleep(0.4)
     pyautogui.PAUSE = 0.2
     pyautogui.press('right')
@@ -87,7 +87,7 @@ def preenche_plan(nomeSol, nomeInt, data, retido, codigo_rastreio, n_serie, n_se
 
 
 def preenche_plan2(nomeSol, nomeInt, data):
-    fc.muda_janela('Distribuição Processo Drone.xlsx')
+    fc.muda_janela('Distribuição Processo Drone_2025.xlsx')
     time.sleep(0.4)
     pyautogui.PAUSE = 0.2
     pyautogui.press('right')
@@ -240,13 +240,13 @@ janela_principal = navegador.current_window_handle
 # pyautogui.click(edge)
 try:
     # Busca todas as janelas que contenham o título especificado
-    matches = find_windows(title_re=f".*Distribuição Processo Drone.xlsx.*", backend="win32", visible_only=True)
+    matches = find_windows(title_re=f".*Distribuição Processo Drone_2025.xlsx.*", backend="win32", visible_only=True)
     
     if not matches:
-        raise ElementNotFoundError(f"Nenhuma janela encontrada com o título 'Distribuição Processo Drone.xlsx'.")
+        raise ElementNotFoundError(f"Nenhuma janela encontrada com o título 'Distribuição Processo Drone_2025.xlsx'.")
 
     if len(matches) > 1:
-        print(f"Mais de uma janela encontrada com o título 'Distribuição Processo Drone.xlsx'. Selecionando a mais recente.")
+        print(f"Mais de uma janela encontrada com o título 'Distribuição Processo Drone_2025.xlsx'. Selecionando a mais recente.")
     
     # Seleciona a última janela encontrada (mais recente/ativa)
     handle = matches[-1]
@@ -261,7 +261,7 @@ except ElementNotFoundError:
     # Abre o Edge
     subprocess.Popen(["C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"])
     time.sleep(3)
-    sitePlan = 'https://anatel365.sharepoint.com/:x:/r/sites/lista.orcn/_layouts/15/Doc.aspx?sourcedoc=%7B4130A4D6-7F00-45D4-A328-ED0866A62335%7D&file=Distribui%C3%A7%C3%A3o%20Processo%20Drone.xlsx&action=default&mobileredirect=true'
+    sitePlan = 'https://anatel365.sharepoint.com/:x:/r/sites/lista.orcn/_layouts/15/doc.aspx?sourcedoc=%7B458e5539-83f9-4bd7-91a8-21f8cd0ea009%7D&action=edit'
     pyperclip.copy(sitePlan)
     pyautogui.hotkey('ctrl', 'l')
     pyautogui.hotkey('ctrl', 'v')
@@ -343,7 +343,7 @@ verifica=input('Aperte enter após filtrar a planilha geral.')
 
 # edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
 # pyautogui.click(edge)
-fc.muda_janela('Distribuição Processo Drone.xlsx')
+fc.muda_janela('Distribuição Processo Drone_2025.xlsx')
 pyautogui.click(x=160, y=375)
 counter = 0
 while True:
@@ -448,7 +448,7 @@ while True:
             # edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
             # edge=pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
             # pyautogui.click(edge)
-            fc.muda_janela('Distribuição Processo Drone.xlsx')
+            fc.muda_janela('Distribuição Processo Drone_2025.xlsx')
             pyautogui.press('down')
     
         if processo_reaberto:
@@ -456,5 +456,5 @@ while True:
     except Exception as e:
         print(e)
         # pyautogui.click(edge)
-        fc.muda_janela('Distribuição Processo Drone.xlsx')
+        fc.muda_janela('Distribuição Processo Drone_2025.xlsx')
         pyautogui.press('down')        

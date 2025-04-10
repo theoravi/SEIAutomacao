@@ -674,9 +674,13 @@ def localiza_processo(processo):
     return celula_encontrada
 
 #FUNCAO QUE PREENCHE A PLANILHA GERAL
-def preenche_planilhageral(processo, nomeEstag, retido='', situacao='', codigo_rastreio='', nome_interessado=''):
+def preenche_planilhageral(processo, nomeEstag, retido='', situacao='', codigo_rastreio='', nome_interessado='', opcao_de_planilha=1):
     #ENCONTRA O ICONE DO EDGE E ABRE O NAVEGADOR DA PLANILHA
-    mudou_janela = muda_janela('Distribuição Processo Drone.xlsx')
+    if opcao_de_planilha == 1:
+        planilha = 'Distribuição Processo Drone_2024.xlsx'
+    else:
+        planilha = 'Distribuição Processo Drone_2025.xlsx'
+    mudou_janela = muda_janela(planilha)
     if mudou_janela:
         #LOCALIZA O PROCESSO NA PLANILHA
         celula_encontrada = localiza_processo(processo)
@@ -689,9 +693,9 @@ def preenche_planilhageral(processo, nomeEstag, retido='', situacao='', codigo_r
                 muda_janela('theomation')
                 opcao = input('Parece que o Excel está lento. Caso o processo tenha sido encontrado, pressione [1]. Caso contrário, pressione enter para que o programa tente localizá-lo novamente: ')
                 if opcao == '1':
-                    muda_janela('Distribuição Processo Drone.xlsx')
+                    muda_janela(planilha)
                     break
-            muda_janela('Distribuição Processo Drone.xlsx')
+            muda_janela(planilha)
             celula_encontrada = localiza_processo(processo)
         if situacao == 'Cancelado':
             pyautogui.PAUSE = 0.3
@@ -1152,7 +1156,7 @@ def abreChromeEdge():
     # Tenta selecionar o Edge
     try:
         # Busca todas as janelas que contenham o título especificado
-        matches = find_windows(title_re=f".*Distribuição Processo Drone.xlsx.*", backend="win32", visible_only=True)
+        matches = find_windows(title_re=f".*Distribuição Processo Drone_2025.xlsx.*", backend="win32", visible_only=True)
         
         if not matches:
             raise ElementNotFoundError(f"Nenhuma janela encontrada com o título 'Distribuição Processo Drone.xlsx'.")
@@ -1173,7 +1177,7 @@ def abreChromeEdge():
         # Abre o Edge
         subprocess.Popen(["C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe"])
         time.sleep(2)
-        sitePlan = 'https://anatel365.sharepoint.com/:x:/r/sites/lista.orcn/_layouts/15/Doc.aspx?sourcedoc=%7B4130A4D6-7F00-45D4-A328-ED0866A62335%7D&file=Distribui%C3%A7%C3%A3o%20Processo%20Drone.xlsx&action=default&mobileredirect=true'
+        sitePlan = 'https://anatel365.sharepoint.com/:x:/r/sites/lista.orcn/_layouts/15/Doc.aspx?sourcedoc=%7B458E5539-83F9-4BD7-91A8-21F8CD0EA009%7D&file=Distribui%C3%A7%C3%A3o%20Processo%20Drone_2025.xlsx&action=default&mobileredirect=true'
         pyperclip.copy(sitePlan)
         pyautogui.hotkey('ctrl', 'l')
         pyautogui.hotkey('ctrl', 'v')
@@ -1241,10 +1245,19 @@ def iniciaJanela(navegador):
 def analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrones, planilhaRadios):
     drone_modelos = corrige_planilha(drones=True, planilha=planilhaDrones)
     radio_modelos = corrige_planilha(drones=False, planilha=planilhaRadios)
-
+    while True:
+        opcao = str(input("Indique qual planilha estão os processos a serem analisados [1] para 2024 e [2] para 2025: "))
+        if opcao == '1':
+            opcao_de_planilha = 1
+            break
+        elif opcao == '2':
+            opcao_de_planilha = 2
+            break
+        else:
+            print("Alternativa inválida")
     for processos in lista_processos[:]:
         try:
-            analisa(navegador, processos, nomeEstag, drone_modelos, radio_modelos)
+            analisa(navegador, processos, nomeEstag, drone_modelos, radio_modelos, opcao_de_planilha)
         except Exception as e:
             print("Ocorreu um erro: ", e)
             print("Traceback: ")
@@ -1267,12 +1280,23 @@ def analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones, planilhaRadios
     radio_modelos = corrige_planilha(drones=False, planilha=planilhaRadios)
 
     while True:
+        opcao = str(input("Indique qual planilha estão os processos a serem analisados [1] para 2024 e [2] para 2025: "))
+        if opcao == '1':
+            opcao_de_planilha = 1
+            break
+        elif opcao == '2':
+            opcao_de_planilha = 2
+            break
+        else:
+            print("Alternativa inválida")
+
+    while True:
         #PEDE O PROCESSO A SER ANALISADO
         processo = str(input("Digite o número do processo: " ))
         opcao = str(input("Caso deseje analisar este processo, digite [1], caso contrario digite [2]: "))
         if opcao == '1':
             try:
-                analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos)
+                analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos, opcao_de_planilha)
             except Exception as e:
                 print("Ocorreu um erro: ", e)
                 print("Traceback: ")
@@ -1291,7 +1315,7 @@ def analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones, planilhaRadios
                 print("Alternativa inválida")
 
 #FUNCAO PARA ANALISAR PROCESSO
-def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
+def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos, opcao_de_planilha):
     #VARIAVEL UTILIZADA PARA O SELENIUM RETORNAR PARA A JANELA PRINCIPAL
     janela_principal = navegador.current_window_handle
 # try:
@@ -1738,7 +1762,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
     #VERIFICA SE O PROCESSO CONTEM ALGUMA SITUACAO ANTES DE ESCREVER SOBRE
     #SE HOUVER ALGUM ERRO OU PULAR PROCESSO NAO ESCREVERA NA PLANILHA
     if situacao == 'Aprovado' or situacao == 'Exigência' or situacao == 'Intercorrente' or situacao == 'Cancelado':
-        preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastreio, nome_interessado)
+        preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastreio, nome_interessado, opcao_de_planilha=opcao_de_planilha)
     else:
         print('--------------------------------------------------------------------------')
         print('--------------------------------------------------------------------------')
@@ -1747,12 +1771,22 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos):
     pyautogui.PAUSE = 0.7
 
 #FUNCAO PARA CONCLUIR PROCESSO
-def concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nomeEstag, planilhaGeral):
+def concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nomeEstag, planilhaGeral2024, planilhaGeral2025):
     #VARIAVEL PARA VOLTAR À JANELA INICIAL
     janela_principal = navegador.current_window_handle
 
     # Carrega a planilha geral de processos com apenas a primeira coluna de processos (índice 0) 
     # e a terceira coluna que informa se está retido ou não (índice 2)
+    while True:
+        opcao = str(input("Em qual planilha estão os processos a serem concluídos? Digite [1] para 2024 ou [2] para 2025: ")).strip('"')
+        if opcao == '1':
+            planilhaGeral = planilhaGeral2024
+            break
+        elif opcao == '2':
+            planilhaGeral = planilhaGeral2025
+            break
+        else:
+            print("Alternativa inválida")
     try:
         df = pd.read_excel(planilhaGeral, usecols=[0,2,3])
     except Exception as e:
@@ -2113,18 +2147,20 @@ def concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nome
 
 
 
-def atribuir_processos(planilhaGeral, num_processos):
+def atribuir_processos(planilhaGeral2025, num_processos):
 
     # Lê a planilha do Excel
     try:
-        df = pd.read_excel(planilhaGeral, usecols=[0,1])
+        df = pd.read_excel(planilhaGeral2025, usecols=[0,1])
     except Exception as e:
         print("Ocorreu um erro ao buscar o caminho da pasta geral")
         print(e)
-        planilhaGeral = input("Digite o caminho da planilha geral manualmente: ").strip('"')
-        planilhaGeral = planilhaGeral.replace("\\", "\\\\")
-        df = pd.read_excel(planilhaGeral, usecols=[0,1])
-        
+        planilhaGeral2025 = input("Digite o caminho da planilha geral manualmente: ").strip('"')
+        planilhaGeral2025 = planilhaGeral2025.replace("\\", "\\\\")
+        df = pd.read_excel(planilhaGeral2025, usecols=[0,1])
+    
+
+    
     # Filtra as linhas onde a segunda coluna (Estagiário responsável) é uma data
     df['Estagiario responsável'] = pd.to_datetime(df['Estagiario responsável'], format='%d/%m/%Y', errors='coerce')
     df_com_datas = df.dropna(subset=['Estagiario responsável'])
@@ -2147,7 +2183,7 @@ def atribuir_processos(planilhaGeral, num_processos):
     return lista_processos_atr, df_com_datas
 
 
-def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral):
+def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral2025):
     # Exemplo de uso
     navegador.switch_to.default_content()
     try:    
@@ -2160,7 +2196,7 @@ def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral):
     except Exception as e:
         print(e)
     num_processos = int(input('Digite a quantidade de processos que deseja atribuir: '))
-    lista_processos_atr, df_com_datas = atribuir_processos(planilhaGeral, num_processos)
+    lista_processos_atr, df_com_datas = atribuir_processos(planilhaGeral2025, num_processos)
     print('Lista de processos a serem atribuídos:', lista_processos_atr)
 
     # Procura a caixa da Chirlene
@@ -2221,7 +2257,7 @@ def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral):
     pyautogui.PAUSE = 0.7
     # edge = pyautogui.locateOnScreen('imagensAut/edge.png', confidence=0.7)
     # CLICA NO NAVEGADOR
-    muda_janela('Distribuição Processo Drone.xlsx')
+    muda_janela('Distribuição Processo Drone_2025.xlsx')
     
     time.sleep(0.5)
     for processos_atr2 in processos_para_atr:
@@ -2249,7 +2285,7 @@ def atribuicao(navegador, nomeEstag_sem_acento, nomeEstag, planilhaGeral):
             if celula_encontrada == 'nan':
                 muda_janela('theomation')
                 input('Parece que o Excel não estava em foco na janela do Microsoft Edge. Volte para a página do app, coloque em foco (clicando em qualquer lugar da planilha) e pressione enter.')
-                muda_janela('Distribuição Processo Drone.xlsx')
+                muda_janela('Distribuição Processo Drone_2025.xlsx')
             celula_encontrada = localiza_processo(processos_atr2)
         pyautogui.press('right')
         pyperclip.copy(nomeEstag)
