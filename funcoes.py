@@ -133,7 +133,7 @@ def insira_anexo(processos, navegador):
     root.mainloop()
     
     #PREENCHE O ASSUNTO DO EMAIL
-    navegador.find_element(By.ID, 'txtAssunto').send_keys(f"Processo SEI nº {processos} - Exigência")
+    navegador.find_element(By.ID, 'txtAssunto').send_keys(f"Processo SEI nº {processos} - Intercorrente")
     #PREENCHE O CAMPO DE EMAIL COM A VARIAVEL CRIADA ACIMA
     navegador.find_element(By.ID, 'txaMensagem').send_keys(f'''Prezado(a) Senhor(a),
 
@@ -276,11 +276,11 @@ def erro_declaracao(processos, impProp, navegador, jaHomologado=False):
     Anatel - Agência Nacional de Telecomunicações'''
         
     #INSERE ASSUNTO DO PROCESO
-    navegador.find_element(By.ID, 'txtAssunto').send_keys(f"Processo SEI nº {processos} - Indeferido")
+    navegador.find_element(By.ID, 'txtAssunto').send_keys(f"Processo SEI nº {processos} - Exigência")
     #INSERE EMAIL COM CORPO DO EMAIL
     navegador.find_element(By.ID, 'txaMensagem').send_keys(texto_padrao)
 
-def devolver_pacote(processo, navegador, codigo_rastreio, tipo_processo):
+def devolver_pacote(processo, navegador, codigo_rastreio):
     endereco_email("notificacaosei.sp@anatel.gov.br", navegador)
     endereco_email("notificacaosei.rj@anatel.gov.br", navegador)
     endereco_email("notificacaosei.pr@anatel.gov.br", navegador)
@@ -297,24 +297,27 @@ def devolver_pacote(processo, navegador, codigo_rastreio, tipo_processo):
     while True:
         print("Selecione o motivo pelo o qual será necessário devolver o pacote:",
         "[1] Ligados à Tomada.",
-        "[2] Produto com Nota Fiscal.",
-        "[3] Produto descumpre ato da Anatel.",
+        "[2] Ensaio de SAR.",
+        "[3] Estação de Tratamento de Acesso (ETA).",
+        "[4] Produto descumpre ato da Anatel.",
         sep = "\n")
         opcao = str(input("Opção: "))
         if opcao == '1':
             ligado_tomada(navegador, processo, codigo_rastreio)
             return
         elif opcao == '2':
-            produto_nota_fiscal(navegador, processo, codigo_rastreio)
+            sar(navegador, processo, codigo_rastreio)
             return
         elif opcao == '3':
-            descumpre_ato_anatel(navegador, processo, tipo_processo, codigo_rastreio)
+            eta(navegador, processo, codigo_rastreio)
+            return
+        elif opcao == '4':
+            descumpre_ato_anatel(navegador, processo, codigo_rastreio)
             return
         else:
             print("Opção inválida. Por favor, digite [1] para ligados à tomada, [2] para produto com nota fiscal, ou [3] para produto descumpre ato da Anatel.")
 
 def ligado_tomada(navegador, processo, codigo_rastreio):
-
     #INSERE ASSUNTO DO PROCESO
     navegador.find_element(By.ID, 'txtAssunto').send_keys(f"Processo SEI nº {processo} - Devolução do pacote {codigo_rastreio}")
     #INSERE EMAIL COM CORPO DO EMAIL
@@ -323,80 +326,88 @@ def ligado_tomada(navegador, processo, codigo_rastreio):
     #SELECIONA O TEXTO PADRAO DE EQUIPAMENTOS LIGADOS À TOMADA
     select.select_by_visible_text('Processo SEI ORCN Ligados à Tomada')
 
-def produto_nota_fiscal(navegador, processo, codigo_rastreio):
+def sar(navegador, processo, codigo_rastreio):
     #INSERE ASSUNTO DO PROCESO
     navegador.find_element(By.ID, 'txtAssunto').send_keys(f"Processo SEI nº {processo} - Devolução do pacote {codigo_rastreio}")
     #INSERE EMAIL COM CORPO DO EMAIL
     select_element = WebDriverWait(navegador, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selTextoPadrao"]')))
     select = Select(select_element)
     #SELECIONA O TEXTO PADRAO DE EQUIPAMENTOS LIGADOS À TOMADA
-    select.select_by_visible_text('Processo SEI ORCN Produto com Nota Fiscal')
+    select.select_by_visible_text('Processo SEI ORCN Exigência - SAR')
 
-def descumpre_ato_anatel(navegador, processo, tipo_processo, codigo_rastreio):
-    if tipo_processo == 'Importado':
-        while True:
-            print("Indique se o objeto desta homologação é um drone ou um rádio:",
-            "[1] Drone",
-            "[2] Rádio",
-            sep = "\n")
-            opcao = str(input("Opção: "))
-            if opcao == '1':
-                produto = 'drone'
-                break
-            elif opcao == '2':
-                produto = 'radio'
-                break
-            else:
-                print("Opção inválida. Por favor, digite [1] para ligados à tomada, ou [2] para produto com nota fiscal.")
-        
-        while True:
-            modelo = str(input("Insira o modelo do produto: "))
-            opcao = str(input("Caso esteja correto, digite [1]. Para digitar novamente, digite [2]: "))
-            if opcao == '1':
-                break
-            elif opcao == '2':
-                continue
-            else:
-                print("Opção inválida!")
+def eta(navegador, processo, codigo_rastreio):
+    #INSERE ASSUNTO DO PROCESO
+    navegador.find_element(By.ID, 'txtAssunto').send_keys(f"Processo SEI nº {processo} - Devolução do pacote {codigo_rastreio}")
+    #INSERE EMAIL COM CORPO DO EMAIL
+    select_element = WebDriverWait(navegador, 10).until(EC.presence_of_element_located((By.XPATH, '//*[@id="selTextoPadrao"]')))
+    select = Select(select_element)
+    #SELECIONA O TEXTO PADRAO DE EQUIPAMENTOS LIGADOS À TOMADA
+    select.select_by_visible_text('Processo SEI ORCN Exigência - ETA')
 
-        while True:
-            ato = str(input("Insira o ato ao qual o produto não cumpre: "))
-            opcao = str(input("Caso esteja correto, digite [1]. Para digitar novamente, digite [2]: "))
-            if opcao == '1':
-                break
-            elif opcao == '2':
-                continue
-            else:
-                print("Opção inválida!")
+def descumpre_ato_anatel(navegador, processo, codigo_rastreio):
+    while True:
+        print("Indique se o objeto desta homologação é um drone ou um rádio:",
+        "[1] Drone",
+        "[2] Rádio",
+        sep = "\n")
+        opcao = str(input("Opção: "))
+        if opcao == '1':
+            produto = 'drone'
+            break
+        elif opcao == '2':
+            produto = 'radio'
+            break
+        else:
+            print("Opção inválida. Por favor, digite [1] para ligados à tomada, ou [2] para produto com nota fiscal.")
+    
+    while True:
+        modelo = str(input("Insira o modelo do produto: "))
+        opcao = str(input("Caso esteja correto, digite [1]. Para digitar novamente, digite [2]: "))
+        if opcao == '1':
+            break
+        elif opcao == '2':
+            continue
+        else:
+            print("Opção inválida!")
 
-        while True:
-            item = str(input("Insira o item correspondente do ato: "))
-            opcao = str(input("Caso esteja correto, digite [1]. Para digitar novamente, digite [2]: "))
-            if opcao == '1':
-                break
-            elif opcao == '2':
-                continue
-            else:
-                print("Opção inválida!")
+    while True:
+        ato = str(input("Insira o ato ao qual o produto não cumpre: "))
+        opcao = str(input("Caso esteja correto, digite [1]. Para digitar novamente, digite [2]: "))
+        if opcao == '1':
+            break
+        elif opcao == '2':
+            continue
+        else:
+            print("Opção inválida!")
 
-        texto_padrao = f"""Prezado(a) Senhor(a),
+    while True:
+        item = str(input("Insira o item correspondente do ato: "))
+        opcao = str(input("Caso esteja correto, digite [1]. Para digitar novamente, digite [2]: "))
+        if opcao == '1':
+            break
+        elif opcao == '2':
+            continue
+        else:
+            print("Opção inválida!")
 
-        Informamos que o {produto} de modelo {modelo} não atende aos requisitos estabelecidos pelas normas técnicas da ANATEL, uma vez que descumpre o item {item} do Ato nº {ato}. Dessa forma, não é possível proceder com sua homologação.                        
-                                            
-        Atenciosamente,
+    texto_padrao = f"""Prezado(a) Senhor(a),
 
-        ORCN - Gerência de Certificação e Numeração
+    Informamos que o {produto} de modelo {modelo} não atende aos requisitos estabelecidos pelas normas técnicas da ANATEL, uma vez que descumpre o item {item} do Ato nº {ato}. Dessa forma, não é possível proceder com sua homologação.                        
+                                        
+    Atenciosamente,
 
-        SOR - Superintendência de Outorga e Recursos à Prestação
+    ORCN - Gerência de Certificação e Numeração
 
-        Anatel - Agência Nacional de Telecomunicações
-        """
+    SOR - Superintendência de Outorga e Recursos à Prestação
 
-        #INSERE ASSUNTO DO PROCESO
-        navegador.find_element(By.ID, 'txtAssunto').send_keys(f"Processo SEI nº {processo} - Devolução do pacote {codigo_rastreio}")
-        #INSERE EMAIL COM CORPO DO EMAIL
-        navegador.find_element(By.ID, 'txaMensagem').send_keys(texto_padrao)
-        #INSERE ASSUNTO DO PROCESO
+    Anatel - Agência Nacional de Telecomunicações
+    """
+
+    #INSERE ASSUNTO DO PROCESO
+    navegador.find_element(By.ID, 'txtAssunto').send_keys(f"Processo SEI nº {processo} - Devolução do pacote {codigo_rastreio}")
+    #INSERE EMAIL COM CORPO DO EMAIL
+    navegador.find_element(By.ID, 'txaMensagem').send_keys(texto_padrao)
+    #INSERE ASSUNTO DO PROCESO
 
 def processo_errado(processo, navegador):
     #ENVIA TEXTO DE INPUT PARA A VARIAVEL
@@ -458,97 +469,181 @@ def processo_errado(processo, navegador):
     #INSERE EMAIL COM CORPO DO EMAIL
     navegador.find_element(By.ID, 'txaMensagem').send_keys(texto_padrao)
 
-def processo_reaberto(navegador, processo, nomeEstag):
-    #VAI PARA A PÁGINA INICIAL DO PROCESSO
-    vai_para_processo(navegador, processo)
+def numero_de_serie_com_informacao_pessoal(navegador, processo):
+    texto_padrao = """Prezado(a) Senhor(a),
 
-    #CLICA NO INCONE DE INCLUIR DOCUMENTO
-    navegador.switch_to.frame('ifrConteudoVisualizacao')
-    clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]')
+        O número de série do equipamento precisa ser um documento público. Desta maneira, este não pode incluir informações pessoais (tais como RG, CNH ou CPF).
 
-    #CLICA NA OPCAO DE DESPACHO DECISORIO
-    navegador.switch_to.frame('ifrVisualizacao')
-    clica_noelemento(navegador, By.PARTIAL_LINK_TEXT,'Despacho Decisório')
+        FAVOR NÃO RESPONDER ESTE E-MAIL. 
 
-    #SELECIONA TEXTO PADRAO
-    clica_noelemento(navegador, By.XPATH,'//*[@id="divOptTextoPadrao"]/div')
+         
 
-    #ENVIA QUAL DESPACHO DECISORIO DEVE SER CRIADO
-    navegador.find_element(By.XPATH,'//*[@id="txtTextoPadrao"]').send_keys('Despacho Decisório - Cancelamento de Homologação')
+        Atenciosamente,
 
-    #CLICA NA PRIMEIRA OPCAO
-    clica_noelemento(navegador, By.XPATH,'//*[@id="divInfraAjaxtxtTextoPadrao"]/ul/li/a')
+        ORCN - Gerência de Certificação e Numeração
 
-    #COLOCA O DESPACHO COMO PUBLICO
-    clica_noelemento(navegador, By.XPATH,'//*[@id="divOptPublico"]/div')
+        SOR - Superintendência de Outorga e Recursos à Prestação
 
-    #SALVA DESPACHO
-    clica_noelemento(navegador, By.ID,'btnSalvar')
+        Anatel - Agência Nacional de Telecomunicações"""
+    #INSERE ASSUNTO DO PROCESO
+    navegador.find_element(By.ID, 'txtAssunto').send_keys(f"Processo SEI nº {processo}")
+    #INSERE EMAIL COM CORPO DO EMAIL
+    navegador.find_element(By.ID, 'txaMensagem').send_keys(texto_padrao)
+def processo_reaberto(navegador, processo, nomeEstag, janela_principal):
 
     while True:
-        try:
-            confirmacao = str(input('Edite o documento da forma que preferir, salve e feche a janela.\nPara concluir digite [1], caso haja algum problema e queira parar o código, digite [2]: '))
-            if confirmacao == '1':
-                break
-            elif confirmacao == '2':
+        print("Selecione o motivo pelo o qual o processo foi reaberto, ou pule a análise do processo:",
+        "[1] Retorno do número de série com informacões pessoais (CPF, RG ou CNH) de um equipamento retido.",
+        "[2] Pedido de Cancelamento.",
+        "[3] Pular processo.",
+        sep = "\n")
+        opcao = str(input('Opção: '))
+        if opcao == '1':
+            abre_email(navegador, processo)
+            numero_de_serie_com_informacao_pessoal(navegador, processo)
+            while True:
+                try:
+                    confere = int(input('Caso esteja tudo certo digite [1], caso tenha algum erro digite [2]: '))
+                    if confere == 1:
+                        break
+                    elif confere == 2:
+                        break
+                    else:
+                        print("Opção inválida, tente novamente!")
+                except ValueError:
+                    print("Opção inválida, tente novamente!")
+            if confere == 1:
+                try:
+                    #ENVIA EMAIL COM A EXIGENCIA
+                    navegador.find_element(By.XPATH, '//*[@id="divInfraBarraComandosInferior"]/button[1]').click()
+                    time.sleep(0.5)
+                    #FECHA ALERTA DO NAVEGADOR
+                    alert = Alert(navegador)
+                    alert.accept()
+                    time.sleep(0.5)
+                    
+                except Exception:
+                    print("Não foi possivel selecionar o botão de enviar o e-mail. Pode ser que a janela tenha sido fechada.")
+                    
+                navegador.switch_to.window(janela_principal)    
+                vai_para_processo(navegador, processo)
+                time.sleep(1)
+                navegador.switch_to.frame('ifrConteudoVisualizacao')
+                #CLICA NO ICONE DE CONCLUIR PROCESSO
+                clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/processo_concluir.svg?18')]")
+                #clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[19]')
+                navegador.switch_to.frame('ifrVisualizacao')
+                clica_noelemento(navegador, By.XPATH, '//*[@id="sbmSalvar"]')
+            elif confere == 2:
+                print("Caso tenha algum erro, tente novamente!")
                 return
-            else:
-                print("Opção inválida, tente novamente!")
-        except ValueError:
-            print("Opção inválida, tente novamente!")
+        elif opcao == '2':
+            while True:
+                confirmacao = str(input('Confirme a geração de despacho de cancelamento digitando [1], caso contrário digite [2]: '))
+                if confirmacao == '1':
+                    break
+                elif confirmacao == '2':
+                    print("Realize as alterações necessárias mais tarde.")
+                    return
+                else:
+                    print("Opção inválida, tente novamente!")
+            #VAI PARA A PÁGINA INICIAL DO PROCESSO
+            vai_para_processo(navegador, processo)
 
-    navegador.switch_to.default_content()
-    navegador.switch_to.frame('ifrArvore')
-    lista_despachos = navegador.find_elements(By.PARTIAL_LINK_TEXT, 'Despacho Decisório')
-    for i in lista_despachos:
-        navegador.switch_to.default_content()
-        navegador.switch_to.frame('ifrArvore')
-        i.click()
-        navegador.switch_to.default_content()
-        navegador.switch_to.frame('ifrConteudoVisualizacao')
-        navegador.switch_to.frame('ifrVisualizacao')
-        time.sleep(1)
-        if check_element_exists(By.XPATH, "//*[contains(text(), 'Revogar o')]", navegador):
+            #CLICA NO INCONE DE INCLUIR DOCUMENTO
+            navegador.switch_to.frame('ifrConteudoVisualizacao')
+            clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[1]')
+
+            #CLICA NA OPCAO DE DESPACHO DECISORIO
+            navegador.switch_to.frame('ifrVisualizacao')
+            clica_noelemento(navegador, By.PARTIAL_LINK_TEXT,'Despacho Decisório')
+
+            #SELECIONA TEXTO PADRAO
+            clica_noelemento(navegador, By.XPATH,'//*[@id="divOptTextoPadrao"]/div')
+
+            #ENVIA QUAL DESPACHO DECISORIO DEVE SER CRIADO
+            navegador.find_element(By.XPATH,'//*[@id="txtTextoPadrao"]').send_keys('Despacho Decisório - Cancelamento de Homologação')
+
+            #CLICA NA PRIMEIRA OPCAO
+            clica_noelemento(navegador, By.XPATH,'//*[@id="divInfraAjaxtxtTextoPadrao"]/ul/li/a')
+
+            #COLOCA O DESPACHO COMO PUBLICO
+            clica_noelemento(navegador, By.XPATH,'//*[@id="divOptPublico"]/div')
+
+            #SALVA DESPACHO
+            clica_noelemento(navegador, By.ID,'btnSalvar')
+
+            while True:
+                try:
+                    confirmacao = str(input('Edite o documento da forma que preferir, salve e feche a janela.\nPara concluir digite [1], caso haja algum problema e queira parar o código, digite [2]: '))
+                    if confirmacao == '1':
+                        break
+                    elif confirmacao == '2':
+                        return
+                    else:
+                        print("Opção inválida, tente novamente!")
+                except ValueError:
+                    print("Opção inválida, tente novamente!")
+
+            navegador.switch_to.default_content()
+            navegador.switch_to.frame('ifrArvore')
+            lista_despachos = navegador.find_elements(By.PARTIAL_LINK_TEXT, 'Despacho Decisório')
+            for i in lista_despachos:
+                navegador.switch_to.default_content()
+                navegador.switch_to.frame('ifrArvore')
+                i.click()
+                navegador.switch_to.default_content()
+                navegador.switch_to.frame('ifrConteudoVisualizacao')
+                navegador.switch_to.frame('ifrVisualizacao')
+                time.sleep(1)
+                if check_element_exists(By.XPATH, "//*[contains(text(), 'Revogar o')]", navegador):
+                    navegador.switch_to.default_content()
+                    navegador.switch_to.frame('ifrConteudoVisualizacao')
+                    print('Despacho Decisório de Cancelamento encontrado.\n')
+
+                    time.sleep(1)
+                    #CLICA NO ICONE DE LEGO
+                    clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/bloco_incluir_protocolo.svg?18')]")
+                    
+                    #SELECIONA BLOCO (SELECIONA O PRIMEIRO DESPACHO PARA DRONES APROVADOS QUE LER)
+                    time.sleep(1.5)
+                    navegador.switch_to.frame('ifrVisualizacao')
+                    select_element = navegador.find_element(By.ID, 'selBloco')
+                    select = Select(select_element)
+                    #PROCURA O PRIMEIRO BLOCO QUE TENHA O TEXTO "Despachos para Drones aprovados"
+                    for opcao in select.options:
+                        if "Despachos para Drones aprovados" in opcao.text:
+                            select.select_by_visible_text(opcao.text)
+                            break
+                    time.sleep(0.5)
+                    #CLICA NO BOTAO DE INCLUIR NO BLOCO
+                    clica_noelemento(navegador, By.XPATH,'//*[@id="sbmIncluir"]')
+                    #navegador.find_element(By.XPATH, '//*[@id="sbmIncluir"]').click()
+
+            #VOLTA PARA PAGINA INICIAL DO PROCESSO
+            vai_para_processo(navegador, processo)
+            time.sleep(1)
+            #ADICIONA NOTA PARA AGUARDAR ASSINATURA
+            #CLICA NO ICONE DE ANOTACAO
             navegador.switch_to.default_content()
             navegador.switch_to.frame('ifrConteudoVisualizacao')
-            print('Despacho Decisório de Cancelamento encontrado.\n')
-
-            time.sleep(1)
-            #CLICA NO ICONE DE LEGO
-            clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/bloco_incluir_protocolo.svg?18')]")
-            
-            #SELECIONA BLOCO (SELECIONA O PRIMEIRO DESPACHO PARA DRONES APROVADOS QUE LER)
-            time.sleep(1.5)
+            clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/anotacao_cadastro.svg?18')]")
+            #clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[16]')
+            time.sleep(0.1)
+            #INSERE O TEXTO DA ANOTACAO
             navegador.switch_to.frame('ifrVisualizacao')
-            select_element = navegador.find_element(By.ID, 'selBloco')
-            select = Select(select_element)
-            #PROCURA O PRIMEIRO BLOCO QUE TENHA O TEXTO "Despachos para Drones aprovados"
-            for opcao in select.options:
-                if "Despachos para Drones aprovados" in opcao.text:
-                    select.select_by_visible_text(opcao.text)
-                    break
-            time.sleep(0.5)
-            #CLICA NO BOTAO DE INCLUIR NO BLOCO
-            clica_noelemento(navegador, By.XPATH,'//*[@id="sbmIncluir"]')
-            #navegador.find_element(By.XPATH, '//*[@id="sbmIncluir"]').click()
+            navegador.find_element(By.ID, 'txaDescricao').send_keys('Pedido de Cancelamento')
+            #SALVA O TEXTO
+            navegador.find_element(By.NAME, 'sbmRegistrarAnotacao').click()
+            #DA COMO APROVADO E ANOTA NO TXT DE PROCESSOS CONFORMES
+            preenche_planilhageral(processo, nomeEstag, situacao="Cancelado")
+            return
+        elif opcao == '3':
+            return
+        else:
+            print("Opção inválida, tente novamente!")
 
-    #VOLTA PARA PAGINA INICIAL DO PROCESSO
-    vai_para_processo(navegador, processo)
-    time.sleep(1)
-    #ADICIONA NOTA PARA AGUARDAR ASSINATURA
-    #CLICA NO ICONE DE ANOTACAO
-    navegador.switch_to.default_content()
-    navegador.switch_to.frame('ifrConteudoVisualizacao')
-    clica_noelemento(navegador, By.XPATH, "//img[contains(@src, 'svg/anotacao_cadastro.svg?18')]")
-    #clica_noelemento(navegador, By.XPATH,'//*[@id="divArvoreAcoes"]/a[16]')
-    time.sleep(0.1)
-    #INSERE O TEXTO DA ANOTACAO
-    navegador.switch_to.frame('ifrVisualizacao')
-    navegador.find_element(By.ID, 'txaDescricao').send_keys('Pedido de Cancelamento')
-    #SALVA O TEXTO
-    navegador.find_element(By.NAME, 'sbmRegistrarAnotacao').click()
-    #DA COMO APROVADO E ANOTA NO TXT DE PROCESSOS CONFORMES
-    preenche_planilhageral(processo, nomeEstag, situacao="Cancelado")
+    
 
 
 #FUNCAO QUE PERMITE O USUARIO INSERIR CORPO DO EMAIL
@@ -952,7 +1047,7 @@ def endereco_email(endereco, navegador):
     clica_noelemento(navegador, By.XPATH, '//*[@id="select2-drop"]/ul')
     time.sleep(0.2)
 
-def envia_email(navegador, janela_principal, processo, nomeEstag, impProp, codigo_rastreio, tipoExig, tipo_processo):
+def envia_email(navegador, janela_principal, processo, nomeEstag, impProp, codigo_rastreio, tipoExig):
     if tipoExig == 1:
         #PUXA FUNCAO INSIRA_ANEXO CONTENDO O CORPO DE EMAIL PEDINDO ANEXOS
         insira_anexo(processo, navegador)
@@ -964,7 +1059,7 @@ def envia_email(navegador, janela_principal, processo, nomeEstag, impProp, codig
         erro_declaracao(processo, impProp, navegador, jaHomologado=True)
     elif tipoExig == 4:
         #PUXA FUNCAO DEVOLVER_PACOTE CONTENDO O CORPO DE EMAIL PEDINDO PARA ABRIR NOVO PROCESSO SEI
-        devolver_pacote(processo, navegador, codigo_rastreio, tipo_processo)
+        devolver_pacote(processo, navegador, codigo_rastreio)
     elif tipoExig == 5:
         #PUXA FUNCAO OUTRO_ERRO EM QUE USUARIO INSERE O EMAIL COMO QUISER
         outro_erro(navegador)
@@ -1024,9 +1119,12 @@ def envia_email(navegador, janela_principal, processo, nomeEstag, impProp, codig
         if tipoExig == 1:
             #CLICA NA TAG DE INTERCORRENTE
             navegador.find_element(By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Intercorrente').click()
+        elif tipoExig == 4:
+            #CLICA NA TAG DE DEVOLUCAO
+            navegador.find_element(By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Devolução').click()
         else:
-            #CLICA NA TAG DE PENDENCIA
-            navegador.find_element(By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Pendência').click()
+            #CLICA NA TAG DE EXIGENCIA
+            navegador.find_element(By.PARTIAL_LINK_TEXT, 'Processo SEI ORCN - Exigência').click()
 
         #PEDE O TEXTO DA TAG
         muda_janela('theomation')
@@ -1340,18 +1438,18 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos, opcao_
     elif check_element_exists(By.PARTIAL_LINK_TEXT, 'Despacho Decisório', navegador) and (check_element_exists(By.XPATH, "//img[contains(@src, 'svg/marcador_verde.svg?18')]", navegador) or check_element_exists(By.XPATH, "//img[contains(@src, 'svg/marcador_preto.svg?18')]", navegador)):
         tipo_processo = 'Reaberto'
         print(f"O processo {processo} foi reaberto!")
-        while True:
-            try:
-                confirmacao = str(input('Caso este seja um PEDIDO DE CANCELAMENTO, digite [1] para gerar o despacho. Caso contrário digite [2]: '))
-                if confirmacao == '1':
-                    processo_reaberto(navegador, processo, nomeEstag)
-                    return
-                elif confirmacao == '2':
-                    return
-                else:
-                    print("Opção inválida, tente novamente!")
-            except ValueError:
-                print("Opção inválida, tente novamente!")
+        # while True:
+        #     try:
+        #         confirmacao = str(input('Caso este seja um PEDIDO DE CANCELAMENTO, digite [1] para gerar o despacho. Caso contrário digite [2]: '))
+        #         if confirmacao == '1':
+        processo_reaberto(navegador, processo, nomeEstag, janela_principal)
+        return
+            #     elif confirmacao == '2':
+            #         return
+            #     else:
+            #         print("Opção inválida, tente novamente!")
+            # except ValueError:
+            #     print("Opção inválida, tente novamente!")
     
     #CONFERE SE EXISTE A DECLARACAO DE CONFORMIDADE OU UMA PASTA
     # if check_element_exists(By.PARTIAL_LINK_TEXT, "Declaração de Conformidade", navegador):
@@ -1376,7 +1474,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos, opcao_
                 if confirmacao == '1':
                     try:
                         abre_email(navegador, processo, processo_errado=True)
-                        email_enviado = envia_email(navegador, janela_principal, processo, nomeEstag, impProp, 5, tipo_processo)
+                        email_enviado = envia_email(navegador, janela_principal, processo, nomeEstag, impProp, 5)
                         vai_para_processo(navegador, processo)
                         nomeSol = armazena_nomesolicitante(navegador)
                         if email_enviado:
@@ -1733,7 +1831,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos, opcao_
                         situacao = 'Exigência'
 
                     try:
-                        email_enviado = envia_email(navegador, janela_principal, processo, nomeEstag, impProp, codigo_rastreio, exig, tipo_processo)
+                        email_enviado = envia_email(navegador, janela_principal, processo, nomeEstag, impProp, codigo_rastreio, exig)
                     except:
                         print("Ocorreu um erro ao enviar o email, tente novamente!")
                         navegador.switch_to.window(janela_principal)
@@ -1761,7 +1859,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos, opcao_
             print("Pulando processo.")
     #VERIFICA SE O PROCESSO CONTEM ALGUMA SITUACAO ANTES DE ESCREVER SOBRE
     #SE HOUVER ALGUM ERRO OU PULAR PROCESSO NAO ESCREVERA NA PLANILHA
-    if situacao == 'Aprovado' or situacao == 'Exigência' or situacao == 'Intercorrente' or situacao == 'Cancelado':
+    if situacao == 'Aprovado' or situacao == 'Exigência' or situacao == 'Intercorrente' or situacao == 'Cancelado' or situacao == 'Devolução':
         preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastreio, nome_interessado, opcao_de_planilha=opcao_de_planilha)
     else:
         print('--------------------------------------------------------------------------')

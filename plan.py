@@ -1,5 +1,6 @@
 import pyautogui
 import pyperclip
+import traceback
 import time
 import funcoes as fc
 import tkinter as tk
@@ -165,6 +166,14 @@ def clica_noelemento(modo_procura, element_id):
         element.click()
     except TimeoutException:
         print(f"Elemento {element_id} não foi carregado no tempo esperado")
+
+def muda_para_iframe(navegador, modo_procura, element_id, tempo=5):
+    # Espera até que o iframe esteja disponível
+    iframe = WebDriverWait(navegador, tempo).until(
+        EC.presence_of_element_located((modo_procura, element_id))
+    )
+    # Muda para o iframe
+    navegador.switch_to.frame(iframe)
 
 def reabre_processo():
     navegador.switch_to.default_content()
@@ -357,6 +366,12 @@ while True:
         time.sleep(0.2)
         n_processo = pyperclip.paste()
         print("Processo: " + n_processo)
+        if n_processo == 'Recuperando dados. Aguarde alguns segundos e tente cortar ou copiar novamente.':
+            time.sleep(5)
+            pyautogui.hotkey('ctrl', 'c')
+            time.sleep(0.5)
+            n_processo = pyperclip.paste()
+            print("Processo: " + n_processo)
         if n_processo == '':
             counter += 1
         if counter == 5:
@@ -455,6 +470,8 @@ while True:
             fecha_processo()
     except Exception as e:
         print(e)
+        traceback.print_exc()
+        print("\n")
         # pyautogui.click(edge)
         fc.muda_janela('Distribuição Processo Drone_2025.xlsx')
         pyautogui.press('down')        
