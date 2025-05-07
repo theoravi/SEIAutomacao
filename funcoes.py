@@ -1061,10 +1061,10 @@ def envia_email(navegador, janela_principal, processo, nomeEstag, impProp, codig
         #PUXA FUNCAO DEVOLVER_PACOTE CONTENDO O CORPO DE EMAIL PEDINDO PARA ABRIR NOVO PROCESSO SEI
         devolver_pacote(processo, navegador, codigo_rastreio)
     elif tipoExig == 5:
+        processo_errado(processo, navegador)
+    else:
         #PUXA FUNCAO OUTRO_ERRO EM QUE USUARIO INSERE O EMAIL COMO QUISER
         outro_erro(navegador)
-    else:
-        processo_errado(processo, navegador)
 
     #PEDE PARA USUARIO CONFERIR SE ESTÁ TUDO CERTO COM O EMAIL
     muda_janela('theomation')
@@ -1470,16 +1470,17 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos, opcao_
         while True:
             try:
                 print("Não foi possível encontrar a Declaração de Conformidade.")
-                confirmacao = str(input('Caso este seja um processo CRIADO COM O TIPO ERRADO, digite [1] para enviar exigência, senão, digite [2] para pular o processo: '))
+                confirmacao = str(input(f'Caso o processo {processo} tenha sido CRIADO COM O TIPO ERRADO, digite [1] para enviar exigência, senão, digite [2] para pular o processo: '))
                 if confirmacao == '1':
                     try:
                         abre_email(navegador, processo, processo_errado=True)
-                        email_enviado = envia_email(navegador, janela_principal, processo, nomeEstag, impProp, 5)
+                        email_enviado = envia_email(navegador, janela_principal, processo, nomeEstag, impProp, '', 5)
                         vai_para_processo(navegador, processo)
                         nomeSol = armazena_nomesolicitante(navegador)
                         if email_enviado:
                             preenche_planilhageral(processo, nomeEstag, 'Não', 'Cancelado', '', nomeSol)
                     except:
+                        traceback.print_exc()
                         print("Ocorreu um erro ao abrir o email, tente novamente!")
                         navegador.switch_to.window(janela_principal)
                     return
@@ -1806,12 +1807,14 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos, opcao_
             muda_janela('theomation')
             while True:
                 try:
-                    print("Selecione o tipo de exigência abaixo:\n",
-                        "[1] Falta algum anexo no processo.\n",
-                        "[2] Erro na declaração de conformidade ou alguma exigência que é necessário abrir novo processo.\n",
-                        "[3] Produto já homologado.\n",
-                        "[4] Pacote terá de ser devolvido.\n",
-                        "[5] Outros.")
+                    print("Selecione o tipo de exigência abaixo:",
+                        "[1] Falta algum anexo no processo.",
+                        "[2] Erro na declaração de conformidade ou alguma exigência que é necessário abrir novo processo.",
+                        "[3] Produto já homologado.",
+                        "[4] Pacote terá de ser devolvido.",
+                        "[5] Processo aberto de forma errada.",
+                        "[6] Outros",
+                        sep='\n')
                     time.sleep(0.5)
                     exig = int(input("Opção: "))
                 except ValueError:
