@@ -1820,7 +1820,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos, opcao_
                 except ValueError:
                     print("Opção inválida. Digite um número inteiro entre 1 e 3.")
                     continue
-                if exig in range(1, 6):
+                if exig in range(1, 7):
                     if exig == 1:
                         situacao = 'Intercorrente'
 
