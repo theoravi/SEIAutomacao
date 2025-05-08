@@ -81,9 +81,9 @@ def main():
    
         planilhaDrones = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - Drones\\Lista de Drones Anatel_Corrigida.xlsx"
         planilhaRadios = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - Rádios\\Lista Radiamador.xlsx"
-        planilhaGeral2024 = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - DRONES SEI PLANILHA\\Distribuição Processo Drone_2024.xlsx"
         planilhaGeral2025 = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - DRONES SEI PLANILHA\\Distribuição Processo Drone_2025.xlsx"
-
+        planilhaGeral2024 = f"C:\\Users\\{user_name}\\ANATEL\\ORCN - DRONES SEI PLANILHA\\Distribuição Processo Drone_2024.xlsx"
+        
         # #IMPRIME CAMINHOS ENCONTRADOS
         # print("Coletado caminho da planilha de drones conformes", planilhaDrones)
         # print("Coletado caminho da planilha de rádios conformes", planilhaRadios)
@@ -104,7 +104,7 @@ def main():
             opcoes = str(input("Opção: "))
             if opcoes == '1':
                 #EXECUTA FUNCAO PARA ANALISAR PROCESSO
-                fc.analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrones, planilhaRadios)
+                fc.analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrones, planilhaRadios, planilhaGeral2025)
                 print("Análise finalizada.")        
             elif opcoes == '2':
                 #EXECUTA FUNCAO PARA CONCLUIR PROCESSO
@@ -133,7 +133,7 @@ def main():
                 print("Quantidade de pedidos de cancelamento a concluir", len(lista_procCancelamento))
             elif opcoes == '4':
                 #EXECUTA FUNCAO PARA ANALISAR  UM ÚNICO PROCESSO
-                fc.analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones, planilhaRadios)
+                fc.analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones, planilhaRadios, planilhaGeral2025)
             elif opcoes == '5':
                 # Clica no icone que mostra a lista de processos 
                 navegador.switch_to.default_content()

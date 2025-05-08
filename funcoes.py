@@ -769,12 +769,12 @@ def localiza_processo(processo):
     return celula_encontrada
 
 #FUNCAO QUE PREENCHE A PLANILHA GERAL
-def preenche_planilhageral(processo, nomeEstag, retido='', situacao='', codigo_rastreio='', nome_interessado='', opcao_de_planilha=1):
+def preenche_planilhageral(processo, nomeEstag, retido='', situacao='', codigo_rastreio='', nome_interessado=''):
     #ENCONTRA O ICONE DO EDGE E ABRE O NAVEGADOR DA PLANILHA
-    if opcao_de_planilha == 1:
-        planilha = 'Distribuição Processo Drone_2024.xlsx'
-    else:
-        planilha = 'Distribuição Processo Drone_2025.xlsx'
+    # if opcao_de_planilha == 1:
+    #     planilha = 'Distribuição Processo Drone_2024.xlsx'
+    # else:
+    planilha = 'Distribuição Processo Drone_2025.xlsx'
     mudou_janela = muda_janela(planilha)
     if mudou_janela:
         #LOCALIZA O PROCESSO NA PLANILHA
@@ -1340,22 +1340,22 @@ def iniciaJanela(navegador):
     navegador.find_element(By.XPATH, '//*[@id="sbmAcessar"]').click()
 
 #FUNCAO QUE ANALISA TODOS OS PROCESSOS NA CAIXA DO USUARIO
-def analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrones, planilhaRadios):
+def analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrones, planilhaRadios, planilhaGeral):
     drone_modelos = corrige_planilha(drones=True, planilha=planilhaDrones)
     radio_modelos = corrige_planilha(drones=False, planilha=planilhaRadios)
-    while True:
-        opcao = str(input("Indique qual planilha estão os processos a serem analisados [1] para 2024 e [2] para 2025: "))
-        if opcao == '1':
-            opcao_de_planilha = 1
-            break
-        elif opcao == '2':
-            opcao_de_planilha = 2
-            break
-        else:
-            print("Alternativa inválida")
+    # while True:
+    #     opcao = str(input("Indique qual planilha estão os processos a serem analisados [1] para 2024 e [2] para 2025: "))
+    #     if opcao == '1':
+    #         opcao_de_planilha = 1
+    #         break
+    #     elif opcao == '2':
+    #         opcao_de_planilha = 2
+    #         break
+    #     else:
+    #         print("Alternativa inválida")
     for processos in lista_processos[:]:
         try:
-            analisa(navegador, processos, nomeEstag, drone_modelos, radio_modelos, opcao_de_planilha)
+            analisa(navegador, processos, nomeEstag, drone_modelos, radio_modelos, planilhaGeral)
         except Exception as e:
             print("Ocorreu um erro: ", e)
             print("Traceback: ")
@@ -1373,20 +1373,20 @@ def analisaListaDeProcessos(navegador, lista_processos, nomeEstag, planilhaDrone
     return
 
 #FUNCAO QUE ANALISA UM PROCESSO ESPECIFICO
-def analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones, planilhaRadios):
+def analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones, planilhaRadios, planilhaGeral):
     drone_modelos = corrige_planilha(drones=True, planilha=planilhaDrones)
     radio_modelos = corrige_planilha(drones=False, planilha=planilhaRadios)
 
-    while True:
-        opcao = str(input("Indique qual planilha estão os processos a serem analisados [1] para 2024 e [2] para 2025: "))
-        if opcao == '1':
-            opcao_de_planilha = 1
-            break
-        elif opcao == '2':
-            opcao_de_planilha = 2
-            break
-        else:
-            print("Alternativa inválida")
+    # while True:
+    #     opcao = str(input("Indique qual planilha estão os processos a serem analisados [1] para 2024 e [2] para 2025: "))
+    #     if opcao == '1':
+    #         opcao_de_planilha = 1
+    #         break
+    #     elif opcao == '2':
+    #         opcao_de_planilha = 2
+    #         break
+    #     else:
+    #         print("Alternativa inválida")
 
     while True:
         #PEDE O PROCESSO A SER ANALISADO
@@ -1394,7 +1394,7 @@ def analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones, planilhaRadios
         opcao = str(input("Caso deseje analisar este processo, digite [1], caso contrario digite [2]: "))
         if opcao == '1':
             try:
-                analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos, opcao_de_planilha)
+                analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos, planilhaGeral)
             except Exception as e:
                 print("Ocorreu um erro: ", e)
                 print("Traceback: ")
@@ -1413,8 +1413,10 @@ def analisaApenasUmProcesso(navegador, nomeEstag, planilhaDrones, planilhaRadios
                 print("Alternativa inválida")
 
 #FUNCAO PARA ANALISAR PROCESSO
-def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos, opcao_de_planilha):
+def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos, planilhaGeral):
     #VARIAVEL UTILIZADA PARA O SELENIUM RETORNAR PARA A JANELA PRINCIPAL
+    suspeitos = pd.read_excel(planilhaGeral, sheet_name='Suspeitos de comercialização')
+    
     janela_principal = navegador.current_window_handle
 # try:
     #FAZ UM LOG DO PROCESSO
@@ -1711,6 +1713,24 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos, opcao_
     print('--------------------------------------------------------------------------')
     print('--------------------------------------------------------------------------')
 
+    if nome_interessado in suspeitos['Nome'].values:
+        linha = suspeitos.loc[suspeitos['Nome']==nome_interessado].values[0]
+        n_processos_sei_suspeito = linha[1]
+        try:
+            n_processos_sch_suspeito = int(linha[2])
+            total_processos_suspeito = int(linha[3])
+        except:
+            n_processos_sch_suspeito = '--'
+            total_processos_suspeito = n_processos_sei_suspeito
+        situacao_suspeito = linha[4]
+        suspeito = True
+        if pd.isna(situacao_suspeito):
+            print(f'{nome_interessado} é SUSPEITO DE COMERCIALIZAÇÃO, possui {n_processos_sei_suspeito} processos no SEI e {n_processos_sch_suspeito} no SCH (total: {total_processos_suspeito}).', 'Ainda não possui observação registrada\n', sep='\n')
+        else:
+            print(f'{nome_interessado} é SUSPEITO DE COMERCIALIZAÇÃO, possui {n_processos_sei_suspeito} processos no SEI e {n_processos_sch_suspeito} no SCH (total: {total_processos_suspeito}).', f'Sua observação é: {situacao_suspeito}\n', sep='\n')
+    else:
+        suspeito = False
+
     time.sleep(1)
     navegador.switch_to.default_content()
     #CRIA DESPACHO DECISORIO
@@ -1722,6 +1742,9 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos, opcao_
             confirmacao = str(input('Caso esteja tudo certo e NÃO HAJA UM DESPACHO JÁ CRIADO digite [1] para continuar, senão, digite [2]: '))
             if (nome_interessado == 'Não informado' or '') and confirmacao == '1':
                 print("Nome do interessado não informado, não é possível criar despacho, selecione outra opção!")
+            if suspeito and confirmacao == '1':
+                confirmacao = str(input('Confirme mais uma vez que irá gerar um despacho (visto que o interessado é SUSPEITO DE COMERCIALIZAÇÃO). Digite [1] para continuar, senão, digite [2]: '))
+                break
             elif confirmacao == '1':
                 break
             elif confirmacao == '2':
@@ -1863,7 +1886,7 @@ def analisa(navegador, processo, nomeEstag, drone_modelos, radio_modelos, opcao_
     #VERIFICA SE O PROCESSO CONTEM ALGUMA SITUACAO ANTES DE ESCREVER SOBRE
     #SE HOUVER ALGUM ERRO OU PULAR PROCESSO NAO ESCREVERA NA PLANILHA
     if situacao == 'Aprovado' or situacao == 'Exigência' or situacao == 'Intercorrente' or situacao == 'Cancelado' or situacao == 'Devolução':
-        preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastreio, nome_interessado, opcao_de_planilha=opcao_de_planilha)
+        preenche_planilhageral(processo, nomeEstag, retido, situacao, codigo_rastreio, nome_interessado)
     else:
         print('--------------------------------------------------------------------------')
         print('--------------------------------------------------------------------------')
@@ -1895,7 +1918,7 @@ def concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nome
         print(e)
         planilhaGeral = input("Digite o caminho da planilha geral manualmente: ").strip('"')
         planilhaGeral = planilhaGeral.replace("\\", "\\\\")
-        df = pd.read_excel(planilhaGeral, usecols=[0,2,3])
+        df = pd.read_excel(planilhaGeral, usecols=[0,2,3], sheet_name='2025')
 
     #ITERA SOBRE OS processo DA LISTA DE PROCESSOS CONFORMES
     print('Concluindo processos conformes\n')
@@ -2248,17 +2271,17 @@ def concluiProcesso(navegador, lista_procConformes, lista_procCancelamento, nome
 
 
 
-def atribuir_processos(planilhaGeral2025, num_processos):
+def atribuir_processos(planilhaGeral, num_processos):
 
     # Lê a planilha do Excel
     try:
-        df = pd.read_excel(planilhaGeral2025, usecols=[0,1])
+        df = pd.read_excel(planilhaGeral, usecols=[0,1])
     except Exception as e:
         print("Ocorreu um erro ao buscar o caminho da pasta geral")
         print(e)
         planilhaGeral2025 = input("Digite o caminho da planilha geral manualmente: ").strip('"')
         planilhaGeral2025 = planilhaGeral2025.replace("\\", "\\\\")
-        df = pd.read_excel(planilhaGeral2025, usecols=[0,1])
+        df = pd.read_excel(planilhaGeral, usecols=[0,1], sheet_name='2025')
     
 
     
